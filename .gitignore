@@ -1,1 +1,3 @@
 *.egg
+build/
+*.egg-info/
