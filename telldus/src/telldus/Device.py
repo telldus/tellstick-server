@@ -39,6 +39,9 @@ class Device(object):
 	def params(self):
 		return {}
 
+	def paramUpdated(self, param):
+		self._manager.save()
+
 	def setId(self, id):
 		self._id = id
 

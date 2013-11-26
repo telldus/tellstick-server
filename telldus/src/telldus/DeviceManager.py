@@ -32,7 +32,7 @@ class DeviceManager(object):
 		if not found:
 			self.nextId = self.nextId + 1
 			device.setId(self.nextId)
-		self.__save()
+		self.save()
 		self.__sendDeviceReport()
 
 	def device(self, deviceId):
@@ -48,7 +48,7 @@ class DeviceManager(object):
 				print("Found it")
 				del self.devices[i]
 				break
-		self.__save()
+		self.save()
 		self.__sendDeviceReport()
 
 	def stateUpdated(self, device):
@@ -77,7 +77,7 @@ class DeviceManager(object):
 	def __load(self):
 		self.store = self.s.get('devices', [])
 
-	def __save(self):
+	def save(self):
 		data = []
 		for d in self.devices:
 			data.append({
