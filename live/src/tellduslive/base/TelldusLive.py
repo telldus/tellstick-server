@@ -45,12 +45,8 @@ class TelldusLive(threading.Thread):
 			print("This client isn't activated, please activate it using this url:\n%s" % params['url'].stringVal)
 			return
 
-		#if (message.name() == "registered"):
-			#params = message.argument(0).dictVal
-			#self.supportedMethods = params['supportedMethods'].intVal
-			#self.tellduscore.setSupportedMethods(self.supportedMethods)
-			#self.sendDevicesReport()
-			#return
+		if (message.name() == "registered"):
+			self.registered = True
 
 		if (message.name() == "command"):
 			# Extract ACK and handle it
