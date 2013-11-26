@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import socket, ssl
-import time, os
+import time, random
 import threading
 
 from base import Application, Settings
@@ -9,6 +8,7 @@ from base import Application, Settings
 #from configobj import ConfigObj
 
 from ServerList import *
+from ServerConnection import ServerConnection
 #from TelldusCore import *
 from LiveMessage import *
 
@@ -27,17 +27,15 @@ class TelldusLive(threading.Thread):
 		TelldusLive._initialized = True
 		super(TelldusLive,self).__init__()
 		print("Telldus Live! loading")
-		self.publicKey = ''
-		self.privateKey = ''
-		self.hashMethod = 'sha1'
-		self.pongTimer = 0
-		self.pingTimer = 0
 		self.supportedMethods = 0
 		self.handlers = {}
+		self.registered = False
 		self.serverList = ServerList()
 		Application().registerShutdown(self.stop)
 		self.s = Settings('tellduslive.config')
 		self.uuid = self.s['uuid']
+		self.conn = ServerConnection()
+		self.pingTimer = 0
 		self.start()
 
 	def handleMessage(self, message):
@@ -65,6 +63,10 @@ class TelldusLive(threading.Thread):
 		if (message.name() == "pong"):
 			return
 
+		if (message.name() == "disconnect"):
+			self.conn.close()
+			return
+
 		if message.name() in self.handlers:
 			for handler in self.handlers[message.name()]:
 				handler(message)
@@ -79,18 +81,72 @@ class TelldusLive(threading.Thread):
 	def run(self):
 		self.running = True
 		app = Application()
-		server = self.serverList.popServer()
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket = ssl.wrap_socket(s, ssl_version=ssl.PROTOCOL_TLSv1, ca_certs="/etc/ssl/certs/ca-certificates.crt",cert_reqs=ssl.CERT_REQUIRED)
-		self.socket.settimeout(5)
-		self.socket.connect((server['address'], int(server['port'])))
 
+		wait = 0
+		pongTimer, self.pingTimer = (0, 0)
+		while self.running:
+			if wait > 0:
+				wait = wait - 1
+				time.sleep(1)
+				continue
+			state = self.conn.process()
+			if state == ServerConnection.CLOSED:
+				server = self.serverList.popServer()
+				if not server:
+					wait = random.randint(60, 300)
+					print("No servers found, retry in %i seconds" % wait)
+					continue
+				if not self.conn.connect(server['address'], int(server['port'])):
+					wait = random.randint(60, 300)
+					print("Could not connect, retry in %i seconds" % wait)
+
+			elif state == ServerConnection.CONNECTED:
+				pongTimer, self.pingTimer = (time.time(), time.time())
+				self.__sendRegisterMessage()
+
+			elif state == ServerConnection.MSG_RECEIVED:
+				msg = self.conn.popMessage()
+				if msg is None:
+					continue
+				pongTimer = time.time()
+				app.queue(self.handleMessage, msg)
+
+			elif state == ServerConnection.DISCONNECTED:
+				wait = random.randint(10, 50)
+				print("Disconnected, reconnect in %i seconds" % wait)
+
+			else:
+				if (time.time() - pongTimer >= 360):  # No pong received
+					self.conn.close()
+					wait = random.randint(10, 50)
+					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
+				elif (time.time() - self.pingTimer >= 120):
+					# Time to ping
+					self.conn.send(LiveMessage("Ping"))
+					self.pingTimer = time.time()
+
+	def stop(self):
+		self.running = False
+
+	def send(self, message):
+		self.conn.send(message)
+		self.pingTimer = time.time()
+
+	def pushToWeb(self, module, action, data):
+		msg = LiveMessage("sendToWeb")
+		msg.append(module)
+		msg.append(action)
+		msg.append(data)
+		self.send(msg)
+
+	def __sendRegisterMessage(self):
+		print("Send register")
 		uuid = self.s['uuid']
 		msg = LiveMessage('Register')
 		msg.append({
-			'key': self.publicKey,
+			'key': self.conn.publicKey,
 			'uuid': uuid,
-			'hash': self.hashMethod
+			'hash': 'sha1'
 		})
 		msg.append({
 			'protocol': 2,
@@ -98,74 +154,4 @@ class TelldusLive(threading.Thread):
 			'os': 'linux',
 			'os-version': 'telldus'
 		})
-
-		self.socket.write(self.signedMessage(msg))
-		self.pongTimer = time.time()
-		self.pingTimer = time.time()
-		while(self.running):
-			try:
-				resp = self.socket.read(1024)
-			except ssl.SSLError:
-				# Timeout, try again after some maintenance
-				if (time.time() - self.pongTimer >= 360):  # No pong received
-					print("No pong received, disconnecting")
-					break
-				if (time.time() - self.pingTimer >= 120):
-					# Time to ping
-					msg = LiveMessage("Ping")
-					self.socket.write(self.signedMessage(msg))
-					self.pingTimer = time.time()
-
-				continue
-
-			if (resp == ''):
-				print("no response")
-				break
-
-			envelope = LiveMessage.fromByteArray(resp)
-			if (not envelope.verifySignature(self.hashMethod, self.privateKey)):
-				print("Signature failed")
-				continue
-
-			self.pongTimer = time.time()
-			#print("Handle message", envelope.argument(0).stringVal)
-			app.queue(self.handleMessage, LiveMessage.fromByteArray(envelope.argument(0).stringVal))
-
-	def stop(self):
-		self.running = False
-
-	def send(self, message):
-		self.socket.write(self.signedMessage(message))
-
-	def signedMessage(self, message):
-		return message.toSignedMessage(self.hashMethod, self.privateKey)
-
-'''	def connect(self, server):
-
-		try:
-			uuid = self.config['uuid']
-		except:
-			pass
-
-	def handleCommand(self, args):
-		if (args['action'].stringVal == 'turnon'):
-			self.tellduscore.turnon(args['id'].intVal)
-		elif (args['action'].stringVal == 'turnoff'):
-			self.tellduscore.turnoff(args['id'].intVal)
-		else:
-			return
-
-		if ('ACK' in args):
-			#Respond to ack
-			msg = LiveMessage("ACK")
-			msg.append(args['ACK'].intVal)
-			self.socket.write(self.signedMessage(msg))
-
-	
-
-
-	def sendDevicesReport(self):
-		msg = LiveMessage("DevicesReport")
-		msg.append(self.tellduscore.getList())
-		self.socket.write(self.signedMessage(msg))
-'''
+		self.conn.send(msg)
