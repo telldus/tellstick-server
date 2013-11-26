@@ -18,6 +18,7 @@ class DeviceManager(object):
 
 	def addDevice(self, device):
 		self.devices.append(device)
+		device.setManager(self)
 		# Find out if this one was saved before
 		found = False
 		for i, dev in enumerate(self.store):
@@ -32,6 +33,33 @@ class DeviceManager(object):
 			self.nextId = self.nextId + 1
 			device.setId(self.nextId)
 		self.__save()
+		self.__sendDeviceReport()
+
+	def device(self, deviceId):
+		for d in self.devices:
+			if d.id() == deviceId:
+				return d
+		return None
+
+	def removeDevice(self, deviceId):
+		print("Trying to remove device", deviceId)
+		for i, device in enumerate(self.devices):
+			if device.id() == deviceId:
+				print("Found it")
+				del self.devices[i]
+				break
+		self.__save()
+		self.__sendDeviceReport()
+
+	def stateUpdated(self, device):
+		if not self.live.registered:
+			return
+		(state, stateValue) = device.state()
+		msg = LiveMessage("DeviceEvent")
+		msg.append(device.id())
+		msg.append(state)
+		msg.append(stateValue)
+		self.live.send(msg)
 
 	def __handleCommand(self, msg):
 		args = msg.argument(0).dictVal
@@ -63,12 +91,14 @@ class DeviceManager(object):
 		self.s['nextId'] = self.nextId
 
 	def __sendDeviceReport(self):
+		if not self.live.registered:
+			return
 		l = []
 		for d in self.devices:
 			device = {
 				'id': d.id(),
 				'name': d.name(),
-				'methods': 3,
+				'methods': d.methods(),
 				'state': 2,
 				'stateValue': '',
 			}
