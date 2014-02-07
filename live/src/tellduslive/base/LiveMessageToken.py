@@ -52,6 +52,24 @@ class LiveMessageToken(object):
 
 		return self.stringVal
 
+	def toNative(self):
+		if (self.valueType == LiveMessageToken.TYPE_INT):
+			return self.intVal
+
+		if (self.valueType == LiveMessageToken.TYPE_LIST):
+			retval = []
+			for token in self.listVal:
+				retval.append(token.toNative())
+			return retval
+
+		if (self.valueType == LiveMessageToken.TYPE_DICTIONARY):
+			retval = {}
+			for key in self.dictVal:
+				retval[key] = self.dictVal[key].toNative()
+			return retval
+
+		return self.stringVal
+
 	def toByteArray(self):
 		if (self.valueType == LiveMessageToken.TYPE_INT):
 			return 'i%Xs' % self.intVal
