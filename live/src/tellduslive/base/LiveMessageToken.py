@@ -83,7 +83,7 @@ class LiveMessageToken(object):
 		if (self.valueType == LiveMessageToken.TYPE_DICTIONARY):
 			retval = 'h'
 			for key in self.dictVal:
-				retval = retval + LiveMessageToken(key).toByteArray() + self.dictVal[key].toByteArray()
+				retval = retval + LiveMessageToken(str(key)).toByteArray() + self.dictVal[key].toByteArray()
 			return retval + 's'
 
 		if type(self.stringVal) == unicode:
