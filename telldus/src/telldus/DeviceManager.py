@@ -14,6 +14,7 @@ class DeviceManager(object):
 		self.registered = False
 		self.live.registerHandler('registered', self.__liveRegistered)
 		self.live.registerHandler('command', self.__handleCommand)
+		self.live.registerHandler('device', self.__handleDeviceCommand)
 		self.__load()
 
 	def addDevice(self, device):
@@ -69,6 +70,20 @@ class DeviceManager(object):
 			if dev.id() != id:
 				continue
 			dev.command(action)
+
+	def __handleDeviceCommand(self, msg):
+		args = msg.argument(0).dictVal
+		if 'action' not in args:
+			return
+		if args['action'].stringVal == 'setName':
+			if 'name' not in args or args['name'].stringVal == '':
+				return
+			for dev in self.devices:
+				if dev.id() != args['device'].intVal:
+					continue
+				dev.setName(args['name'].stringVal)
+				self.__sendDeviceReport()
+				break
 
 	def __liveRegistered(self, msg):
 		self.registered = True

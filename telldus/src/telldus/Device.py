@@ -40,13 +40,18 @@ class Device(object):
 		return {}
 
 	def paramUpdated(self, param):
-		self._manager.save()
+		if self._manager:
+			self._manager.save()
 
 	def setId(self, id):
 		self._id = id
 
 	def setManager(self, manager):
 		self._manager = manager
+
+	def setName(self, name):
+		self._name = name
+		self.paramUpdated('name')
 
 	def setParams(self, params):
 		pass
