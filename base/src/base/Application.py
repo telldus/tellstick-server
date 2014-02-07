@@ -40,8 +40,9 @@ class Application(object):
 				m = moduleClass()
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				print("Could not load", entry, e)
-				print(traceback.extract_tb(exc_traceback))
+				print("Could not load", entry)
+				print(e)
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		while 1:
 			with self.lock:
 				if not self.running:
@@ -54,7 +55,7 @@ class Application(object):
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				print(e)
-				print(traceback.extract_tb(exc_traceback))
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
 			fn()
 	
@@ -80,6 +81,10 @@ class Application(object):
 			self.__taskLock.notifyAll()
 		finally:
 			self.__taskLock.release()
+
+	def printBacktrace(self, bt):
+		for f in bt:
+			print(f)
 
 	def signal(self, signum, frame):
 		print("Signal %d caught" % signum)
