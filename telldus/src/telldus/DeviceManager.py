@@ -34,7 +34,17 @@ class DeviceManager(object):
 			self.nextId = self.nextId + 1
 			device.setId(self.nextId)
 		self.save()
-		self.__sendDeviceReport()
+		if self.live.registered:
+			deviceDict = {
+				'id': device.id(),
+				'name': device.name(),
+				'methods': device.methods(),
+				'state': 2,
+				'stateValue': '',
+			}
+			msg = LiveMessage("DeviceAdded")
+			msg.append(deviceDict)
+			self.live.send(msg)
 
 	def device(self, deviceId):
 		for d in self.devices:
@@ -50,7 +60,10 @@ class DeviceManager(object):
 				del self.devices[i]
 				break
 		self.save()
-		self.__sendDeviceReport()
+		if self.live.registered:
+			msg = LiveMessage("DeviceRemoved")
+			msg.append({'id': deviceId})
+			self.live.send(msg)
 
 	def sensorValueUpdated(self, device):
 		if not self.live.registered:
