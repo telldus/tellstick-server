@@ -87,7 +87,7 @@ class LiveMessageToken(object):
 			return retval + 's'
 
 		if type(self.stringVal) == unicode:
-			s = base64.encodestring(self.stringVal.encode('utf-8'))
+			s = base64.b64encode(self.stringVal.encode('utf-8'))
 			return 'u%X:%s' % (len(s), str(s),)
 
 		return '%X:%s' % (len(self.stringVal), str(self.stringVal),)
