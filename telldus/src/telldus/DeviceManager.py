@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import json
-from tellduslive.base import TelldusLive, LiveMessage
+from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken
 from base import Settings
 
 class DeviceManager(object):
@@ -52,8 +52,34 @@ class DeviceManager(object):
 		self.save()
 		self.__sendDeviceReport()
 
+	def sensorValueUpdated(self, device):
+		if not self.live.registered:
+			return
+		if device.isSensor() == False:
+			return
+		msg = LiveMessage("SensorEvent")
+		sensor = {
+			'name': device.name(),
+			'protocol': 'z-wave',
+			'model': 'n/a',
+			'sensor_id': device.id(),
+		}
+		msg.append(sensor)
+		values = device.sensorValues()
+		valueList = []
+		for valueType in values:
+			valueList.append({
+				'type': valueType,
+				'lastUp': str(int(time.time())),
+				'value': str(values[valueType])
+			})
+		msg.append(valueList)
+		self.live.send(msg)
+
 	def stateUpdated(self, device):
 		if not self.live.registered:
+			return
+		if device.isDevice() == False:
 			return
 		(state, stateValue) = device.state()
 		msg = LiveMessage("DeviceEvent")
@@ -119,6 +145,29 @@ class DeviceManager(object):
 			}
 			l.append(device)
 		msg = LiveMessage("DevicesReport")
+		msg.append(l)
+		self.live.send(msg)
+
+	def __sendSensorReport(self):
+		if not self.live.registered:
+			return
+		l = []
+		for d in self.devices:
+			if d.isSensor() == False:
+				continue
+			sensorFrame = []
+			sensor = {
+				'name': d.name(),
+				'protocol': 'z-wave',
+				'model': 'n/a',
+				'sensor_id': d.id(),
+			}
+			sensorFrame.append(sensor)
+			valueList = []
+			# TODO(micke): Add current values
+			sensorFrame.append(valueList)
+			l.append(sensorFrame)
+		msg = LiveMessage("SensorsReport")
 		msg.append(l)
 		self.live.send(msg)
 

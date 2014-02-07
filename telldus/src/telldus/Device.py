@@ -5,6 +5,9 @@ class Device(object):
 	TURNON  = 1
 	TURNOFF = 2
 
+	TEMPERATURE = 1
+	HUMIDITY = 2
+
 	def __init__(self):
 		super(Device,self).__init__()
 		self._id = 0
@@ -12,6 +15,7 @@ class Device(object):
 		self._manager = None
 		self._state = Device.TURNOFF
 		self._stateValue = ''
+		self._sensorValues = {}
 
 	def id(self):
 		return self._id
@@ -30,6 +34,12 @@ class Device(object):
 	def localId(self):
 		return 0
 
+	def isDevice(self):
+		return True
+
+	def isSensor(self):
+		return False
+
 	def methods(self):
 		return 0
 
@@ -43,6 +53,9 @@ class Device(object):
 		if self._manager:
 			self._manager.save()
 
+	def sensorValues(self):
+		return self._sensorValues
+
 	def setId(self, id):
 		self._id = id
 
@@ -55,6 +68,14 @@ class Device(object):
 
 	def setParams(self, params):
 		pass
+
+	def setSensorValue(self, valueType, value):
+		if valueType != Device.TEMPERATURE and valueType != Device.HUMIDITY:
+			# TODO(micke): Ignoring for now
+			return
+		self._sensorValues[valueType] = value
+		if self._manager:
+			self._manager.sensorValueUpdated(self)
 
 	def setState(self, state, stateValue = ''):
 		self._state = state
