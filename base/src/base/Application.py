@@ -6,9 +6,26 @@ import traceback
 import signal
 import sys
 
+# Decorator
+class mainthread(object):
+	def __init__(self, f):
+		self.__f = f
+
+	def __get__(self, obj, objtype):
+		def __call__(*args, **kwargs):
+			if threading.currentThread() == Application._mainThread:
+				# We are in main thread. Call it directly
+				self.__f(obj, *args, **kwargs)
+			else:
+				# Queue call
+				Application().queue(self.__f, obj, *args, **kwargs)
+			return None
+		return __call__
+
 class Application(object):
 	_instance = None
 	_initialized = False
+	_mainThread = None
 
 	def __new__(cls, *args, **kwargs):
 		if not cls._instance:
@@ -28,6 +45,7 @@ class Application(object):
 		self.__taskLock = threading.Condition(threading.Lock())
 		signal.signal(signal.SIGINT, self.signal)
 		signal.signal(signal.SIGTERM, self.signal)
+		Application._mainThread = threading.currentThread()
 		self.run()
 
 	def registerShutdown(self, fn):
