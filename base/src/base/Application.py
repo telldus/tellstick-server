@@ -54,6 +54,14 @@ class Application(object):
 		self.shutdown.append(fn)
 
 	def run(self):
+		for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
+			try:
+				moduleClass = entry.load()
+			except Exception as e:
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				print("Could not load", entry)
+				print(e)
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
 				moduleClass = entry.load()
