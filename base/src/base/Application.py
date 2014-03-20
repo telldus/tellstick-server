@@ -5,6 +5,7 @@ import threading
 import traceback
 import signal
 import sys
+from Plugin import Plugin, PluginContext
 
 # Decorator
 class mainthread(object):
@@ -40,6 +41,7 @@ class Application(object):
 		self.lock = threading.RLock()
 		self.running = True
 		self.shutdown = []
+		self.pluginContext = PluginContext()
 		self.__isJoining = False
 		self.__tasks = []
 		self.__taskLock = threading.Condition(threading.Lock())
@@ -55,7 +57,10 @@ class Application(object):
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
 				moduleClass = entry.load()
-				m = moduleClass()
+				if issubclass(moduleClass, Plugin):
+					m = moduleClass(self.pluginContext)
+				else:
+					m = moduleClass()
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				print("Could not load", entry)
