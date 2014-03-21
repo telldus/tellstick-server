@@ -11,7 +11,7 @@ class DeviceManager(Plugin):
 		self.devices = []
 		self.s = Settings('telldus.devicemanager')
 		self.nextId = self.s.get('nextId', 0)
-		self.live = TelldusLive()
+		self.live = TelldusLive(self.context)
 		self.registered = False
 		self.live.registerHandler('command', self.__handleCommand)
 		self.live.registerHandler('device', self.__handleDeviceCommand)
@@ -124,7 +124,7 @@ class DeviceManager(Plugin):
 				self.__sendDeviceReport()
 				break
 
-	def liveRegistered(self):
+	def liveRegistered(self, params):
 		self.registered = True
 		self.__sendDeviceReport()
 

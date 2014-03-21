@@ -22,7 +22,6 @@ class TelldusLive(Plugin):
 	observers = ObserverCollection(ITelldusLiveObserver)
 
 	def __init__(self):
-		self.context = Application().pluginContext
 		print("Telldus Live! loading")
 		self.supportedMethods = 0
 		self.handlers = {}
