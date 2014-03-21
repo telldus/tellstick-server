@@ -24,7 +24,6 @@ class TelldusLive(Plugin):
 	def __init__(self):
 		print("Telldus Live! loading")
 		self.supportedMethods = 0
-		self.handlers = {}
 		self.registered = False
 		self.serverList = ServerList()
 		Application().registerShutdown(self.stop)
@@ -45,6 +44,7 @@ class TelldusLive(Plugin):
 		if (message.name() == "registered"):
 			self.registered = True
 			self.observers.liveRegistered(message.argument(0).toNative())
+			return
 
 		if (message.name() == "command"):
 			# Extract ACK and handle it
@@ -61,16 +61,13 @@ class TelldusLive(Plugin):
 			self.conn.close()
 			return
 
-		if message.name() in self.handlers:
-			for handler in self.handlers[message.name()]:
-				handler(message)
-			return
-		print "Did not understand: %s" % message.toByteArray()
-
-	def registerHandler(self, message, fn):
-		if message not in self.handlers:
-			self.handlers[message] = []
-		self.handlers[message].append(fn)
+		handled = False
+		for o in self.observers:
+			for f in getattr(o, '_telldusLiveHandlers', {}).get(message.name(), []):
+				f(o, message)
+				handled = True
+		if not handled:
+			print "Did not understand: %s" % message.toByteArray()
 
 	def run(self):
 		self.running = True
@@ -134,6 +131,15 @@ class TelldusLive(Plugin):
 		msg.append(action)
 		msg.append(data)
 		self.send(msg)
+
+	@staticmethod
+	def handler(message):
+		def call(fn):
+			import sys
+			frame = sys._getframe(1)
+			frame.f_locals.setdefault('_telldusLiveHandlers', {}).setdefault(message, []).append(fn)
+			return fn
+		return call
 
 	def __sendRegisterMessage(self):
 		print("Send register")

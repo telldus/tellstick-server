@@ -13,8 +13,6 @@ class DeviceManager(Plugin):
 		self.nextId = self.s.get('nextId', 0)
 		self.live = TelldusLive(self.context)
 		self.registered = False
-		self.live.registerHandler('command', self.__handleCommand)
-		self.live.registerHandler('device', self.__handleDeviceCommand)
 		self.__load()
 
 	def addDevice(self, device):
@@ -101,6 +99,7 @@ class DeviceManager(Plugin):
 		msg.append(stateValue)
 		self.live.send(msg)
 
+	@TelldusLive.handler('command')
 	def __handleCommand(self, msg):
 		args = msg.argument(0).dictVal
 		action = args['action'].stringVal
@@ -110,6 +109,7 @@ class DeviceManager(Plugin):
 				continue
 			dev.command(action)
 
+	@TelldusLive.handler('device')
 	def __handleDeviceCommand(self, msg):
 		args = msg.argument(0).dictVal
 		if 'action' not in args:
