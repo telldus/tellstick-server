@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import json
-from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken
-from base import Settings
+from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
+from base import Settings, Plugin, implements
 
-class DeviceManager(object):
-	def __init__(self,):
-		super(DeviceManager,self).__init__()
+class DeviceManager(Plugin):
+	implements(ITelldusLiveObserver)
+
+	def __init__(self):
 		self.devices = []
 		self.s = Settings('telldus.devicemanager')
 		self.nextId = self.s.get('nextId', 0)
 		self.live = TelldusLive()
 		self.registered = False
-		self.live.registerHandler('registered', self.__liveRegistered)
 		self.live.registerHandler('command', self.__handleCommand)
 		self.live.registerHandler('device', self.__handleDeviceCommand)
 		self.__load()
@@ -124,7 +124,7 @@ class DeviceManager(object):
 				self.__sendDeviceReport()
 				break
 
-	def __liveRegistered(self, msg):
+	def liveRegistered(self):
 		self.registered = True
 		self.__sendDeviceReport()
 
