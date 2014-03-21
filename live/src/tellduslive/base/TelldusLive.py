@@ -13,7 +13,7 @@ from ServerConnection import ServerConnection
 from LiveMessage import *
 
 class ITelldusLiveObserver(IInterface):
-	def liveRegistered():
+	def liveRegistered(params):
 		"""This method is called when we have succesfully registered with a Live! server"""
 	def liveDisconnected():
 		"""This method is call when we are disconnected"""
@@ -45,7 +45,7 @@ class TelldusLive(Plugin):
 
 		if (message.name() == "registered"):
 			self.registered = True
-			self.observers.liveRegistered()
+			self.observers.liveRegistered(message.argument(0).toNative())
 
 		if (message.name() == "command"):
 			# Extract ACK and handle it
