@@ -3,7 +3,7 @@
 import time, random
 import threading
 
-from base import Application, Settings
+from base import Application, Settings, IInterface, ObserverCollection
 
 #from configobj import ConfigObj
 
@@ -12,9 +12,16 @@ from ServerConnection import ServerConnection
 #from TelldusCore import *
 from LiveMessage import *
 
+class ITelldusLiveObserver(IInterface):
+	def liveRegistered():
+		"""This method is called when we have succesfully registered with a Live! server"""
+	def liveDisconnected():
+		"""This method is call when we are disconnected"""
+
 class TelldusLive(threading.Thread):
 	_instance = None
 	_initialized = False
+	observers = ObserverCollection(ITelldusLiveObserver)
 
 	def __new__(cls, *args, **kwargs):
 		if not cls._instance:
@@ -26,6 +33,7 @@ class TelldusLive(threading.Thread):
 			return
 		TelldusLive._initialized = True
 		super(TelldusLive,self).__init__()
+		self.context = Application().pluginContext
 		print("Telldus Live! loading")
 		self.supportedMethods = 0
 		self.handlers = {}
@@ -47,6 +55,7 @@ class TelldusLive(threading.Thread):
 
 		if (message.name() == "registered"):
 			self.registered = True
+			self.observers.liveRegistered()
 
 		if (message.name() == "command"):
 			# Extract ACK and handle it
@@ -110,12 +119,14 @@ class TelldusLive(threading.Thread):
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
 				print("Disconnected, reconnect in %i seconds" % wait)
+				self.observers.liveDisconnected()
 
 			else:
 				if (time.time() - pongTimer >= 360):  # No pong received
 					self.conn.close()
 					wait = random.randint(10, 50)
 					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
+					self.observers.liveDisconnected()
 				elif (time.time() - self.pingTimer >= 120):
 					# Time to ping
 					self.conn.send(LiveMessage("Ping"))
