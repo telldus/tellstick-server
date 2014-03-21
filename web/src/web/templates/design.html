@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+	<py:match path="head" once="true">
+		<head py:attrs="select('@*')">
+			<title py:with="title = list(select('title/text()'))">
+				TellStick ZNet: <py:if test="title">$title</py:if>
+			</title>
+			${select('*[local-name()!="title"]')}
+		</head>
+	</py:match>
+
+	<py:match path="body" once="true">
+		<body py:attrs="select('@*')">
+			<div id="header">
+				<h1>$title</h1>
+			</div>
+			<h3>Menu</h3>
+			<ol py:if="menu">
+				<li py:for="menuitem in menu"><a href="/${menuitem.link}">${menuitem.title}</a></li>
+			</ol>
+
+			<div id="content">
+				${select('*|text()')}
+			</div>
+
+			<div id="footer">
+				<hr />
+				<p class="legalese">© 2014 Telldus Technologies AB</p>
+			</div>
+		</body>
+	</py:match>
+</html>
