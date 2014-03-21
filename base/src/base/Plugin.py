@@ -53,7 +53,7 @@ class PluginMeta(type):
 
 	def __call__(cls, *args, **kwargs):
 		assert len(args) >= 1 and isinstance(args[0], PluginContext), \
-		       "First argument must be a ComponentManager instance"
+		       "First argument must be a PluginContext instance"
 		context = args[0]
 		self = context.components.get(cls)
 		if self is None:
