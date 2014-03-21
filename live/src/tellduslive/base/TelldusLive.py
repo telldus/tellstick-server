@@ -3,7 +3,7 @@
 import time, random
 import threading
 
-from base import Application, Settings, IInterface, ObserverCollection
+from base import Application, Settings, IInterface, ObserverCollection, Plugin
 
 #from configobj import ConfigObj
 
@@ -18,21 +18,10 @@ class ITelldusLiveObserver(IInterface):
 	def liveDisconnected():
 		"""This method is call when we are disconnected"""
 
-class TelldusLive(threading.Thread):
-	_instance = None
-	_initialized = False
+class TelldusLive(Plugin):
 	observers = ObserverCollection(ITelldusLiveObserver)
 
-	def __new__(cls, *args, **kwargs):
-		if not cls._instance:
-			cls._instance = super(TelldusLive, cls).__new__(cls, *args, **kwargs)
-		return cls._instance
-
 	def __init__(self):
-		if TelldusLive._initialized:
-			return
-		TelldusLive._initialized = True
-		super(TelldusLive,self).__init__()
 		self.context = Application().pluginContext
 		print("Telldus Live! loading")
 		self.supportedMethods = 0
@@ -44,7 +33,8 @@ class TelldusLive(threading.Thread):
 		self.uuid = self.s['uuid']
 		self.conn = ServerConnection()
 		self.pingTimer = 0
-		self.start()
+		self.thread = threading.Thread(target=self.run)
+		self.thread.start()
 
 	def handleMessage(self, message):
 		if (message.name() == "notregistered"):
