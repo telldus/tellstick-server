@@ -69,6 +69,10 @@ class TelldusLive(Plugin):
 		if not handled:
 			print "Did not understand: %s" % message.toByteArray()
 
+
+	def isRegistered(self):
+		return self.registered
+
 	def run(self):
 		self.running = True
 		app = Application()

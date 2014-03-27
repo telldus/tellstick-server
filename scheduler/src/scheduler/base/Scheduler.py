@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 import copy
+import random
 import threading
 import time
 from base import Application, mainthread, Settings, Plugin, implements
 from calendar import timegm
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
+from astral import Location
 from pytz import timezone
+from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 
 class Scheduler(Plugin):
@@ -20,6 +23,7 @@ class Scheduler(Plugin):
 		Application().registerShutdown(self.stop)
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
+		self.deviceManager = DeviceManager(self.context)
 		if self.live.isRegistered():
 			#probably not practically possible to end up here
 			self.requestJobsFromServer()
@@ -37,6 +41,9 @@ class Scheduler(Plugin):
 
 	def calculateNextRunTime(self, job):
 		"""Calculates nextRunTime for a job, depending on time, weekday and timezone."""
+		if not job['active']:
+			job['nextRunTime'] = 9999999999999 #todo, set to max or something
+			return
 		today = date.today().weekday()
 		weekdays = [int(n) for n in job['weekdays'].split(',')]
 		runToday = False
@@ -57,7 +64,7 @@ class Scheduler(Plugin):
 			#this weekday is included in the ones that this schedule should be run on
 			runTimeToday = self.calculateRunTimeForDay(todayDate, job)
 			if runTimeToday > time.time():
-				job['nextRunTime'] = runTimeToday
+				job['nextRunTime'] = runTimeToday + random.randint(0, job['random_interval'])
 				return
 			elif len(weekdays) == 1:
 				#this job should only run on this weekday, since it has already passed today, run it next week
@@ -72,13 +79,12 @@ class Scheduler(Plugin):
 
 			if not runDate:
 				#something is wrong, no weekday to run
-				#TODO
 				job['active'] = False
 				job['nextRunTime'] = 9999999999999 #todo, set to max or something
-				print "Error"
+				print "Error" #TODO
 				return
 
-		job['nextRunTime'] = self.calculateRunTimeForDay(runDate, job)
+		job['nextRunTime'] = self.calculateRunTimeForDay(runDate, job) + random.randint(0, job['random_interval'])
 
 	def calculateNextWeekday(self, d, weekday):
 		days_ahead = weekday - d.weekday()
@@ -90,17 +96,16 @@ class Scheduler(Plugin):
 		"""Calculates and returns a timestamp for when this job should be run next. Takes timezone into consideration."""
 		runDate = datetime(runDate.year, runDate.month, runDate.day)
 		if job['type'] == 'time':
-			runDate = runDate + timedelta(hours=job['hour'], minutes=job['minute'])
+			tt = timezone(self.timezone) #TODO, sending timezone from the server now, but it's really a client setting, can I get it from somewhere else?
+			runDate = runDate + timedelta(hours=job['hour'], minutes=job['minute']) #won't random here, since this time may also be used to see if it's passed today or not
+			return timegm(tt.localize(runDate).utctimetuple()) #returning a timestamp, corrected for timezone settings
 		elif job['type'] == 'sunrise':
-			#TODO
-			pass
+			#using astral, OK? At least smaller than PyEphem
+			astralLocation = Location(("Client", "Local", float(self.latitude), float(self.longitude), self.timezone))
+			runDate = astralLocation.sunrise(runDate)
+			return timegm(runDate.utctimetuple()) + job['offset'] * 60 #returning a timestamp, corrected for timezone settings
 		elif job['type'] == 'sunset':
-			#TODO
-			pass
-
-		tt = timezone(self.timezone) #TODO, sending timezone from the server now, but it's really a client setting, can I get it from somewhere else?
-
-		return timegm(tt.localize(runDate).utctimetuple()) #returning a timestamp, corrected for timezone settings
+			return timegm(Location(("Client", "Local", float(self.latitude), float(self.longitude), self.timezone)).sunset(runDate).utctimetuple()) + job['offset'] * 60
 
 	def fetchLocalJobs(self):
 		"""Fetch local jobs from settings"""
@@ -109,7 +114,9 @@ class Scheduler(Plugin):
 		except ValueError:
 			jobs = [] #something bad has been stored, just ignore it and continue?
 			print "WARNING: Could not fetch schedules from local storage"
-		self.timezone = self.s.get('tz', 'UTC')
+		self.timezone = self.s.get('tz', 'UTC') #TODO all these should probably be fetched elsewhere?
+		self.latitude = self.s.get('latitude', '55.699592')
+		self.longitude = self.s.get('longitude', '13.187836')
 		self.calculateJobs(jobs)
 
 	def liveRegistered(self, msg):
@@ -134,6 +141,8 @@ class Scheduler(Plugin):
 	def run(self):
 		self.running = True
 		while self.running:
+			#if len(self.jobs) > 0:
+			#	print str(self.jobs[0]['nextRunTime']), " vs ", str(time.time())
 			if len(self.jobs) > 0 and self.jobs[0]['nextRunTime'] < time.time():
 				#a job has passed its nextRunTime
 				job = self.jobs[0]
@@ -141,7 +150,7 @@ class Scheduler(Plugin):
 				#with self.runningJobsLock:
 				jobCopy = copy.deepcopy(job) #make a copy, don't edit the original job
 				jobCopy['originalRepeats'] = job['reps']
-				jobCopy['maxRunTime'] = jobCopy['nextRunTime'] + jobCopy['reps'] * 3 + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) + 70 #approximate maxRunTime, sanity check
+				jobCopy['maxRunTime'] = jobCopy['nextRunTime'] + jobCopy['reps'] * 3 + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) + 70 + jobCopy['random_interval'] * 60 + jobCopy['offset'] * 60 #approximate maxRunTime, sanity check
 				self.runningJobs[jobId] = jobCopy
 				self.calculateNextRunTime(job)
 				self.jobs.sort(key=lambda job: job['nextRunTime'])
@@ -156,18 +165,17 @@ class Scheduler(Plugin):
 			#with self.runningJobsLock: #or release it between each?
 			for runningJobId in self.runningJobs.keys():
 				runningJob = self.runningJobs[runningJobId]
-
 				if runningJob['nextRunTime'] < time.time():
-					if runningJob['maxRunTime'] < time.time():
-						isZWaveDevice = False
+					if runningJob['maxRunTime'] > time.time():
+						isZWaveDevice = False #TODO
 						if not isZWaveDevice:
 							runningJob['reps'] = int(runningJob['reps']) - 1
-							if runningJob['reps'] >= 0:
+							if runningJob['reps'] > 0: #TODO? >=
 								runningJob['nextRunTime'] = time.time() + 3
 								jobsToRun.append(runningJob)
 								continue
 
-						if runningJob['retries'] > 0:
+						if runningJob['retries'] > 1: #0 or 1?
 							runningJob['nextRunTime'] = time.time() + (runningJob['retry_interval'] * 60)
 							runningJob['retries'] = runningJob['retries'] - 1
 							runningJob['reps'] = runningJob['originalRepeats']
@@ -190,5 +198,11 @@ class Scheduler(Plugin):
 
 	@mainthread
 	def runJob(self, jobData):
-		#TODO, and callback-method on success
+		#TODO, correct method, statevalue too, possible to send to 433 and callback-method on success
 		print "IS RUNNING A JOB"
+		device = self.deviceManager.device(jobData['client_device_id'])
+		status, statevalue = device.state()
+		if status == 1:
+			device.command('turnoff')
+		else:
+			device.command('turnon')
