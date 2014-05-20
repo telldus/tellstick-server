@@ -1,0 +1,11 @@
+[Unit]
+Description=Telldus Standalone Service
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/tellstick-znet.py
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
