@@ -3,6 +3,7 @@
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
 from base import Settings, Plugin, implements
+import time
 
 class DeviceManager(Plugin):
 	implements(ITelldusLiveObserver)
