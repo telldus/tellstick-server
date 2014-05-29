@@ -7,11 +7,14 @@ class ServerList():
 
 	def __init__(self):
 		self.list = []
-		self.retrieveServerList()
 
 	def popServer(self):
 		if (self.list == []):
-			self.retrieveServerList()
+			try:
+				self.retrieveServerList()
+			except Exception as e:
+				print "Could not retrieve server list:", e
+				return False
 
 		if (self.list == []):
 			return False
