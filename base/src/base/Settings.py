@@ -7,17 +7,20 @@ import ConfigParser
 
 
 class Settings(object):
+	_config = None
+
 	def __init__(self, section):
 		super(Settings,self).__init__()
 		self.section = section
 
-		self.configPath = os.environ['HOME'] + '/.config/Telldus'
-		if not os.path.exists(self.configPath):
-			os.makedirs(self.configPath)
-		self.configFilename = 'Telldus.conf'
-		self.config = ConfigObj(self.configPath + '/' + self.configFilename)
-		if section not in self.config:
-			self.config[section] = {}
+		if Settings._config is None:
+			self.configPath = os.environ['HOME'] + '/.config/Telldus'
+			if not os.path.exists(self.configPath):
+				os.makedirs(self.configPath)
+			self.configFilename = 'Telldus.conf'
+			Settings._config = ConfigObj(self.configPath + '/' + self.configFilename)
+		if section not in Settings._config:
+			Settings._config[section] = {}
 
 	def get(self, name, default):
 		v = self[name]
@@ -31,7 +34,7 @@ class Settings(object):
 
 	def __getitem__(self, name):
 		try:
-			value = self.config[self.section][name]
+			value = Settings._config[self.section][name]
 		except:
 			return None
 		return value
@@ -39,5 +42,5 @@ class Settings(object):
 	def __setitem__(self, name, value):
 		if type(value) is dict or type(value) is list:
 			value = json.dumps(value)
-		self.config[self.section][name] = value
-		self.config.write()
+		Settings._config[self.section][name] = value
+		Settings._config.write()
