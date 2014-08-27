@@ -17,6 +17,8 @@ class UpgradeManager(object):
 		self._dist = None
 		self._content = ''
 		self._requireRestart = False
+
+	def check(self):
 		conn = httplib.HTTPConnection("api.telldus.net:80")
 		conn.request('GET', "/client/versions")
 		response = conn.getresponse()
@@ -135,3 +137,7 @@ class UpgradeManager(object):
 
 if __name__ == '__main__':
 	um = UpgradeManager()
+	while True:
+		um.check()
+		print "Sleep for one day"
+		time.sleep(60*60*24)
