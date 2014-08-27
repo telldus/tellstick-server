@@ -1,0 +1,11 @@
+[Unit]
+Description=Telldus Firmware upgrade daemon
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/tellstick-upgrade.py
+Type=simple
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
