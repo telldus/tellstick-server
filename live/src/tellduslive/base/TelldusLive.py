@@ -145,6 +145,10 @@ class TelldusLive(Plugin):
 			return fn
 		return call
 
+	def __firmwareVersion(self):
+		with open('/etc/builddate') as f:
+			return f.readline().strip()
+
 	def __sendRegisterMessage(self):
 		print("Send register")
 		uuid = self.s['uuid']
@@ -156,7 +160,7 @@ class TelldusLive(Plugin):
 		})
 		msg.append({
 			'protocol': 2,
-			'version': '1',
+			'version': self.__firmwareVersion(),
 			'os': 'linux',
 			'os-version': 'telldus'
 		})
