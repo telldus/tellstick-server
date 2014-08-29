@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import hashlib, httplib, os, time
-import urllib2
+import platform, urllib2
 import xml.parsers.expat
 
 PRODUCT = 'tellstick-znet'
@@ -51,11 +51,16 @@ class UpgradeManager(object):
 		if el == 'firmware' and self.doUpgrade(attrs, self._content, 'core-image-tellstick-beagleboard.ubi'):
 			self._requireRestart = True
 			return
+		if el == 'kernel' and self.doUpgrade(attrs, self._content, 'uImage'):
+			self._requireRestart = True
+			return
 
 	def fetchVersion(self, imageType):
 		if imageType == 'firmware':
 			with open('/etc/builddate') as f:
 				return f.readline().strip()
+		if imageType == 'kernel':
+			return platform.release()
 		return None
 
 	def distribution(self):
