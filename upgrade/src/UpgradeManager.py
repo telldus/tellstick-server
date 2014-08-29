@@ -139,13 +139,20 @@ class UpgradeManager(object):
 			self._product = None
 		if name == 'dist':
 			self._dist = None
-		if name == 'firmware':
+		if name in ['firmware', 'kernel']:
 			self.checkForUpgrade(el, attrs)
 		self._content = ''
 
 if __name__ == '__main__':
 	um = UpgradeManager()
 	while True:
-		um.check()
-		print "Sleep for one day"
-		time.sleep(60*60*24)
+		try:
+			um.check()
+			print "Sleep for one day"
+			time.sleep(60*60*24)
+		except KeyboardInterrupt:
+			print "Exit"
+			break
+		except:
+			print "Could not fetch. Sleep one minute and try again"
+			time.sleep(60)
