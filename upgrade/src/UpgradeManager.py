@@ -7,7 +7,6 @@ import xml.parsers.expat
 
 PRODUCT = 'tellstick-znet'
 HW = '1'
-DIST = 'stable'
 TARGET_DIR = '/var/firmware'
 
 class UpgradeManager(object):
@@ -40,7 +39,7 @@ class UpgradeManager(object):
 			return
 		if 'name' not in self._dist or 'version' not in attrs:
 			return
-		if self._dist['name'] != DIST:
+		if self._dist['name'] != self.distribution():
 			return
 		version = self.fetchVersion(el)
 		if version is None:
@@ -58,6 +57,10 @@ class UpgradeManager(object):
 			with open('/etc/builddate') as f:
 				return f.readline().strip()
 		return None
+
+	def distribution(self):
+		with open('/etc/distribution') as f:
+			return f.readline().strip()
 
 	def doUpgrade(self, attrs, url, targetFilename):
 		if 'size' not in attrs or 'sha1' not in attrs:
