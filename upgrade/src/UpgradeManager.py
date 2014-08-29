@@ -48,7 +48,7 @@ class UpgradeManager(object):
 			print el, "up to date"
 			return
 		print "Do upgrade", el
-		if el == 'firmware' and self.doUpgrade(attrs, self._content, 'core-image-tellstick-beagleboard.ubi'):
+		if el == 'firmware' and self.doUpgrade(attrs, self._content, 'core-image-tellstick-znet.img'):
 			self._requireRestart = True
 			return
 		if el == 'kernel' and self.doUpgrade(attrs, self._content, 'uImage'):
