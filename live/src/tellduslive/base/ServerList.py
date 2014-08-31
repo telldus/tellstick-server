@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import httplib
+import fcntl, socket, struct
 import xml.parsers.expat
 
 class ServerList():
@@ -21,10 +22,8 @@ class ServerList():
 
 		return self.list.pop(0)
 
-
 	def retrieveServerList(self):
-		#conn = httplib.HTTPConnection("api.telldus.com:80")
-		conn = httplib.HTTPConnection("api.telldus.net:80")
+		conn = httplib.HTTPConnection("api.telldus.com:80")
 		conn.request('GET', "/server/assign?protocolVersion=2")
 		response = conn.getresponse()
 
