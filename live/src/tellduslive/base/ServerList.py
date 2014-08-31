@@ -24,7 +24,7 @@ class ServerList():
 
 	def retrieveServerList(self):
 		conn = httplib.HTTPConnection("api.telldus.com:80")
-		conn.request('GET', "/server/assign?protocolVersion=2")
+		conn.request('GET', "/server/assign?protocolVersion=2&mac=%s" % ServerList.getMacAddr('eth0'))
 		response = conn.getresponse()
 
 		p = xml.parsers.expat.ParserCreate()
@@ -35,3 +35,9 @@ class ServerList():
 	def _startElement(self, name, attrs):
 		if (name == 'server'):
 			self.list.append(attrs)
+
+	@staticmethod
+	def getMacAddr(ifname):
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+		return ''.join(['%02X' % ord(char) for char in info[18:24]])
