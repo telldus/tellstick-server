@@ -151,11 +151,11 @@ class TelldusLive(Plugin):
 
 	def __sendRegisterMessage(self):
 		print("Send register")
-		uuid = self.s['uuid']
 		msg = LiveMessage('Register')
 		msg.append({
 			'key': self.conn.publicKey,
-			'uuid': uuid,
+			'mac': TelldusLive.getMacAddr('eth0'),
+			'secret': TelldusLive.getSecret(),
 			'hash': 'sha1'
 		})
 		msg.append({
@@ -165,3 +165,20 @@ class TelldusLive(Plugin):
 			'os-version': 'telldus'
 		})
 		self.conn.send(msg)
+
+	@staticmethod
+	def getMacAddr(ifname):
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+		return ''.join(['%02X' % ord(char) for char in info[18:24]])
+
+	@staticmethod
+	def getSecret():
+		with open('/etc/board/uEnv.txt') as f:
+			for line in f.readlines():
+				args = line.strip().split('=')
+				if len(args) < 2:
+					continue
+				if args[0] == 'secret':
+					return args[1]
+		return ''
