@@ -40,6 +40,7 @@ class DeviceManager(Plugin):
 				'methods': device.methods(),
 				'state': 2,
 				'stateValue': '',
+				'transport': device.typeString()
 			}
 			msg = LiveMessage("DeviceAdded")
 			msg.append(deviceDict)
@@ -156,6 +157,7 @@ class DeviceManager(Plugin):
 				'methods': d.methods(),
 				'state': 2,
 				'stateValue': '',
+				'transport': d.typeString()
 			}
 			l.append(device)
 		msg = LiveMessage("DevicesReport")
