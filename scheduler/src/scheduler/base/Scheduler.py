@@ -66,7 +66,7 @@ class Scheduler(Plugin):
 			#this weekday is included in the ones that this schedule should be run on
 			runTimeToday = self.calculateRunTimeForDay(todayDate, job)
 			if runTimeToday > time.time():
-				job['nextRunTime'] = runTimeToday + random.randint(0, job['random_interval'])
+				job['nextRunTime'] = runTimeToday + random.randint(0, job['random_interval']) * 60
 				return
 			elif len(weekdays) == 1:
 				#this job should only run on this weekday, since it has already passed today, run it next week
@@ -86,8 +86,8 @@ class Scheduler(Plugin):
 				print "Error" #TODO
 				return
 
-		job['nextRunTime'] = self.calculateRunTimeForDay(runDate, job) + random.randint(0, job['random_interval'])
-
+		job['nextRunTime'] = self.calculateRunTimeForDay(runDate, job) + random.randint(0, job['random_interval']) * 60
+		
 	def calculateNextWeekday(self, d, weekday):
 		days_ahead = weekday - d.weekday()
 		if days_ahead <= 0: # Target day already happened this week
