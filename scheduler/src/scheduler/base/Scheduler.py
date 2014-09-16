@@ -36,8 +36,9 @@ class Scheduler(Plugin):
 		for job in jobs:
 			self.calculateNextRunTime(job)
 
-		jobs.sort(key=lambda job: job['id'])
-		self.jobs = jobs
+		jobs.sort(key=lambda job: job['nextRunTime'])
+		with self.jobsLock:
+			self.jobs = jobs
 
 	def calculateNextRunTime(self, job):
 		"""Calculates nextRunTime for a job, depending on time, weekday and timezone."""
