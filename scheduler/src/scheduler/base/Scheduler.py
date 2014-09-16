@@ -53,6 +53,7 @@ class Scheduler(Plugin):
 		runDate = None
 
 		for weekday in weekdays:
+			weekday = weekday - 1 #weekdays in python: 0-6, weekdays in our database: 1-7
 			if weekday == today:
 				runToday = True
 			elif today < weekday and (nextWeekdayToRun is None or nextWeekdayToRun > weekday):
