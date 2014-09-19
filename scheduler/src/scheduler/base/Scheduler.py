@@ -266,7 +266,12 @@ class Scheduler(Plugin):
 
 	def successfulJobRun(self, jobId):
 		"""Called when job run was considered successful (acked by Z-Wave or sent away from 433), repeats should still be run"""
-		self.runningJobs['retries'] = 0
+		#save timestamp for when this was executed, to avoid rerun within maxRunTime on restart, TODO is this too much writing?
+		executedJobs = self.s.get('executedJobs', {})
+		executedJobs[str(jobId)] = time.time() #doesn't work well with int type, for some reason
+		self.s['executedJobs'] = executedJobs
+		executedJobsTest = self.s.get('executedJobs', {})
+		self.runningJobs[jobId]['retries'] = 0
 
 	@mainthread
 	def runJob(self, jobData):
