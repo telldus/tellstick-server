@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 
 from Device import Device
-from DeviceManager import DeviceManager
+from DeviceManager import DeviceManager, IDeviceChange

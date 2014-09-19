@@ -2,11 +2,17 @@
 
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
-from base import Settings, Plugin, implements
+from base import Settings, ObserverCollection, IInterface, Plugin, implements
 import time
+
+class IDeviceChange(IInterface):
+	def stateChanged(device, state, statevalue):
+		"""Called when the state of a device changed"""
 
 class DeviceManager(Plugin):
 	implements(ITelldusLiveObserver)
+
+	observers = ObserverCollection(IDeviceChange)
 
 	def __init__(self):
 		self.devices = []
@@ -95,6 +101,7 @@ class DeviceManager(Plugin):
 		if device.isDevice() == False:
 			return
 		(state, stateValue) = device.state()
+		self.observers.stateChanged(device, state, stateValue)
 		msg = LiveMessage("DeviceEvent")
 		msg.append(device.id())
 		msg.append(state)
