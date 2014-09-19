@@ -20,7 +20,7 @@ class Device(object):
 	def id(self):
 		return self._id
 
-	def command(self, action):
+	def command(self, action, success=None, failure=None, callbackArgs=[]):
 		pass
 
 	def load(self, settings):
