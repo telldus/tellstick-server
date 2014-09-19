@@ -275,11 +275,17 @@ class Scheduler(Plugin):
 
 	@mainthread
 	def runJob(self, jobData):
-		#TODO, correct method, statevalue too, possible to send to 433 and callback-method on success
-		print "IS RUNNING A JOB"
+		#TODO statevalue too, possible to send to 433 with callback-method on success
 		device = self.deviceManager.device(jobData['client_device_id'])
-		status, statevalue = device.state()
-		if status == 1:
-			device.command('turnoff')
+		if not device:
+			print "Missing device: " + str(jobData['client_device_id'])
+			return
+		method = jobData['method']
+		
+		if 'zwave' in jobData['transport']:
+			#TODO dimmer and whatnot, is there a general conversion-thingy?
+			action = 'turnoff' if method == 2 else 'turnon'
+			device.command(action, success=self.successfulJobRun, callbackArgs=[jobData['id']])
 		else:
-			device.command('turnon')
+			pass
+			#TODO 433
