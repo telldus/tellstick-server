@@ -7,8 +7,8 @@ from base import Application, mainthread, Settings, Plugin, implements
 from calendar import timegm
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
-from astral import Location
 from pytz import timezone
+from SunCalculator import SunCalculator
 from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 
@@ -102,12 +102,14 @@ class Scheduler(Plugin):
 			runDate = runDate + timedelta(hours=job['hour'], minutes=job['minute']) #won't random here, since this time may also be used to see if it's passed today or not
 			return timegm(tt.localize(runDate).utctimetuple()) #returning a timestamp, corrected for timezone settings
 		elif job['type'] == 'sunrise':
-			#using astral, OK? At least smaller than PyEphem
-			astralLocation = Location(("Client", "Local", float(self.latitude), float(self.longitude), self.timezone))
-			runDate = astralLocation.sunrise(runDate)
-			return timegm(runDate.utctimetuple()) + job['offset'] * 60 #returning a timestamp, corrected for timezone settings
+			sunCalc = SunCalculator()
+			riseSet = sunCalc.nextRiseSet(timegm(runDate.utctimetuple()), float(self.latitude), float(self.longitude))
+			return riseSet['sunrise'] + job['offset'] * 60	
 		elif job['type'] == 'sunset':
-			return timegm(Location(("Client", "Local", float(self.latitude), float(self.longitude), self.timezone)).sunset(runDate).utctimetuple()) + job['offset'] * 60
+			sunCalc = SunCalculator()
+			riseSet = sunCalc.nextRiseSet(timegm(runDate.utctimetuple()), float(self.latitude), float(self.longitude))
+			return riseSet['sunset'] + job['offset'] * 60
+
 
 	def fetchLocalJobs(self):
 		"""Fetch local jobs from settings"""
