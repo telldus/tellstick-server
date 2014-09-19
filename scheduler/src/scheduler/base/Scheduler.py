@@ -168,6 +168,15 @@ class Scheduler(Plugin):
 	def liveRegistered(self, msg):
 		self.requestJobsFromServer()
 
+	@TelldusLive.handler('scheduler-remove')
+	def removeOneJob(self, msg):
+		if len(msg.argument(0).toNative()) != 0:
+			scheduleDict = msg.argument(0).toNative()
+			jobId = scheduleDict['id']
+			self.deleteJob(jobId)
+			self.s['jobs'] = self.jobs #save to storage
+			self.live.pushToWeb('scheduler', 'removed', job['id'])
+
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
 		"""Receive list of jobs from server, saves to settings and calculate nextRunTimes"""
