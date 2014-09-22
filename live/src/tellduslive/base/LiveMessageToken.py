@@ -16,6 +16,10 @@ class LiveMessageToken(object):
 			self.valueType = self.TYPE_INT
 			self.intVal = value
 
+		elif (type(value) is bool):
+			self.valueType = self.TYPE_INT
+			self.intVal = int(value)
+
 		elif (type(value) is str or type(value) is unicode):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = value
