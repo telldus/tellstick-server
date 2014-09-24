@@ -238,8 +238,8 @@ class Scheduler(Plugin):
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():
-						isZWaveDevice = True if 'zwave' in runningJob['transport'] else False
-						if not isZWaveDevice:
+						#TODO this is really a 433-thing, so check if 433 is in transport instead
+						if 'e433' in runningJob['transport']:
 							#repeats for 433-devices only, TODO test
 							runningJob['reps'] = int(runningJob['reps']) - 1
 							if runningJob['reps'] > 0:
