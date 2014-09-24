@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 
+from Device import CachedDevice
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
 from base import Settings, ObserverCollection, IInterface, Plugin, implements
 import time
 
 class IDeviceChange(IInterface):
+	def deviceAdded(device):
+		"""This method is called when a device is added"""
+	def deviceConfirmed(device):
+		"""This method is called when a device is confirmed on the network, not only loaded from storage (not applicable to all device types)"""
+	def deviceRemoved(deviceId):
+		"""This method is called when a device is removed"""
 	def stateChanged(device, state, statevalue):
 		"""Called when the state of a device changed"""
 
@@ -23,34 +30,40 @@ class DeviceManager(Plugin):
 		self.__load()
 
 	def addDevice(self, device):
+		cachedDevice = None
+		for i, delDevice in enumerate(self.devices):
+			# Delete the cached device from loaded devices, since it is replaced by a confirmed/specialised one
+			if delDevice.localId() == device.localId() and device.typeString() == delDevice.typeString() and not delDevice.confirmed():
+				cachedDevice = delDevice
+				del self.devices[i]
+				break
 		self.devices.append(device)
 		device.setManager(self)
-		# Find out if this one was saved before
-		found = False
-		for i, dev in enumerate(self.store):
-			if 'type' not in dev or 'localId' not in dev:
-				continue
-			if dev['type'] == device.typeString() and dev['localId'] == device.localId():
-				device.load(dev)
-				del self.store[i]
-				found = True
-				break
-		if not found:
+
+		if not cachedDevice:  # New device, not stored in local cache
 			self.nextId = self.nextId + 1
 			device.setId(self.nextId)
+		else:  # Transfer parameters from the loaded one
+			device.loadCached(cachedDevice)
 		self.save()
-		if self.live.registered:
-			deviceDict = {
-				'id': device.id(),
-				'name': device.name(),
-				'methods': device.methods(),
-				'state': 2,
-				'stateValue': '',
-				'transport': device.typeString()
-			}
-			msg = LiveMessage("DeviceAdded")
-			msg.append(deviceDict)
-			self.live.send(msg)
+		
+		if not cachedDevice:
+			self.observers.deviceAdded(device)
+			if self.live.registered:
+				deviceDict = {
+					'id': device.id(),
+					'name': device.name(),
+					'methods': device.methods(),
+					'state': 2,
+					'stateValue': '',
+					'transport': device.typeString()
+				}
+				msg = LiveMessage("DeviceAdded")
+				msg.append(deviceDict)
+				self.live.send(msg)
+		else:
+			# Previously cached device is now confirmed, TODO notify Live! about this too?
+			self.observers.deviceConfirmed(device)
 
 	def device(self, deviceId):
 		for d in self.devices:
@@ -58,11 +71,16 @@ class DeviceManager(Plugin):
 				return d
 		return None
 
+	def finishedLoading(self, type):
+		""" Finished loading all devices of this type. If there are any unconfirmed, these should be deleted """
+		for device in self.devices:
+			if device.typeString() == type and not device.confirmed():
+				self.removeDevice(device.id())
+
 	def removeDevice(self, deviceId):
-		print("Trying to remove device", deviceId)
 		for i, device in enumerate(self.devices):
 			if device.id() == deviceId:
-				print("Found it")
+				self.observers.deviceRemoved(deviceId)
 				del self.devices[i]
 				break
 		self.save()
@@ -133,12 +151,17 @@ class DeviceManager(Plugin):
 				self.__sendDeviceReport()
 				break
 
-	def liveRegistered(self, params):
+	def liveRegistered(self, msg):
 		self.registered = True
 		self.__sendDeviceReport()
+		self.__sendSensorReport()
 
 	def __load(self):
 		self.store = self.s.get('devices', [])
+		for dev in self.store:
+			if 'type' not in dev or 'localId' not in dev:
+				continue  # This should not be possible
+			self.devices.append(CachedDevice(dev))
 
 	def save(self):
 		data = []
@@ -149,6 +172,7 @@ class DeviceManager(Plugin):
 				"type": d.typeString(),
 				"name": d.name(),
 				"params": d.params(),
+				"method": d.methods()
 			})
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId

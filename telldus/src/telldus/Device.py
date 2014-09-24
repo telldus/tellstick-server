@@ -16,12 +16,21 @@ class Device(object):
 		self._state = Device.TURNOFF
 		self._stateValue = ''
 		self._sensorValues = {}
+		self._confirmed = True
 
 	def id(self):
 		return self._id
 
 	def command(self, action, success=None, failure=None, callbackArgs=[]):
 		pass
+
+	def confirmed(self):
+		return self._confirmed
+
+	def loadCached(self, olddevice):
+		self._id = olddevice._id
+		self._name = olddevice._name
+		self.setParams(olddevice.params())
 
 	def load(self, settings):
 		if 'id' in settings:
@@ -88,3 +97,28 @@ class Device(object):
 
 	def typeString(self):
 		return ''
+
+class CachedDevice(Device):
+	def __init__(self, settings):
+		super(CachedDevice, self).__init__()
+		self.paramsStorage = {}
+		self.load(settings)
+		self._confirmed = False
+		self._localId = 0
+		self.mimikType = ''
+		if 'localId' in settings:
+			self._localId = settings['localId']
+		if 'type' in settings:
+			self.mimikType = settings['type']
+
+	def localId(self):
+		return self._localId
+
+	def params(self):
+		return self.paramsStorage
+
+	def setParams(self, params):
+		self.paramsStorage = params
+
+	def typeString(self):
+		return self.mimikType

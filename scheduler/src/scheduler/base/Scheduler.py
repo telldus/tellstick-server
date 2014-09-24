@@ -9,11 +9,11 @@ from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from pytz import timezone
 from SunCalculator import SunCalculator
-from telldus import DeviceManager, Device
+from telldus import DeviceManager, Device, IDeviceChange
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 
 class Scheduler(Plugin):
-	implements(ITelldusLiveObserver)
+	implements(ITelldusLiveObserver, IDeviceChange)
 
 	def __init__(self):
 		self.running = False
@@ -153,6 +153,14 @@ class Scheduler(Plugin):
 				del executedJobs[str(jobId)]
 				self.s['executedJobs'] = executedJobs
 
+	def deviceRemoved(self, deviceId):
+		jobsToDelete = []
+		for job in self.jobs:
+			if job['id'] == deviceId:
+				jobsToDelete.append[job['id']]
+		for jobId in jobsToDelete:
+			self.deleteJob(jobId)
+
 	def fetchLocalJobs(self):
 		"""Fetch local jobs from settings"""
 		try:
@@ -215,7 +223,6 @@ class Scheduler(Plugin):
 
 	def run(self):
 		self.running = True
-		time.sleep(10) #TODO have to have devices initiated before starting this (since we load schedules that should have been run during off)
 		while self.running:
 			jobCopy = None
 			with self.jobsLock:
@@ -259,7 +266,7 @@ class Scheduler(Plugin):
 			for jobToRun in jobsToRun:
 				self.runJob(jobToRun)
 
-			time.sleep(5) # TODO decide on a time
+			time.sleep(5) # TODO decide on a time (how often should we check for jobs to run, what resolution?)
 
 	def stop(self):
 		self.running = False
