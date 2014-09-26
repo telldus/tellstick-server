@@ -111,8 +111,8 @@ class CachedDevice(Device):
 			self._localId = settings['localId']
 		if 'type' in settings:
 			self.mimikType = settings['type']
-		if 'method' in settings:
-			self.storedmethods = settings['method']
+		if 'methods' in settings:
+			self.storedmethods = settings['methods']
 
 	def localId(self):
 		return self._localId

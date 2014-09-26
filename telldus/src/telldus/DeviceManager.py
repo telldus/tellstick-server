@@ -172,7 +172,7 @@ class DeviceManager(Plugin):
 				"type": d.typeString(),
 				"name": d.name(),
 				"params": d.params(),
-				"method": d.methods()
+				"methods": d.methods()
 			})
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId
