@@ -106,13 +106,19 @@ class CachedDevice(Device):
 		self._confirmed = False
 		self._localId = 0
 		self.mimikType = ''
+		self.storedmethods = 0
 		if 'localId' in settings:
 			self._localId = settings['localId']
 		if 'type' in settings:
 			self.mimikType = settings['type']
+		if 'method' in settings:
+			self.storedmethods = settings['method']
 
 	def localId(self):
 		return self._localId
+
+	def methods(self):
+		return self.storedmethods
 
 	def params(self):
 		return self.paramsStorage
