@@ -4,6 +4,7 @@
 class Device(object):
 	TURNON  = 1
 	TURNOFF = 2
+	DIM = 16
 
 	TEMPERATURE = 1
 	HUMIDITY = 2
@@ -21,7 +22,7 @@ class Device(object):
 	def id(self):
 		return self._id
 
-	def command(self, action, success=None, failure=None, callbackArgs=[]):
+	def command(self, action, value=None, success=None, failure=None, callbackArgs=[]):
 		pass
 
 	def confirmed(self):

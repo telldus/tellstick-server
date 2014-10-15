@@ -129,13 +129,14 @@ class DeviceManager(Plugin):
 
 	@TelldusLive.handler('command')
 	def __handleCommand(self, msg):
-		args = msg.argument(0).dictVal
-		action = args['action'].stringVal
-		id = args['id'].intVal
+		args = msg.argument(0).toNative()
+		action = args['action']
+		value = args['value'] if 'value' in args else None
+		id = args['id']
 		for dev in self.devices:
 			if dev.id() != id:
 				continue
-			dev.command(action)
+			dev.command(action, value)
 
 	@TelldusLive.handler('device')
 	def __handleDeviceCommand(self, msg):
