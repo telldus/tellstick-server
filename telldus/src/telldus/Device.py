@@ -31,6 +31,8 @@ class Device(object):
 		self._id = olddevice._id
 		self._name = olddevice._name
 		self.setParams(olddevice.params())
+		(state, stateValue) = olddevice.state()
+		self.setState(state, stateValue)
 
 	def load(self, settings):
 		if 'id' in settings:
@@ -39,6 +41,8 @@ class Device(object):
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
+		if 'state' in settings and 'stateValue' in settings:
+			self.setState(settings['state'], settings['stateValue'])
 
 	def localId(self):
 		return 0

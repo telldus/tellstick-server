@@ -50,12 +50,13 @@ class DeviceManager(Plugin):
 		if not cachedDevice:
 			self.observers.deviceAdded(device)
 			if self.live.registered:
+				(state, stateValue) = device.state()
 				deviceDict = {
 					'id': device.id(),
 					'name': device.name(),
 					'methods': device.methods(),
-					'state': 2,
-					'stateValue': '',
+					'state': state,
+					'stateValue': stateValue,
 					'transport': device.typeString()
 				}
 				msg = LiveMessage("DeviceAdded")
@@ -166,13 +167,16 @@ class DeviceManager(Plugin):
 	def save(self):
 		data = []
 		for d in self.devices:
+			(state, stateValue) = d.state()
 			data.append({
 				"id": d.id(),
 				"localId": d.localId(),
 				"type": d.typeString(),
 				"name": d.name(),
 				"params": d.params(),
-				"methods": d.methods()
+				"methods": d.methods(),
+				"state": state,
+				"stateValue": stateValue
 			})
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId
@@ -182,12 +186,13 @@ class DeviceManager(Plugin):
 			return
 		l = []
 		for d in self.devices:
+			(state, stateValue) = d.state()
 			device = {
 				'id': d.id(),
 				'name': d.name(),
 				'methods': d.methods(),
-				'state': 2,
-				'stateValue': '',
+				'state': state,
+				'stateValue': stateValue,
 				'transport': d.typeString()
 			}
 			l.append(device)
