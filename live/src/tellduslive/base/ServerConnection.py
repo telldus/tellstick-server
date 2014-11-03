@@ -91,4 +91,12 @@ class ServerConnection(object):
 		return ServerConnection.MSG_RECEIVED
 
 	def send(self, msg):
-		self.socket.write(msg.toSignedMessage('sha1', self.privateKey))
+		if self.state != ServerConnection.CONNECTED and self.state != ServerConnection.READY:
+			return
+		signedMessage = msg.toSignedMessage('sha1', self.privateKey)
+		try:
+			self.socket.write(signedMessage)
+		except Exception as e:
+			print('ERROR, could not write to socket. Close and reconnect')
+			print(e)
+			self.close()
