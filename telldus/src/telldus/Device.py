@@ -8,6 +8,7 @@ class Device(object):
 
 	TEMPERATURE = 1
 	HUMIDITY = 2
+	WATT = 256
 
 	def __init__(self):
 		super(Device,self).__init__()
@@ -84,7 +85,7 @@ class Device(object):
 		pass
 
 	def setSensorValue(self, valueType, value):
-		if valueType != Device.TEMPERATURE and valueType != Device.HUMIDITY:
+		if valueType != Device.TEMPERATURE and valueType != Device.HUMIDITY and valueType != Device.WATT:
 			# TODO(micke): Ignoring for now
 			return
 		self._sensorValues[valueType] = value
