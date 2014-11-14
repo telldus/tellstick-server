@@ -6,6 +6,7 @@ class Device(object):
 	TURNOFF = 2
 	DIM = 16
 
+	UNKNOWN = 0
 	TEMPERATURE = 1
 	HUMIDITY = 2
 	WATT = 256
@@ -86,9 +87,6 @@ class Device(object):
 		pass
 
 	def setSensorValue(self, valueType, value, scale):
-		if valueType not in [Device.TEMPERATURE, Device.HUMIDITY, Device.WATT, Device.LUMINANCE]:
-			# TODO(micke): Ignoring for now
-			return
 		if valueType not in self._sensorValues:
 			self._sensorValues[valueType] = []
 		found = False
