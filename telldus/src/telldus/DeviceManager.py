@@ -106,11 +106,14 @@ class DeviceManager(Plugin):
 		values = device.sensorValues()
 		valueList = []
 		for valueType in values:
-			valueList.append({
-				'type': valueType,
-				'lastUp': str(int(time.time())),
-				'value': str(values[valueType])
-			})
+			for value in values[valueType]:
+				print value
+				valueList.append({
+					'type': valueType,
+					'lastUp': str(int(time.time())),
+					'value': str(value['value']),
+					'scale': value['scale']
+				})
 		msg.append(valueList)
 		self.live.send(msg)
 

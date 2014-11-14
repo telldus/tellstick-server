@@ -85,11 +85,20 @@ class Device(object):
 	def setParams(self, params):
 		pass
 
-	def setSensorValue(self, valueType, value):
+	def setSensorValue(self, valueType, value, scale):
 		if valueType not in [Device.TEMPERATURE, Device.HUMIDITY, Device.WATT, Device.LUMINANCE]:
 			# TODO(micke): Ignoring for now
 			return
-		self._sensorValues[valueType] = value
+		if valueType not in self._sensorValues:
+			self._sensorValues[valueType] = []
+		found = False
+		for sensorType in self._sensorValues[valueType]:
+			if sensorType['scale'] == scale:
+				sensorType['value'] = value
+				found = True
+				break
+		if not found:
+			self._sensorValues[valueType].append({'value': value, 'scale': scale})
 		if self._manager:
 			self._manager.sensorValueUpdated(self)
 
