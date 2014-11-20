@@ -153,6 +153,7 @@ if __name__ == '__main__':
 		except KeyboardInterrupt:
 			print "Exit"
 			break
-		except:
+		except Exception as e:
 			print "Could not fetch. Sleep one minute and try again"
+			print str(e)
 			time.sleep(60)
