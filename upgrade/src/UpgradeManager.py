@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import hashlib, httplib, os, time
+import hashlib, httplib, random, os, time
 import platform, urllib2
 import xml.parsers.expat
+from datetime import datetime, timedelta
 
 PRODUCT = 'tellstick-znet'
 HW = '1'
@@ -29,8 +30,8 @@ class UpgradeManager(object):
 		p.CharacterDataHandler = self._characterDataHandler
 		p.Parse(response.read())
 		if self._requireRestart:
-			print "Restart"
-			os.system("/sbin/reboot")
+			return True
+		return False
 
 	def checkForUpgrade(self, el, attrs):
 		if 'name' not in self._product or 'hw' not in self._product:
@@ -99,6 +100,15 @@ class UpgradeManager(object):
 		os.rename(downloadFilename, TARGET_DIR + '/' + targetFilename)
 		return True
 
+	def rebootLater(self):
+		starttime = datetime.utcnow().replace(hour=0,minute=0,second=0,microsecond=0)
+		if datetime.utcnow() > (starttime + timedelta(hours=4)):
+			starttime = starttime + timedelta(days=1)
+		reboottime = starttime + timedelta(minutes=random.randint(0,240))
+		while datetime.utcnow() < reboottime:
+			time.sleep(300)
+		os.system("/sbin/reboot")
+
 	def verifyFile(self, filename, size, checksum):
 		if os.stat(filename).st_size != size:
 			print "Downloaded filesize doesn't match recorded size"
@@ -147,7 +157,9 @@ if __name__ == '__main__':
 	um = UpgradeManager()
 	while True:
 		try:
-			um.check()
+			if um.check():
+				print "Reboot tonight"
+				um.rebootLater()
 			print "Sleep for one day"
 			time.sleep(60*60*24)
 		except KeyboardInterrupt:
