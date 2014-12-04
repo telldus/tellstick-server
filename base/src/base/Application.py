@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import pkg_resources
 import threading
 import traceback
@@ -59,8 +60,8 @@ class Application(object):
 				moduleClass = entry.load()
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				print("Could not load", entry)
-				print(e)
+				logging.error("Could not load %s", str(entry))
+				logging.error(str(e))
 				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
@@ -71,8 +72,8 @@ class Application(object):
 					m = moduleClass()
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				print("Could not load", entry)
-				print(e)
+				logging.error("Could not load %s", str(entry))
+				logging.error(str(e))
 				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		while 1:
 			with self.lock:
@@ -85,7 +86,7 @@ class Application(object):
 				task(*args, **kwargs)
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				print(e)
+				logging.error(e)
 				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
 			fn()
@@ -115,10 +116,10 @@ class Application(object):
 
 	def printBacktrace(self, bt):
 		for f in bt:
-			print(f)
+			logging.error(str(f))
 
 	def signal(self, signum, frame):
-		print("Signal %d caught" % signum)
+		logging.info("Signal %d caught" % signum)
 		self.quit()
 
 	def __nextTask(self):
