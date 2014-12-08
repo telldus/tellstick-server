@@ -113,6 +113,10 @@ class Device(object):
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
+	def setStateFailed(self, state, stateValue = '', reason = 0, origin=None):
+		if self._manager:
+			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
+
 	def state(self):
 		return (self._state, self._stateValue)
 

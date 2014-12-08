@@ -138,6 +138,27 @@ class DeviceManager(Plugin):
 		msg.append(extras)
 		self.live.send(msg)
 
+	def stateUpdatedFail(self, device, state, stateValue, reason, origin):
+		if not self.live.registered:
+			return
+		if device.isDevice() == False:
+			return
+		extras = {
+			'reason': reason,
+		}
+		if origin:
+			extras['origin'] = origin
+		else:
+			extras['origin'] = 'Unknown'
+		(state, stateValue) = device.state()
+		self.observers.stateChanged(device, state, stateValue)
+		msg = LiveMessage('DeviceFailEvent')
+		msg.append(device.id())
+		msg.append(state)
+		msg.append(stateValue)
+		msg.append(extras)
+		self.live.send(msg)
+
 	@TelldusLive.handler('command')
 	def __handleCommand(self, msg):
 		args = msg.argument(0).toNative()
@@ -164,6 +185,8 @@ class DeviceManager(Plugin):
 					'reason': reason,
 				})
 				self.live.send(msg)
+				# Abort the DeviceEvent this triggered
+				raise DeviceAbortException()
 
 		device.command(action, value, success=success, failure=fail)
 
