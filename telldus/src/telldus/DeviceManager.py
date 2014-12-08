@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Device import CachedDevice
+from Device import CachedDevice, DeviceAbortException
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
 from base import Settings, ObserverCollection, IInterface, Plugin, implements
@@ -117,17 +117,25 @@ class DeviceManager(Plugin):
 		msg.append(valueList)
 		self.live.send(msg)
 
-	def stateUpdated(self, device):
+	def stateUpdated(self, device, ackId = None, origin = None):
 		if not self.live.registered:
 			return
 		if device.isDevice() == False:
 			return
+		extras = {}
+		if ackId:
+			extras['ACK'] = ackId
+		if origin:
+			extras['origin'] = origin
+		else:
+			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
 		self.observers.stateChanged(device, state, stateValue)
 		msg = LiveMessage("DeviceEvent")
 		msg.append(device.id())
 		msg.append(state)
 		msg.append(stateValue)
+		msg.append(extras)
 		self.live.send(msg)
 
 	@TelldusLive.handler('command')
@@ -136,10 +144,28 @@ class DeviceManager(Plugin):
 		action = args['action']
 		value = args['value'] if 'value' in args else None
 		id = args['id']
+		device = None
 		for dev in self.devices:
-			if dev.id() != id:
-				continue
-			dev.command(action, value)
+			if dev.id() == id:
+				device = dev
+				break
+
+		def success(state, stateValue):
+			if 'ACK' in args:
+				device.setState(state, stateValue, ack=args['ACK'])
+				# Abort the DeviceEvent this triggered
+				raise DeviceAbortException()
+		def fail(reason):
+			# We failed to set status for some reason, nack the server
+			if 'ACK' in args:
+				msg = LiveMessage('NACK')
+				msg.append({
+					'ackid': args['ACK'],
+					'reason': reason,
+				})
+				self.live.send(msg)
+
+		device.command(action, value, success=success, failure=fail)
 
 	@TelldusLive.handler('device')
 	def __handleDeviceCommand(self, msg):

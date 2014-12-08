@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+class DeviceAbortException(Exception):
+	pass
 
 class Device(object):
 	TURNON  = 1
@@ -11,6 +13,11 @@ class Device(object):
 	HUMIDITY = 2
 	WATT = 256
 	LUMINANCE = 512
+
+	FAILED_STATUS_RETRIES_FAILED = 1
+	FAILED_STATUS_NO_REPLY = 2
+	FAILED_STATUS_TIMEDOUT = 3
+	FAILED_STATUS_NOT_CONFIRMED = 4
 
 	def __init__(self):
 		super(Device,self).__init__()
@@ -25,7 +32,7 @@ class Device(object):
 	def id(self):
 		return self._id
 
-	def command(self, action, value=None, success=None, failure=None, callbackArgs=[]):
+	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
 		pass
 
 	def confirmed(self):
@@ -100,11 +107,11 @@ class Device(object):
 		if self._manager:
 			self._manager.sensorValueUpdated(self)
 
-	def setState(self, state, stateValue = ''):
+	def setState(self, state, stateValue = '', ack=None, origin=None):
 		self._state = state
 		self._stateValue = stateValue
 		if self._manager:
-			self._manager.stateUpdated(self)
+			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
 	def state(self):
 		return (self._state, self._stateValue)
