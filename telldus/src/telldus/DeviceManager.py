@@ -90,6 +90,14 @@ class DeviceManager(Plugin):
 			msg.append({'id': deviceId})
 			self.live.send(msg)
 
+	def retrieveDevices(self, deviceType = None):
+		l = []
+		for d in self.devices:
+			if deviceType is not None and d.typeString() != deviceType:
+				continue
+			l.append(d)
+		return l
+
 	def sensorValueUpdated(self, device):
 		if not self.live.registered:
 			return
