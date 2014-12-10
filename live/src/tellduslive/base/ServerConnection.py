@@ -16,8 +16,11 @@ class ServerConnection(object):
 	def close(self):
 			print("CLOSE")
 			self.state = ServerConnection.CLOSED
-			self.socket.shutdown(socket.SHUT_RDWR)
-			self.socket.close()
+			try:
+				self.socket.shutdown(socket.SHUT_RDWR)
+				self.socket.close()
+			except:
+				pass
 
 	def connect(self, address, port):
 		self.server = (address, port)
