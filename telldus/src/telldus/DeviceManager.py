@@ -106,7 +106,7 @@ class DeviceManager(Plugin):
 		msg = LiveMessage("SensorEvent")
 		sensor = {
 			'name': device.name(),
-			'protocol': 'z-wave',
+			'protocol': device.typeString(),
 			'model': 'n/a',
 			'sensor_id': device.id(),
 		}
@@ -271,7 +271,7 @@ class DeviceManager(Plugin):
 			sensorFrame = []
 			sensor = {
 				'name': d.name(),
-				'protocol': 'z-wave',
+				'protocol': d.typeString(),
 				'model': 'n/a',
 				'sensor_id': d.id(),
 			}
