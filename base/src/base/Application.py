@@ -34,7 +34,7 @@ class Application(object):
 			cls._instance = super(Application, cls).__new__(cls, *args, **kwargs)
 		return cls._instance
 
-	def __init__(self):
+	def __init__(self, run=True):
 		if Application._initialized:
 			return
 		Application._initialized = True
@@ -49,12 +49,24 @@ class Application(object):
 		signal.signal(signal.SIGINT, self.signal)
 		signal.signal(signal.SIGTERM, self.signal)
 		Application._mainThread = threading.currentThread()
-		self.run()
+		if run:
+			self.run()
 
 	def registerShutdown(self, fn):
 		self.shutdown.append(fn)
 
-	def run(self):
+	def run(self, startup=[]):
+		for moduleClass in startup:
+			try:
+				if issubclass(moduleClass, Plugin):
+					m = moduleClass(self.pluginContext)
+				else:
+					m = moduleClass()
+			except Exception as e:
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				logging.error("Could not load %s", str(entry))
+				logging.error(str(e))
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
 			try:
 				moduleClass = entry.load()
