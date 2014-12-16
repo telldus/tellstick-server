@@ -152,8 +152,12 @@ class RF433(Plugin):
 		sensor.updateValues(sensorData)
 
 	def __noVersion(self):
-		logging.warning("Could not get firmware version for RF433")
+		logging.warning("Could not get firmware version for RF433, force upgrade")
+		self.dev.updateFirmware()
 
 	def __version(self, version):
 		self.version = version
 		logging.info("RF433 version: %i", self.version)
+		if version != 12:
+			logging.info("Version %i is to old, update firmware", self.version)
+			self.dev.updateFirmware()
