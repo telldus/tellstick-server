@@ -271,7 +271,7 @@ class Scheduler(Plugin):
 	def stop(self):
 		self.running = False
 
-	def successfulJobRun(self, jobId):
+	def successfulJobRun(self, jobId, state, stateValue):
 		"""Called when job run was considered successful (acked by Z-Wave or sent away from 433), repeats should still be run"""
 		#save timestamp for when this was executed, to avoid rerun within maxRunTime on restart, TODO is this too much writing?
 		executedJobs = self.s.get('executedJobs', {})
@@ -292,7 +292,7 @@ class Scheduler(Plugin):
 		if 'zwave' in jobData['transport']:
 			#TODO dimmer and whatnot, is there a general conversion-thingy?
 			action = 'turnoff' if method == 2 else 'turnon'
-			device.command(action, success=self.successfulJobRun, callbackArgs=[jobData['id']])
+			device.command(action, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
 		else:
 			pass
 			#TODO 433
