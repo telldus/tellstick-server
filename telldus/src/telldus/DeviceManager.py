@@ -49,7 +49,7 @@ class DeviceManager(Plugin):
 		
 		if not cachedDevice:
 			self.observers.deviceAdded(device)
-			if self.live.registered:
+			if self.live.registered and device.isDevice():
 				(state, stateValue) = device.state()
 				deviceDict = {
 					'id': device.id(),
@@ -79,13 +79,15 @@ class DeviceManager(Plugin):
 				self.removeDevice(device.id())
 
 	def removeDevice(self, deviceId):
+		isDevice = True
 		for i, device in enumerate(self.devices):
 			if device.id() == deviceId:
 				self.observers.deviceRemoved(deviceId)
+				isDevice = self.devices[i].isDevice()
 				del self.devices[i]
 				break
 		self.save()
-		if self.live.registered:
+		if self.live.registered and isDevice:
 			msg = LiveMessage("DeviceRemoved")
 			msg.append({'id': deviceId})
 			self.live.send(msg)
@@ -247,6 +249,8 @@ class DeviceManager(Plugin):
 			return
 		l = []
 		for d in self.devices:
+			if not d.isDevice():
+				continue
 			(state, stateValue) = d.state()
 			device = {
 				'id': d.id(),
