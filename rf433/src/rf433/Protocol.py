@@ -105,6 +105,8 @@ class Protocol(object):
 
 	@staticmethod
 	def protocolInstance(protocol):
+		if (protocol == 'arctech'):
+			return ProtocolArctech()
 		if (protocol == 'fineoffset'):
 			return ProtocolFineoffset()
 		if (protocol == 'mandolyn'):
@@ -113,6 +115,7 @@ class Protocol(object):
 			return ProtocolOregon()
 		return None
 
+from ProtocolArctech import *
 from ProtocolFineoffset import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
