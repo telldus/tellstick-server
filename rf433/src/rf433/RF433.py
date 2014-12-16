@@ -4,6 +4,7 @@ from base import Application, Plugin
 from telldus import DeviceManager, Device
 from Protocol import Protocol
 from Adapter import Adapter
+from RF433Msg import RF433Msg
 import logging
 
 class RF433Node(Device):
@@ -110,31 +111,21 @@ class RF433(Plugin):
 			self.deviceManager.addDevice(device)
 
 		self.deviceManager.finishedLoading('433')
-		Application().queue(self.dev.send, 'V+')
+		self.dev.queue(RF433Msg('V', success=self.__version, failure=self.__noVersion))
 
 	def decode(self, msg):
 		if 'class' in msg and msg['class'] == 'sensor':
 			self.decodeSensor(msg)
 			return
 
-	def decodeData(self, data):
-		if len(data) < 1:
-			return
-		if data[0] == 'W':
-			# Incoming
-			lines = data[1:]
-			msg = {}
-			for x in lines.split(';'):
-				line = x.split(':', 1)
-				if len(line) != 2:
-					continue
-				msg[line[0]] = line[1]
-			self.decode(msg)
-		elif data[0] == 'V':
-			self.version = int(data[1:])
-			logging.info("RF433 version: %i" % self.version)
+	def decodeData(self, cmd, params):
+		if cmd == 'W':
+			self.decode(params)
+		elif cmd == 'V':
+			# New version received, probably after firmware upload
+			self.__version(params)
 		else:
-			logging.debug("Unknown data: %s", str(data))
+			logging.debug("Unknown data: %s", str(cmd))
 
 	def decodeSensor(self, msg):
 		protocol = Protocol.protocolInstance(msg['protocol'])
@@ -159,3 +150,10 @@ class RF433(Plugin):
 			self.sensors.append(sensor)
 			self.deviceManager.addDevice(sensor)
 		sensor.updateValues(sensorData)
+
+	def __noVersion(self):
+		logging.warning("Could not get firmware version for RF433")
+
+	def __version(self, version):
+		self.version = version
+		logging.info("RF433 version: %i", self.version)
