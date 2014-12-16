@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, Plugin
-from telldus import DeviceManager, Device
+from base import Application, implements, Plugin
+from telldus import DeviceManager, Device, DeviceAbortException
 from Protocol import Protocol
 from Adapter import Adapter
 from RF433Msg import RF433Msg
+from tellduslive.base import TelldusLive, ITelldusLiveObserver
 import logging
 
 class RF433Node(Device):
@@ -68,9 +69,51 @@ class DeviceNode(RF433Node):
 	def __init__(self, controller):
 		super(DeviceNode,self).__init__()
 		self.controller = controller
+		self._protocol = ''
+		self._model = ''
+		self._protocolParams = {}
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
-		pass  # TODO
+		def triggerFail(reason):
+			if failure:
+				try:
+					failure(reason, *callbackArgs)
+				except DeviceAbortException:
+					return
+
+		protocol = Protocol.protocolInstance(self._protocol)
+		if not protocol:
+			logging.warning("Unknown protocol %s", self._protocol)
+			triggerFail(0)
+			return
+		protocol.setModel(self._model)
+		protocol.setParameters(self._protocolParams)
+		msg = protocol.stringForMethod(action)
+		if msg is None:
+			triggerFail(0)
+			logging.error("Could not encode rf-data for %s:%s %s", self._protocol, self._model, action)
+			return
+
+		def s(params):
+			if action == 'turnon':
+				s = Device.TURNON
+			elif action == 'turnoff':
+				s = Device.TURNOFF
+			else:
+				logging.warning("Unknown state %s", action)
+				return
+			if success:
+				try:
+					success(state=s, stateValue=None, *callbackArgs)
+				except DeviceAbortException:
+					return
+			self.setState(s, None, origin=origin)
+
+		def f():
+			triggerFail(Device.FAILED_STATUS_NO_REPLY)
+
+		if 'S' in msg:
+			self.controller.queue(RF433Msg('S', msg['S'], success=s, failure=f))
 
 	def isDevice(self):
 		return True
@@ -84,12 +127,19 @@ class DeviceNode(RF433Node):
 	def params(self):
 		return {
 			'type': 'device',
+			'protocol': self._protocol,
+			'model': self._model,
+			'protocolParams': self._protocolParams,
 		}
 
 	def setParams(self, params):
-		pass
+		self._protocol = params.setdefault('protocol', '')
+		self._model = params.setdefault('model', '')
+		self._protocolParams = params.setdefault('protocolParams', {})
 
 class RF433(Plugin):
+	implements(ITelldusLiveObserver)
+
 	def __init__(self):
 		self.version = 0
 		self.devices = []
@@ -104,6 +154,9 @@ class RF433(Plugin):
 			if p['type'] == 'sensor':
 				device = SensorNode()
 				self.sensors.append(device)
+			elif p['type'] == 'device':
+				device = DeviceNode(self.dev)
+				self.devices.append(device)
 			else:
 				continue
 			device.setNodeId(d.id())
@@ -112,6 +165,23 @@ class RF433(Plugin):
 
 		self.deviceManager.finishedLoading('433')
 		self.dev.queue(RF433Msg('V', success=self.__version, failure=self.__noVersion))
+
+	def addDevice(self, protocol, model, name, params):
+		device = DeviceNode(self.dev)
+		device.setName(name)
+		device.setParams({
+			'protocol': protocol,
+			'model': model,
+			'params': params
+		})
+		self.deviceManager.addDevice(device)
+
+	@TelldusLive.handler('rf433')
+	def __handleCommand(self, msg):
+		data = msg.argument(0).toNative()
+		action = data['action']
+		if action == 'addDevice':
+			self.addDevice(data['protocol'], data['model'], data['name'], data['parameters'])
 
 	def decode(self, msg):
 		if 'class' in msg and msg['class'] == 'sensor':
