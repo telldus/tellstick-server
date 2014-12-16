@@ -1,17 +1,37 @@
 # -*- coding: utf-8 -*-
 
-from ProtocolFineoffset import *
-from ProtocolMandolyn import *
-from ProtocolOregon import *
+class Protocol(object):
+	def __init__(self):
+		self.parameters = {}
 
-class Protocol():
-	def __init__(self, protocol, model):
-		self.protocol = protocol
+	def setParameters(self, parameters):
+		self.parameters = parameters
+
+	def setModel(self, model):
 		index = model.find(':')
 		if (index >= 0):
 			self.model = model[0:index]
 		else:
 			self.model = model
+
+	def stringParameter(self, name, defaultValue = ''):
+		if name in self.parameters:
+			return self.parameters[name]
+		return defaultValue
+
+	def intParameter(self, name, min, max):
+		value = self.stringParameter(name, None)
+		if value == None:
+			return min
+		try:
+			value = int(value)
+		except:
+			return min
+		if value < min:
+			return min
+		if value > max:
+			return max
+		return value
 
 	def convertToRaw(self, name, value):
 		if (self.protocol == 'arctech' or self.protocol == 'waveman'):
@@ -32,6 +52,9 @@ class Protocol():
 
 	def decodeData(self, data):
 		pass
+
+	def stringForMethod(self, method):
+		return None
 
 	@staticmethod
 	def methodsForProtocol(protocol, model):
@@ -89,3 +112,7 @@ class Protocol():
 		if (protocol == 'oregon'):
 			return ProtocolOregon()
 		return None
+
+from ProtocolFineoffset import *
+from ProtocolMandolyn import *
+from ProtocolOregon import *
