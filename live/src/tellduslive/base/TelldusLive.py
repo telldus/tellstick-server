@@ -59,6 +59,7 @@ class TelldusLive(Plugin):
 
 		if (message.name() == "disconnect"):
 			self.conn.close()
+			self.registered = False
 			return
 
 		handled = False
@@ -108,6 +109,7 @@ class TelldusLive(Plugin):
 
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
+				self.registered = False
 				print("Disconnected, reconnect in %i seconds" % wait)
 				self.observers.liveDisconnected()
 
@@ -115,6 +117,7 @@ class TelldusLive(Plugin):
 				if (time.time() - pongTimer >= 360):  # No pong received
 					self.conn.close()
 					wait = random.randint(10, 50)
+					self.registered = False
 					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
 					self.observers.liveDisconnected()
 				elif (time.time() - self.pingTimer >= 120):
