@@ -26,5 +26,8 @@ class Gpio(Plugin):
 		self.__writeToFile('/sys/class/pwm/%s/run' % name, '1')
 
 	def __writeToFile(self, path, value):
-		with open(path, 'w') as f:
-			f.write(value)
+		try:
+			with open(path, 'w') as f:
+				f.write(value)
+		except:
+			pass
