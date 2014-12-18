@@ -60,6 +60,7 @@ class TelldusLive(Plugin):
 		if (message.name() == "disconnect"):
 			self.conn.close()
 			self.registered = False
+			self.observers.liveDisconnected()
 			return
 
 		handled = False
