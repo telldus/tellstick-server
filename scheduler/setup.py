@@ -9,7 +9,7 @@ except ImportError:
 setup(
 	name='Scheduler',
 	version='0.1',
-	packages=['scheduler'],
+	packages=['scheduler', 'scheduler.base'],
 	package_dir = {'':'src'},
 	entry_points={ \
 		'telldus.startup': ['c = scheduler.base:Scheduler [cREQ]']
