@@ -3,6 +3,7 @@
 import os
 import json
 from configobj import ConfigObj
+from board import Board
 import ConfigParser
 
 
@@ -14,7 +15,7 @@ class Settings(object):
 		self.section = section
 
 		if Settings._config is None:
-			self.configPath = os.environ['HOME'] + '/.config/Telldus'
+			self.configPath = Board.configDir()
 			if not os.path.exists(self.configPath):
 				os.makedirs(self.configPath)
 			self.configFilename = 'Telldus.conf'

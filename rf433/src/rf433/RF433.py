@@ -6,6 +6,7 @@ from Protocol import Protocol
 from Adapter import Adapter
 from RF433Msg import RF433Msg
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
+from board import Board
 import logging
 
 class RF433Node(Device):
@@ -144,7 +145,7 @@ class RF433(Plugin):
 		self.version = 0
 		self.devices = []
 		self.sensors = []
-		self.dev = Adapter(self, '/dev/ttyUSB1')
+		self.dev = Adapter(self, Board.rf433Port())
 		deviceNode = DeviceNode(self.dev)
 		self.deviceManager = DeviceManager(self.context)
 		for d in self.deviceManager.retrieveDevices('433'):

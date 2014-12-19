@@ -3,6 +3,7 @@
 import httplib
 import fcntl, socket, struct
 import xml.parsers.expat
+from board import Board
 
 class ServerList():
 
@@ -23,7 +24,7 @@ class ServerList():
 		return self.list.pop(0)
 
 	def retrieveServerList(self):
-		conn = httplib.HTTPConnection("api.telldus.com:80")
+		conn = httplib.HTTPConnection('%s:80' % Board.liveServer())
 		conn.request('GET', "/server/assign?protocolVersion=2&mac=%s" % ServerList.getMacAddr('eth0'))
 		response = conn.getresponse()
 
