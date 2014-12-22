@@ -172,6 +172,7 @@ class RF433(Plugin):
 
 		self.deviceManager.finishedLoading('433')
 		self.dev.queue(RF433Msg('V', success=self.__version, failure=self.__noVersion))
+		self.live = TelldusLive(self.context)
 
 	def addDevice(self, protocol, model, name, params):
 		device = DeviceNode(self.dev)
@@ -189,6 +190,30 @@ class RF433(Plugin):
 		action = data['action']
 		if action == 'addDevice':
 			self.addDevice(data['protocol'], data['model'], data['name'], data['parameters'])
+
+		elif action == 'deviceInfo':
+			deviceId = data['device']
+			for device in self.devices:
+				if device.id() == deviceId:
+					params = device.params()
+					params['deviceId'] = deviceId
+					self.live.pushToWeb('rf433', 'deviceInfo', params)
+					return
+
+		elif action == 'editDevice':
+			deviceId = data['device']
+			for device in self.devices:
+				if device.id() == deviceId:
+					device.setParams({
+						'protocol': data['protocol'],
+						'model': data['model'],
+						'protocolParams': data['parameters']
+					})
+					device.paramUpdated('')
+					break
+
+		else:
+			logging.warning("Unknown rf433 command %s", action)
 
 	def decode(self, msg):
 		if 'class' in msg and msg['class'] == 'sensor':
