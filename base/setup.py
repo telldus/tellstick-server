@@ -11,6 +11,7 @@ setup(
 	packages=['base'],
 	package_dir = {'':'src'},
 	entry_points={ \
-		'telldus.main': ['.rst = base:Application']
+		'telldus.main': ['.rst = base:Application [cREQ]']
 	},
+	extras_require = dict(cREQ = 'Board>=0.1'),
 )
