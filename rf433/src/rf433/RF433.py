@@ -102,6 +102,10 @@ class DeviceNode(RF433Node):
 				s = Device.TURNOFF
 			elif action == 'dim':
 				s = Device.DIM
+			elif action == 'bell':
+				s = Device.BELL
+			elif action == 'learn':
+				s = Device.LEARN
 			else:
 				logging.warning("Unknown state %s", action)
 				return

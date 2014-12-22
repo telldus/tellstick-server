@@ -12,15 +12,34 @@ class ProtocolArctech(Protocol):
 			return (Device.TURNON | Device.TURNOFF | Device.LEARN)
 		elif self.model == 'selflearning-dimmer':
 			return (Device.TURNON | Device.TURNOFF | Device.DIM | Device.LEARN)
+		elif self.model == 'selflearning-bell':
+			return (Device.BELL | Device.LEARN)
+		elif self.model == 'bell':
+			return Device.BELL
 		return 0
 
 	def stringForMethod(self, method, data=None):
 		if self.model == 'codeswitch':
 			return self.stringForCodeSwitch(method)
+		elif self.model == 'bell':
+			return self.stringForBell()
+		elif self.model == 'selflearning-bell':
+			return self.stringForSelflearning(method, data, 1)
+
 		if method == 'turnon' and self.model == 'selflearning-dimmer':
 			# Workaround for not letting a dimmer do into "dimming mode"
 			return self.stringForSelflearning('dim', 255)
 		return self.stringForSelflearning(method, data)
+
+	def stringForBell(self):
+		strReturn = ''
+
+		house = self.stringParameter('house', 'A')
+		intHouse = ord(house[0]) - ord('A')
+		strReturn = strReturn + self.codeSwitchTuple(intHouse)
+		strReturn = strReturn + '$kk$$kk$$kk$$k$k'  # Unit 7
+		strReturn = strReturn + '$kk$$kk$$kk$$kk$$k'  # Bell
+		return {'S': strReturn}
 
 	def stringForCodeSwitch(self, method):
 		strHouse = self.stringParameter('house', 'A')
