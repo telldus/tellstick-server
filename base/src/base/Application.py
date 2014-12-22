@@ -67,7 +67,7 @@ class Application(object):
 					m = moduleClass()
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				logging.error("Could not load %s", str(entry))
+				logging.error("Could not load %s", str(moduleClass))
 				logging.error(str(e))
 				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		self.__loadPkgResourses()
