@@ -53,8 +53,16 @@ class Protocol(object):
 				return int(value)
 		return value
 
-	def decodeData(self, data):
-		pass
+	@staticmethod
+	def decodeData(data):
+		if 'protocol' not in data:
+			return []
+		retval = []
+		if data['protocol'] == 'arctech':
+			decoded = ProtocolArctech.decodeData(data)
+			if decoded is not None:
+				retval.append(decoded)
+		return retval
 
 	def stringForMethod(self, method):
 		return None
@@ -63,33 +71,23 @@ class Protocol(object):
 	def methodsForProtocol(protocol, model):
 		if (protocol == 'arctech'):
 			if (model == 'codeswitch'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 			if (model == 'selflearning'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 			if (model == 'selflearning-bell'):
-				return Protocol.TELLSTICK_BELL
+				return Device.BELL
 		if (protocol == 'comen'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 		if (protocol == 'everflourish'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 		if (protocol == 'sartano'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 		if (protocol == 'waveman'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 		if (protocol == 'x10'):
-				return Protocol.TELLSTICK_TURNON | Protocol.TELLSTICK_TURNOFF
+				return Device.TURNON | Device.TURNOFF
 		if (protocol == 'hasta'):
-				return Protocol.TELLSTICK_UP | Protocol.TELLSTICK_DOWN | Protocol.TELLSTICK_STOP
-		return 0
-
-	@staticmethod
-	def methodStringToInt(methodString):
-		if (methodString == 'turnon'):
-			return Protocol.TELLSTICK_TURNON
-		elif (methodString == 'turnoff'):
-			return Protocol.TELLSTICK_TURNOFF
-		elif (methodString == 'dim'):
-			return Protocol.TELLSTICK_DIM
+				return Device.UP | Device.DOWN | Device.STOP
 		return 0
 
 	@staticmethod

@@ -123,3 +123,39 @@ class ProtocolArctech(Protocol):
 		code = code + SHORT
 		retval['S'] = code
 		return retval
+
+	@staticmethod
+	def decodeData(data):
+		if 'model' not in data or 'data' not in data:
+			return None
+		if data['model'] == 'codeswitch':
+			return ProtocolArctech.decodeDataCodeSwitch(data)
+		return None
+
+	@staticmethod
+	def decodeDataCodeSwitch(data):
+		value = int(data['data'], 16)
+		methodCode = (value & 0xF00) >> 8
+		unit = (value & 0xF0) >> 4
+		house = (value & 0xF)
+
+		method = 0
+		if methodCode == 6:
+			method = Device.TURNOFF
+		elif methodCode == 14:
+			method = Device.TURNON
+		elif methodCode == 15:
+			method = Device.BELL
+		else:
+			return None
+
+		houseString = chr(ord('A') + house)
+		unitString = str(unit + 1)
+		retval = {}
+		retval['class'] = 'command'
+		retval['protocol'] = 'arctech'
+		retval['model'] = 'codeswitch'
+		retval['house'] = houseString
+		retval['unit'] = unitString
+		retval['method'] = method
+		return retval

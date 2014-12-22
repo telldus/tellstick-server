@@ -226,6 +226,37 @@ class RF433(Plugin):
 		if 'class' in msg and msg['class'] == 'sensor':
 			self.decodeSensor(msg)
 			return
+		msg = Protocol.decodeData(msg)
+		for m in msg:
+			self.decodeCommandData(m)
+
+	def decodeCommandData(self, msg):
+		protocol = msg['protocol']
+		model = msg['model']
+		method = msg['method']
+		methods = Protocol.methodsForProtocol(protocol, model)
+		if not method & methods:
+			return
+		for device in self.devices:
+			params = device.params()
+			if params['protocol'] != protocol:
+				continue
+			if not method & device.methods():
+				continue
+			deviceParams = params['protocolParams']
+			thisDevice = True
+			for parameter in Protocol.parametersForProtocol(protocol, model):
+				if parameter not in msg:
+					thisDevice = False
+					break
+				if parameter not in deviceParams:
+					thisDevice = False
+					break
+				if msg[parameter] != deviceParams[parameter]:
+					thisDevice = False
+					break
+			if thisDevice:
+				device.setState(method, None)
 
 	def decodeData(self, cmd, params):
 		if cmd == 'W':
