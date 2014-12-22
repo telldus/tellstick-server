@@ -14,6 +14,9 @@ class Protocol(object):
 		else:
 			self.model = model
 
+	def methods(self):
+		return 0
+
 	def stringParameter(self, name, defaultValue = ''):
 		if name in self.parameters:
 			return self.parameters[name]

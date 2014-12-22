@@ -7,6 +7,7 @@ class Device(object):
 	TURNON  = 1
 	TURNOFF = 2
 	DIM = 16
+	LEARN = 32
 
 	UNKNOWN = 0
 	TEMPERATURE = 1

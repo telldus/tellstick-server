@@ -100,6 +100,8 @@ class DeviceNode(RF433Node):
 				s = Device.TURNON
 			elif action == 'turnoff':
 				s = Device.TURNOFF
+			elif action == 'dim':
+				s = Device.DIM
 			else:
 				logging.warning("Unknown state %s", action)
 				return
@@ -123,7 +125,11 @@ class DeviceNode(RF433Node):
 		return False
 
 	def methods(self):
-		return 3
+		protocol = Protocol.protocolInstance(self._protocol)
+		if not protocol:
+			return 0
+		protocol.setModel(self._model)
+		return protocol.methods()
 
 	def params(self):
 		return {

@@ -1,9 +1,19 @@
  # -*- coding: utf-8 -*-
 
 from Protocol import Protocol
+from telldus import Device
 import logging
 
 class ProtocolArctech(Protocol):
+	def methods(self):
+		if self.model == 'codeswitch':
+			return (Device.TURNON | Device.TURNOFF)
+		elif self.model == 'selflearning-switch':
+			return (Device.TURNON | Device.TURNOFF | Device.LEARN)
+		elif self.model == 'selflearning-dimmer':
+			return (Device.TURNON | Device.TURNOFF | Device.DIM | Device.LEARN)
+		return 0
+
 	def stringForMethod(self, method):
 		if self.model == 'codeswitch':
 			return self.stringForCodeSwitch(method)
