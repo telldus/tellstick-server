@@ -179,7 +179,7 @@ class RF433(Plugin):
 		device.setParams({
 			'protocol': protocol,
 			'model': model,
-			'params': params
+			'protocolParams': params
 		})
 		self.deviceManager.addDevice(device)
 
