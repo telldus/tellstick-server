@@ -15,7 +15,10 @@ class RF433Msg(object):
 		return self._cmd
 
 	def commandString(self):
-		return '%s%s+' % (self._cmd, self._args)
+		retval = '%s%s+' % (self._cmd, self._args)
+		for p in self._prefixes:
+			retval = '%s%s%s' % (p, chr(self._prefixes[p]), retval)
+		return retval
 
 	def response(self, params):
 		if self._success:

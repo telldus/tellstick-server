@@ -119,8 +119,11 @@ class DeviceNode(RF433Node):
 		def f():
 			triggerFail(Device.FAILED_STATUS_NO_REPLY)
 
+		prefixes = {}
+		if 'R' in msg:
+			prefixes['R'] = msg['R']
 		if 'S' in msg:
-			self.controller.queue(RF433Msg('S', msg['S'], success=s, failure=f))
+			self.controller.queue(RF433Msg('S', msg['S'], prefixes, success=s, failure=f))
 
 	def isDevice(self):
 		return True
