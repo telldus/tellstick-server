@@ -89,7 +89,7 @@ class DeviceNode(RF433Node):
 			return
 		protocol.setModel(self._model)
 		protocol.setParameters(self._protocolParams)
-		msg = protocol.stringForMethod(action)
+		msg = protocol.stringForMethod(action, value)
 		if msg is None:
 			triggerFail(0)
 			logging.error("Could not encode rf-data for %s:%s %s", self._protocol, self._model, action)

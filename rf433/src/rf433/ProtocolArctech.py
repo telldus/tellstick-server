@@ -14,10 +14,13 @@ class ProtocolArctech(Protocol):
 			return (Device.TURNON | Device.TURNOFF | Device.DIM | Device.LEARN)
 		return 0
 
-	def stringForMethod(self, method):
+	def stringForMethod(self, method, data=None):
 		if self.model == 'codeswitch':
 			return self.stringForCodeSwitch(method)
-		logging.warning("Unknown model %s", self.model)
+		if method == 'turnon' and self.model == 'selflearning-dimmer':
+			# Workaround for not letting a dimmer do into "dimming mode"
+			return self.stringForSelflearning('dim', 255)
+		return self.stringForSelflearning(method, data)
 
 	def stringForCodeSwitch(self, method):
 		strHouse = self.stringParameter('house', 'A')
@@ -33,6 +36,13 @@ class ProtocolArctech(Protocol):
 			return None
 		return {'S': strReturn}
 
+	def stringForSelflearning(self, method, level, group=0):
+		intHouse = self.intParameter('house', 1, 67108863)
+		intCode = self.intParameter('unit', 1, 16)-1
+		if method == 'dim' and level == 0:
+			method = 'turnoff'
+		return self.stringSelflearningForCode(intHouse, intCode, method, level, group)
+
 	def codeSwitchTuple(self, intCode):
 		strReturn = ''
 		for i in range(4):
@@ -42,3 +52,55 @@ class ProtocolArctech(Protocol):
 				strReturn = strReturn + '$k$k'
 			intCode = intCode >> 1
 		return strReturn
+
+	def stringSelflearningForCode(self, intHouse, intCode, method, level, group):
+		retval = {}
+		SHORT = chr(24)
+		LONG = chr(127)
+
+		ONE = SHORT + LONG + SHORT + SHORT
+		ZERO = SHORT + SHORT + SHORT + LONG
+
+		code = SHORT + chr(255)
+
+		for i in range(25, -1, -1):
+			if intHouse & (1 << i):
+				code = code + ONE
+			else:
+				code = code + ZERO
+
+		if group == 1:
+			code = code + ONE  # Group (for selflearning bell)
+		else:
+			code = code + ZERO  # Group
+
+		# On/off
+		if method == 'dim':
+			code = code + SHORT + SHORT + SHORT + SHORT
+		elif method == 'turnoff':
+			code = code  + ZERO
+		elif method == 'turnon' or method == 'bell':
+			code = code + ONE
+		elif method == 'learn':
+			code = code + ONE
+			retval['R'] = 25
+		else:
+			return None
+
+		for i in range(3, -1, -1):
+			if intCode & (1 << i):
+				code = code + ONE
+			else:
+				code = code + ZERO
+
+		if method == 'dim':
+			newLevel = level/16
+			for i in range(3, -1, -1):
+				if newLevel & (1 << i):
+					code = code + ONE
+				else:
+					code = code + ZERO
+
+		code = code + SHORT
+		retval['S'] = code
+		return retval
