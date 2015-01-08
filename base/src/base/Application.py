@@ -118,29 +118,29 @@ class Application(object):
 		logging.info("Signal %d caught" % signum)
 		self.quit()
 
-        def __loadPkgResourses(self):
-			if pkg_resources is None:
-				return
-			for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
-				try:
-					moduleClass = entry.load()
-				except Exception as e:
-					exc_type, exc_value, exc_traceback = sys.exc_info()
-					logging.error("Could not load %s", str(entry))
-					logging.error(str(e))
-					self.printBacktrace(traceback.extract_tb(exc_traceback))
-			for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
-				try:
-					moduleClass = entry.load()
-					if issubclass(moduleClass, Plugin):
-						m = moduleClass(self.pluginContext)
-					else:
-						m = moduleClass()
-				except Exception as e:
-					exc_type, exc_value, exc_traceback = sys.exc_info()
-					logging.error("Could not load %s", str(entry))
-					logging.error(str(e))
-					self.printBacktrace(traceback.extract_tb(exc_traceback))
+	def __loadPkgResourses(self):
+		if pkg_resources is None:
+			return
+		for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
+			try:
+				moduleClass = entry.load()
+			except Exception as e:
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				logging.error("Could not load %s", str(entry))
+				logging.error(str(e))
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
+		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
+			try:
+				moduleClass = entry.load()
+				if issubclass(moduleClass, Plugin):
+					m = moduleClass(self.pluginContext)
+				else:
+					m = moduleClass()
+			except Exception as e:
+				exc_type, exc_value, exc_traceback = sys.exc_info()
+				logging.error("Could not load %s", str(entry))
+				logging.error(str(e))
+				self.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	def __nextTask(self):
 		self.__taskLock.acquire()
