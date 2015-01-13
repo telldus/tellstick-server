@@ -57,7 +57,7 @@ class ConditionsEvaluation(object):
 	def __success(self):
 		if self.state != ConditionsEvaluation.EVALUATING:
 			return
-		if self.timeout != None:
+		if self.timeout is not None:
 			self.timeout.cancel()
 			self.timeout = None
 		self.state = ConditionsEvaluation.SUCCESS
@@ -71,7 +71,7 @@ class ConditionsEvaluation(object):
 	def __failure(self):
 		if self.state != ConditionsEvaluation.EVALUATING:
 			return
-		if self.timeout != None:
+		if self.timeout is not None:
 			self.timeout.cancel()
 			self.timeout = None
 		self.state = ConditionsEvaluation.FAILED

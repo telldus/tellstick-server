@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from Action import Action
-from Condition import Condition
+from base import mainthread
+from Action import Action, RemoteAction
+from Condition import Condition, RemoteCondition
 from ConditionContext import ConditionContext
 from ConditionGroup import ConditionGroup
 from Trigger import Trigger
-from threading import Timer
 import time
 import logging
 
@@ -22,18 +22,18 @@ class Event(object):
 
 	def loadActions(self, data):
 		for id in data:
-			action = Action.load(event=self, id=id, **data[id])
+			action = self.manager.requestAction(event=self, id=id, **data[id])
 			if not action:
-				continue
+				action = RemoteAction(event=self, id=id, **data[id])
 			if 'params' in data[id]:
 				action.loadParams(data[id]['params'])
 			self.actions[id] = action
 
 	def loadConditions(self, data):
 		for id in data:
-			condition = Condition.load(event=self, id=id, **data[id])
+			condition = self.manager.requestCondition(event=self, id=id, **data[id])
 			if not condition:
-				continue
+				condition = RemoteCondition(event=self, id=id, **data[id])
 			if 'params' in data[id]:
 				condition.loadParams(data[id]['params'])
 			group = data[id]['group'] if 'group' in data[id] else 0
@@ -43,13 +43,14 @@ class Event(object):
 
 	def loadTriggers(self, data):
 		for id in data:
-			trigger = Trigger.load(event=self, id=id, **data[id])
+			trigger = self.manager.requestTrigger(event=self, id=id, **data[id])
 			if not trigger:
 				continue
 			if 'params' in data[id]:
 				trigger.loadParams(data[id]['params'])
 			self.triggers[id] = trigger
 
+	@mainthread
 	def execute(self, trigger):
 		self.manager.live.pushToWeb('event', 'trigger', {'event': self.eventId,'trigger': trigger.id})
 		if (self.lastRun is not None) and (time.time() - self.lastRun < self.minimumRepeatInterval):

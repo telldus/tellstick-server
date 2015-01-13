@@ -20,11 +20,6 @@ class Condition(object):
 	def validate(self, success, failure):
 		failure()
 
-	@staticmethod
-	def load(type, **kwargs):
-		return RemoteCondition(**kwargs)
-
-
 class RemoteCondition(Condition):
 	def __init__(self, **kwargs):
 		super(RemoteCondition,self).__init__(**kwargs)

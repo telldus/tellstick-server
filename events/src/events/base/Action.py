@@ -24,11 +24,6 @@ class Action(object):
 	def triggered(self):
 		self.event.execute(self)
 
-	@staticmethod
-	def load(type, **kwargs):
-		return RemoteAction(**kwargs)
-
-
 class RemoteAction(Action):
 	def __init__(self, **kwargs):
 		super(RemoteAction,self).__init__(**kwargs)

@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin, implements
+from base import Plugin, implements, IInterface, ObserverCollection
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
-from telldus import IDeviceChange
 from Event import Event
 import logging
 
+class IEventFactory(IInterface):
+	def createAction(type, **kwargs):
+		"""This method is called when an action is needed"""
+	def createCondition(type, **kwargs):
+		"""This method is called when a condition is needed"""
+	def createTrigger(type, **kwargs):
+		"""This method is called when a trigger is needed"""
+
 class EventManager(Plugin):
 	implements(ITelldusLiveObserver)
-	implements(IDeviceChange)
+
+	observers = ObserverCollection(IEventFactory)
 
 	def __init__(self):
 		self.events = {}
@@ -21,13 +29,33 @@ class EventManager(Plugin):
 		event.loadTriggers(data['triggers'])
 		self.events[eventId] = event
 
+	def requestAction(self, type, **kwargs):
+		for observer in self.observers:
+			action = observer.createAction(type=type, **kwargs)
+			if action is not None:
+				return action
+		return None
+
+	def requestCondition(self, type, **kwargs):
+		for observer in self.observers:
+			condition = observer.createCondition(type=type, **kwargs)
+			if condition is not None:
+				return condition
+		return None
+
+	def requestTrigger(self, type, **kwargs):
+		for observer in self.observers:
+			trigger = observer.createTrigger(type=type, **kwargs)
+			if trigger is not None:
+				return trigger
+		return None
+
 	@TelldusLive.handler('events-report')
 	def receiveEventsFromServer(self, msg):
 		data = msg.argument(0).toNative()
-		logging.warning("Got event-report")
-		logging.warning(str(data))
 		for eventId in data:
-			self.loadEvent(eventId, data[eventId])
+			if eventId not in self.events:
+				self.loadEvent(eventId, data[eventId])
 
 	@TelldusLive.handler('event-conditionresult')
 	def receiveConditionResultFromServer(self, msg):
@@ -44,12 +72,3 @@ class EventManager(Plugin):
 							# Not a RemoteCondition
 							pass
 						return
-
-	def stateChanged(self, device, state, statevalue):
-		for eid in self.events:
-			for tid in self.events[eid].triggers:
-				try:
-					self.events[eid].triggers[tid].triggerDeviceState(device, state, statevalue)
-				except AttributeError as e:
-					# The trigger was no DeviceTrigger
-					pass

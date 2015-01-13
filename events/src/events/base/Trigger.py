@@ -13,13 +13,5 @@ class Trigger(object):
 	def parseParam(self, name, value):
 		pass
 
-	@staticmethod
-	def load(type, **kwargs):
-		if type == 'device':
-			return DeviceTrigger(**kwargs)
-		return None
-
 	def triggered(self):
 		self.event.execute(self)
-
-from DeviceTrigger import DeviceTrigger

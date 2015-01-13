@@ -12,6 +12,6 @@ setup(
 	packages=['telldus'],
 	package_dir = {'':'src'},
 	extras_require = {
-		'telldus': ['Base>=0.1'],
+		'telldus': ['Base>=0.1\nEvent>=0.1'],
 	}
 )
