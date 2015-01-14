@@ -130,12 +130,16 @@ class LiveMessageToken(object):
 			token.valueType = LiveMessageToken.TYPE_DICTIONARY
 			while (start < len(string) and string[start] != 's'):
 				start, keyToken = LiveMessageToken.parseToken(string, start)
-				if (keyToken.valueType == LiveMessageToken.TYPE_INVALID):
+				if keyToken.valueType == LiveMessageToken.TYPE_STRING:
+					key = keyToken.stringVal
+				elif keyToken.valueType == LiveMessageToken.TYPE_INT:
+					key = keyToken.intVal
+				else:
 					break
 				start, valueToken = LiveMessageToken.parseToken(string, start)
 				if (valueToken.valueType == LiveMessageToken.TYPE_INVALID):
 					break
-				token.dictVal[keyToken.stringVal] = valueToken
+				token.dictVal[key] = valueToken
 			start+=1
 
 		elif (string[start] == 'u'): #Base64
