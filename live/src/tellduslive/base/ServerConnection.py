@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import socket, ssl, errno, select
+import socket, ssl, errno, select, logging
 from LiveMessage import LiveMessage
 
 class ServerConnection(object):
@@ -14,7 +14,6 @@ class ServerConnection(object):
 		self.server = None
 
 	def close(self):
-			print("CLOSE")
 			self.state = ServerConnection.CLOSED
 			try:
 				self.socket.shutdown(socket.SHUT_RDWR)
@@ -25,7 +24,7 @@ class ServerConnection(object):
 	def connect(self, address, port):
 		self.server = (address, port)
 		self.state = ServerConnection.CONNECTING
-		print("Connecting to %s:%i" % (address, port))
+		logging.info("Connecting to %s:%i" % (address, port))
 		return True
 
 	def popMessage(self):
@@ -44,14 +43,13 @@ class ServerConnection(object):
 				cert_reqs=ssl.CERT_REQUIRED
 			)
 			try:
-				print("Connect", self.server)
 				self.socket.connect(self.server)
 				self.state = ServerConnection.CONNECTED
 			except socket.error as (error, errorString):
-				print(error, errorString)
+				logging.error("%s %s", str(error), (errorString))
 				self.state = ServerConnection.CLOSED
 				return ServerConnection.DISCONNECTED
-			print("Connected")
+			logging.info("Connected to Telldus Live! server")
 			self.state = ServerConnection.CONNECTED
 			return self.state
 		if self.state == ServerConnection.CONNECTED:
@@ -69,26 +67,25 @@ class ServerConnection(object):
 			resp = self.socket.recv(1024)
 		except socket.error as e:
 			# Timeout
-			print("Socket error!", e)
+			logging.error("Socket error!", str(e))
 			return ServerConnection.READY
 		except Exception as e:
-			print(e)
+			logging.error(str(e))
 		dataLeft = self.socket.pending()
 		while dataLeft:
 			resp += self.socket.recv(dataLeft)
 			dataLeft = self.socket.pending()
 
 		if (resp == ''):
-			print("Empty response, disconnected?", self.state)
+			logging.warning("Empty response, disconnected? %s", str(self.state))
 			if self.state == ServerConnection.CLOSED:
 				return ServerConnection.CLOSED
 			self.close()
-			print("Returning disconnected")
 			return ServerConnection.DISCONNECTED
 
 		envelope = LiveMessage.fromByteArray(resp)
 		if (not envelope.verifySignature('sha1', self.privateKey)):
-			print("Signature failed")
+			logging.warning("Signature failed")
 			return ServerConnection.READY
 		self.msgs.insert(0, LiveMessage.fromByteArray(envelope.argument(0).stringVal))
 		return ServerConnection.MSG_RECEIVED
@@ -100,6 +97,6 @@ class ServerConnection(object):
 		try:
 			self.socket.write(signedMessage)
 		except Exception as e:
-			print('ERROR, could not write to socket. Close and reconnect')
-			print(e)
+			logging.error('ERROR, could not write to socket. Close and reconnect')
+			logging.error(str(e))
 			self.close()
