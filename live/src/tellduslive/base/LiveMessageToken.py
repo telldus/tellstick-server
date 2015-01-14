@@ -127,6 +127,7 @@ class LiveMessageToken(object):
 
 		elif (string[start] == 'h'):
 			start+=1
+			token.valueType = LiveMessageToken.TYPE_DICTIONARY
 			while (start < len(string) and string[start] != 's'):
 				start, keyToken = LiveMessageToken.parseToken(string, start)
 				if (keyToken.valueType == LiveMessageToken.TYPE_INVALID):
@@ -134,7 +135,6 @@ class LiveMessageToken(object):
 				start, valueToken = LiveMessageToken.parseToken(string, start)
 				if (valueToken.valueType == LiveMessageToken.TYPE_INVALID):
 					break
-				token.valueType = LiveMessageToken.TYPE_DICTIONARY
 				token.dictVal[keyToken.stringVal] = valueToken
 			start+=1
 
