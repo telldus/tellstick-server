@@ -49,6 +49,10 @@ class ServerConnection(object):
 				logging.error("%s %s", str(error), (errorString))
 				self.state = ServerConnection.CLOSED
 				return ServerConnection.DISCONNECTED
+			except Exception as e:
+				logging.error(str(e))
+				self.state = ServerConnection.CLOSED
+				return ServerConnection.DISCONNECTED
 			logging.info("Connected to Telldus Live! server")
 			self.state = ServerConnection.CONNECTED
 			return self.state
