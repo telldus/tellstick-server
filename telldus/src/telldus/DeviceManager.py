@@ -13,6 +13,8 @@ class IDeviceChange(IInterface):
 		"""This method is called when a device is confirmed on the network, not only loaded from storage (not applicable to all device types)"""
 	def deviceRemoved(deviceId):
 		"""This method is called when a device is removed"""
+	def sensorValueUpdated(device, valueType, value, scale):
+		"""This method is called when a new sensor value is received from a sensor"""
 	def stateChanged(device, state, statevalue):
 		"""Called when the state of a device changed"""
 
@@ -100,11 +102,12 @@ class DeviceManager(Plugin):
 			l.append(d)
 		return l
 
-	def sensorValueUpdated(self, device):
+	def sensorValueUpdated(self, device, valueType, value, scale):
 		if not self.live.registered:
 			return
 		if device.isSensor() == False:
 			return
+		self.observers.sensorValueUpdated(device, valueType, value, scale)
 		msg = LiveMessage("SensorEvent")
 		sensor = {
 			'name': device.name(),

@@ -133,7 +133,7 @@ class Device(object):
 		if not found:
 			self._sensorValues[valueType].append({'value': value, 'scale': scale})
 		if self._manager:
-			self._manager.sensorValueUpdated(self)
+			self._manager.sensorValueUpdated(self, valueType, value, scale)
 
 	def setState(self, state, stateValue = '', ack=None, origin=None):
 		self._state = state
