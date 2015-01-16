@@ -24,6 +24,10 @@ class DeviceEventFactory(Plugin):
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
 				return DeviceCondition(manager = self.deviceManager, **kwargs)
+			return None
+		if type == 'sensor':
+			if 'local' in params and params['local'] == 1:
+				return SensorCondition(manager = self.deviceManager, **kwargs)
 		return None
 
 	def createTrigger(self, type, **kwargs):
@@ -114,6 +118,65 @@ class DeviceTrigger(Trigger):
 			self.deviceId = int(value)
 		elif name == 'method':
 			self.method = int(value)
+
+class SensorCondition(Condition):
+	def __init__(self, manager, **kwargs):
+		super(SensorCondition,self).__init__(**kwargs)
+		self.manager = manager
+		self.sensorId = 0
+		self.value = 0
+		self.edge = 0
+		self.valueType = 0
+		self.scale = 0
+
+	def parseParam(self, name, value):
+		if name == 'clientSensorId':
+			self.sensorId = int(value)
+		elif name == 'value':
+			self.value = float(value)
+		elif name == 'edge':
+			self.edge = int(value)
+		elif name == 'valueType':
+			if value == 'temperature' or value == 'temp':
+				self.valueType = Device.TEMPERATURE
+			elif value == 'humidity':
+				self.valueType = Device.HUMIDITY
+			elif value == 'wgust':
+				self.valueType = Device.WINDGUST
+			elif value == 'rrate':
+				self.valueType = Device.RAINRATE
+			elif value == 'wavg':
+				self.valueType = Device.WINDAVERAGE
+			elif value == 'uv':
+				self.valueType = Device.UV
+			elif value == 'watt':
+				self.valueType = Device.WATT
+			elif value == 'lum':
+				self.valueType = Device.LUMINANCE
+		elif name == 'scale':
+			self.scale = int(value)
+
+	def validate(self, success, failure):
+		sensor = self.manager.device(self.sensorId)
+		if sensor is None:
+			failure()
+			return
+		value = sensor.sensorValue(self.valueType, self.scale)
+		if value is None:
+			failure()
+			return
+		if self.__compare(float(value), self.value, self.edge):
+			success()
+		else:
+			failure()
+
+	def __compare(self, value, condition, edge):
+		if edge == 1:
+			return value > condition
+		if edge == 0:
+			return value == condition
+		if edge == -1:
+			return value < condition
 
 class SensorTrigger(Trigger):
 	def __init__(self, *args, **kwargs):
