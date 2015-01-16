@@ -97,6 +97,14 @@ class Device(object):
 		if self._manager:
 			self._manager.save()
 
+	def sensorValue(self, valueType, scale):
+		if valueType not in self._sensorValues:
+			return None
+		for sensorType in self._sensorValues[valueType]:
+			if sensorType['scale'] == scale:
+				return sensorType['value']
+		return None
+
 	def sensorValues(self):
 		return self._sensorValues
 
