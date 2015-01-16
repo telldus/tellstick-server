@@ -81,6 +81,8 @@ class DeviceAction(Action):
 			m = 'turnoff'
 		elif self.method == Device.DIM:
 			m = 'dim'
+		elif self.method == Device.BELL:
+			m = 'bell'
 		device.command(m, self.value, origin='Event')
 
 class DeviceCondition(Condition):

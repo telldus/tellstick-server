@@ -6,6 +6,7 @@ class DeviceAbortException(Exception):
 class Device(object):
 	TURNON  = 1
 	TURNOFF = 2
+	BELL = 4
 	DIM = 16
 	LEARN = 32
 
