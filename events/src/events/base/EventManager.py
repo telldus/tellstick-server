@@ -3,6 +3,7 @@
 from base import Plugin, implements, IInterface, ObserverCollection
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 from Event import Event
+from UrlAction import UrlAction
 import logging
 
 class IEventFactory(IInterface):
@@ -31,6 +32,8 @@ class EventManager(Plugin):
 
 	def requestAction(self, type, **kwargs):
 		for observer in self.observers:
+			if type == 'url':
+				return UrlAction(type=type, **kwargs)
 			action = observer.createAction(type=type, **kwargs)
 			if action is not None:
 				return action
