@@ -13,4 +13,4 @@ class Board(object):
 
 	@staticmethod
 	def zwavePort():
-		return '/dev/ttyUSB0'
+		return '/dev/ttyACM0'
