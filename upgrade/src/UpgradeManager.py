@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import hashlib, httplib, random, os, time
-import platform, urllib2
+import platform, urllib2, urlparse
 import xml.parsers.expat
 from datetime import datetime, timedelta
 from board import Board
 
 class UpgradeManager(object):
 	def __init__(self):
+		self._filename = False
 		self._queue = []
 		self._product = None
 		self._dist = None
@@ -46,10 +47,12 @@ class UpgradeManager(object):
 			print el, "up to date"
 			return
 		print "Do upgrade", el
-		if el == 'firmware' and self.doUpgrade(attrs, self._content, 'core-image-tellstick-znet.img'):
-			self._requireRestart = True
-			return
-		if el == 'kernel' and self.doUpgrade(attrs, self._content, 'uImage'):
+		if el == 'firmware':
+			self._filename = self.doUpgrade(attrs, self._content)
+		if el == 'kernel':
+			self._filename = self.doUpgrade(attrs, self._content)
+		if self._filename != False:
+			self._firmwareType = el
 			self._requireRestart = True
 			return
 
@@ -65,13 +68,23 @@ class UpgradeManager(object):
 		with open('/etc/distribution') as f:
 			return f.readline().strip()
 
-	def doUpgrade(self, attrs, url, targetFilename):
+	def doUpgrade(self, attrs, url):
 		if 'size' not in attrs or 'sha1' not in attrs:
 			return False
+		urlsplit = urlparse.urlsplit(url)
+		targetFilename = os.path.basename(urlsplit.path)
 		downloadDir = Board.firmwareDownloadDir() + '/download/'
 		downloadFilename = downloadDir + targetFilename
 		if not os.path.exists(downloadDir):
 			os.makedirs(downloadDir)
+		# Make sure there is enough free space
+		with open('/proc/sys/vm/drop_caches', 'w') as f:
+				f.write('3')
+		s = os.statvfs(downloadDir)
+		freeSpace = s.f_frsize * s.f_bavail
+		if int(attrs['size']) > freeSpace:
+			print "Not enough RAM to download image"
+			return False
 		u = urllib2.urlopen(url)
 		meta = u.info()
 		fileSize = int(meta.getheaders("Content-Length")[0])
@@ -94,17 +107,16 @@ class UpgradeManager(object):
 		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
 			os.remove(downloadFilename)
 			return False
-		os.rename(downloadFilename, Board.firmwareDownloadDir() + '/' + targetFilename)
-		return True
+		return downloadFilename
 
-	def rebootLater(self):
+	def upgradeLater(self):
 		starttime = datetime.utcnow().replace(hour=0,minute=0,second=0,microsecond=0)
 		if datetime.utcnow() > (starttime + timedelta(hours=4)):
 			starttime = starttime + timedelta(days=1)
 		reboottime = starttime + timedelta(minutes=random.randint(0,240))
 		while datetime.utcnow() < reboottime:
 			time.sleep(300)
-		os.system("/sbin/reboot")
+		Board.doUpgradeImage(self._firmwareType, self._filename)
 
 	def verifyFile(self, filename, size, checksum):
 		if os.stat(filename).st_size != size:
@@ -156,7 +168,7 @@ if __name__ == '__main__':
 		try:
 			if um.check():
 				print "Reboot tonight"
-				um.rebootLater()
+				um.upgradeLater()
 			print "Sleep for one day"
 			time.sleep(60*60*24)
 		except KeyboardInterrupt:
