@@ -28,5 +28,5 @@ class Board(object):
 		return '1'
 
 	@staticmethod
-	def firmwareDownloadDir();
+	def firmwareDownloadDir():
 		return '/var/firmware'

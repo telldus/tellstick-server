@@ -24,5 +24,5 @@ class Board(object):
 		return 'el-mini'
 
 	@staticmethod
-	def firmwareDownloadDir();
+	def firmwareDownloadDir():
 		return '/tmp'
