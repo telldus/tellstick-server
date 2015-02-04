@@ -5,10 +5,7 @@ import hashlib, httplib, random, os, time
 import platform, urllib2
 import xml.parsers.expat
 from datetime import datetime, timedelta
-
-PRODUCT = 'tellstick-znet'
-HW = '1'
-TARGET_DIR = '/var/firmware'
+from board import Board
 
 class UpgradeManager(object):
 	def __init__(self):
@@ -36,7 +33,7 @@ class UpgradeManager(object):
 	def checkForUpgrade(self, el, attrs):
 		if 'name' not in self._product or 'hw' not in self._product:
 			return
-		if self._product['name'] != PRODUCT or self._product['hw'] != HW:
+		if self._product['name'] != Board.product() or self._product['hw'] != Board.hw():
 			return
 		if 'name' not in self._dist or 'version' not in attrs:
 			return
@@ -71,7 +68,7 @@ class UpgradeManager(object):
 	def doUpgrade(self, attrs, url, targetFilename):
 		if 'size' not in attrs or 'sha1' not in attrs:
 			return False
-		downloadDir = TARGET_DIR + '/download/'
+		downloadDir = Board.firmwareDownloadDir() + '/download/'
 		downloadFilename = downloadDir + targetFilename
 		if not os.path.exists(downloadDir):
 			os.makedirs(downloadDir)
@@ -97,7 +94,7 @@ class UpgradeManager(object):
 		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
 			os.remove(downloadFilename)
 			return False
-		os.rename(downloadFilename, TARGET_DIR + '/' + targetFilename)
+		os.rename(downloadFilename, Board.firmwareDownloadDir() + '/' + targetFilename)
 		return True
 
 	def rebootLater(self):
