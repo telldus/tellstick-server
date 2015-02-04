@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Board config for TellStick ZNet light
+import os
 
 class Board(object):
 	@staticmethod
@@ -26,3 +27,8 @@ class Board(object):
 	@staticmethod
 	def firmwareDownloadDir():
 		return '/tmp'
+
+	@staticmethod
+	def doUpgradeImage(type, path):
+		if type == 'firmware':
+			os.system("/sbin/sysupgrade %s" % path)

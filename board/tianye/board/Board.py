@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Board config for TellStick ZNet Pro
+import os
 
 class Board(object):
 	@staticmethod
@@ -30,3 +31,13 @@ class Board(object):
 	@staticmethod
 	def firmwareDownloadDir():
 		return '/var/firmware'
+
+	@staticmethod
+	def doUpgradeImage(type, path):
+		if type == 'firmware':
+			os.rename(path, '/var/firmware/core-image-tellstick-znet.img')
+		elif type == 'firmware':
+			os.rename(path, '/var/firmware/uImage')
+		else:
+			return
+		os.system("/sbin/reboot")
