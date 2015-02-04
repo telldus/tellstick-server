@@ -18,3 +18,15 @@ class Board(object):
 	@staticmethod
 	def zwavePort():
 		return '/dev/ttyO5'
+
+	@staticmethod
+	def product():
+		return 'tellstick-znet'
+
+	@staticmethod
+	def hw():
+		return '1'
+
+	@staticmethod
+	def firmwareDownloadDir();
+		return '/var/firmware'
