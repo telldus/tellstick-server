@@ -22,7 +22,8 @@ class Board(object):
 
 	@staticmethod
 	def hw():
-		return 'el-mini'
+		with open('/tmp/sysinfo/board_name') as f:
+			return f.read().strip()
 
 	@staticmethod
 	def firmwareDownloadDir():
