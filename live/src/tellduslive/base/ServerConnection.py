@@ -71,7 +71,7 @@ class ServerConnection(object):
 			resp = self.socket.recv(1024)
 		except socket.error as e:
 			# Timeout
-			logging.error("Socket error!", str(e))
+			logging.error("Socket error: %s", str(e))
 			return ServerConnection.READY
 		except Exception as e:
 			logging.error(str(e))
