@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import hashlib, httplib, random, os, time
+import getopt, hashlib, httplib, random, os, sys, time
 import platform, urllib2, urlparse
 import xml.parsers.expat
 from datetime import datetime, timedelta
@@ -14,7 +14,8 @@ class UpgradeManager(object):
 		self._product = None
 		self._dist = None
 		self._content = ''
-		self._requireRestart = False
+		self._attrs = None
+		self._url = ''
 
 	def check(self):
 		conn = httplib.HTTPConnection("api.telldus.net:80")
@@ -27,7 +28,7 @@ class UpgradeManager(object):
 		p.EndElementHandler = self._endElement
 		p.CharacterDataHandler = self._characterDataHandler
 		p.Parse(response.read())
-		if self._requireRestart:
+		if self._url != '':
 			return True
 		return False
 
@@ -48,13 +49,14 @@ class UpgradeManager(object):
 			return
 		print "Do upgrade", el
 		if el == 'firmware':
-			self._filename = self.doUpgrade(attrs, self._content)
-		if el == 'kernel':
-			self._filename = self.doUpgrade(attrs, self._content)
-		if self._filename != False:
+			self._attrs = attrs
+			self._url = self._content
 			self._firmwareType = el
-			self._requireRestart = True
-			return
+
+		if el == 'kernel':
+			self._attrs = attrs
+			self._url = self._content
+			self._firmwareType = el
 
 	def fetchVersion(self, imageType):
 		if imageType == 'firmware':
@@ -68,29 +70,34 @@ class UpgradeManager(object):
 		with open('/etc/distribution') as f:
 			return f.readline().strip()
 
-	def doUpgrade(self, attrs, url):
+	def download(self):
+		attrs = self._attrs
+		url = self._url
 		if 'size' not in attrs or 'sha1' not in attrs:
-			return False
+			return (None, None)
 		urlsplit = urlparse.urlsplit(url)
 		targetFilename = os.path.basename(urlsplit.path)
 		downloadDir = Board.firmwareDownloadDir() + '/download/'
 		downloadFilename = downloadDir + targetFilename
 		if not os.path.exists(downloadDir):
 			os.makedirs(downloadDir)
-		# Make sure there is enough free space
-		with open('/proc/sys/vm/drop_caches', 'w') as f:
-				f.write('3')
+		try:
+			# Make sure there is enough free space
+			with open('/proc/sys/vm/drop_caches', 'w') as f:
+					f.write('3')
+		except:
+			pass
 		s = os.statvfs(downloadDir)
 		freeSpace = s.f_frsize * s.f_bavail
 		if int(attrs['size']) > freeSpace:
 			print "Not enough RAM to download image"
-			return False
+			return (None, None)
 		u = urllib2.urlopen(url)
 		meta = u.info()
 		fileSize = int(meta.getheaders("Content-Length")[0])
 		if fileSize != int(attrs['size']):
 			print "Size mismatch", fileSize, int(attrs['size'])
-			return False
+			return (None, None)
 		print "Downloading bytes: %s" % (fileSize)
 		f = open(downloadFilename, 'wb')
 		fileSizeDl = 0
@@ -106,17 +113,8 @@ class UpgradeManager(object):
 		f.close()
 		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
 			os.remove(downloadFilename)
-			return False
-		return downloadFilename
-
-	def upgradeLater(self):
-		starttime = datetime.utcnow().replace(hour=0,minute=0,second=0,microsecond=0)
-		if datetime.utcnow() > (starttime + timedelta(hours=4)):
-			starttime = starttime + timedelta(days=1)
-		reboottime = starttime + timedelta(minutes=random.randint(0,240))
-		while datetime.utcnow() < reboottime:
-			time.sleep(300)
-		Board.doUpgradeImage(self._firmwareType, self._filename)
+			return (None, None)
+		return (self._firmwareType, downloadFilename)
 
 	def verifyFile(self, filename, size, checksum):
 		if os.stat(filename).st_size != size:
@@ -163,18 +161,29 @@ class UpgradeManager(object):
 		self._content = ''
 
 if __name__ == '__main__':
+	opts, args = getopt.getopt(sys.argv[1:], "", ["check","upgrade"])
 	um = UpgradeManager()
-	while True:
-		try:
-			if um.check():
-				print "Reboot tonight"
-				um.upgradeLater()
-			print "Sleep for one day"
-			time.sleep(60*60*24)
-		except KeyboardInterrupt:
-			print "Exit"
-			break
-		except Exception as e:
-			print "Could not fetch. Sleep one minute and try again"
-			print str(e)
-			time.sleep(60)
+
+	check = False
+	upgrade = False
+	for opt, arg in opts:
+		if opt in ("--check"):
+			check = True
+		if opt in ("--upgrade"):
+			upgrade = True
+
+	if check:
+		if um.check():
+			sys.exit(1)
+		else:
+			sys.exit(0)
+
+	if upgrade:
+		if not um.check():
+			sys.exit(0)
+		(type, filename) = um.download()
+		if type is None:
+			sys.exit(1)
+		Board.doUpgradeImage(type, filename)
+
+	sys.exit(0)
