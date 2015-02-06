@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Board config for TellStick ZNet light
+# Board config for OpenWRT-based boards
 import os
 
 class Board(object):
