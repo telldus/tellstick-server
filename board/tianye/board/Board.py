@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Board config for TellStick ZNet Pro
-import os, random
+import os, random, time
 from datetime import datetime, timedelta
 
 class Board(object):
