@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 # Board config for TellStick ZNet Pro
-import os
+import os, random
+from datetime import datetime, timedelta
 
 class Board(object):
 	@staticmethod
@@ -40,4 +41,10 @@ class Board(object):
 			os.rename(path, '/var/firmware/uImage')
 		else:
 			return
+		starttime = datetime.utcnow().replace(hour=0,minute=0,second=0,microsecond=0)
+		if datetime.utcnow() > (starttime + timedelta(hours=4)):
+			starttime = starttime + timedelta(days=1)
+		reboottime = starttime + timedelta(minutes=random.randint(0,240))
+		while datetime.utcnow() < reboottime:
+			time.sleep(300)
 		os.system("/sbin/reboot")
