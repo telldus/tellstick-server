@@ -120,7 +120,6 @@ class DeviceManager(Plugin):
 		valueList = []
 		for valueType in values:
 			for value in values[valueType]:
-				print value
 				valueList.append({
 					'type': valueType,
 					'lastUp': str(int(time.time())),
