@@ -204,18 +204,18 @@ class DeviceManager(Plugin):
 
 	@TelldusLive.handler('device')
 	def __handleDeviceCommand(self, msg):
-		args = msg.argument(0).dictVal
+		args = msg.argument(0).toNative()
 		if 'action' not in args:
 			return
-		if args['action'].stringVal == 'setName':
-			if 'name' not in args or args['name'].stringVal == '':
+		if args['action'] == 'setName':
+			if 'name' not in args or args['name'] == '':
 				return
 			for dev in self.devices:
-				if dev.id() != args['device'].intVal:
+				if dev.id() != args['device']:
 					continue
-				dev.setName(args['name'].stringVal)
+				dev.setName(args['name'])
 				self.__sendDeviceReport()
-				break
+				return
 
 	def liveRegistered(self, msg):
 		self.registered = True
