@@ -3,7 +3,7 @@ Description=Telldus Firmware upgrade daemon
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/tellstick-upgrade.py
+ExecStart=/usr/bin/tellstick-upgrade.py --monitor
 Type=simple
 Restart=always
 
