@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import getopt, hashlib, httplib, random, os, sys, time
+import getopt, hashlib, httplib, os, sys, time
 import platform, urllib2, urlparse
 import xml.parsers.expat
-from datetime import datetime, timedelta
 from board import Board
 
 class UpgradeManager(object):
@@ -165,16 +164,41 @@ class UpgradeManager(object):
 		self._content = ''
 
 if __name__ == '__main__':
-	opts, args = getopt.getopt(sys.argv[1:], "", ["check","upgrade"])
+	opts, args = getopt.getopt(sys.argv[1:], "", ["check","monitor","upgrade"])
 	um = UpgradeManager()
 
 	check = False
 	upgrade = False
+	monitor = False
 	for opt, arg in opts:
 		if opt in ("--check"):
 			check = True
 		if opt in ("--upgrade"):
 			upgrade = True
+		if opt in ("--monitor"):
+			monitor = True
+			break
+
+	if monitor:
+		while True:
+			try:
+				if not um.check():
+					print "Sleep for one day"
+					time.sleep(60*60*24)
+					continue
+				(type, filename) = um.download()
+				if type is None:
+					raise Exception("Error downloading file")
+				Board.doUpgradeImage(type, filename)
+				print "Sleep for one day"
+				time.sleep(60*60*24)
+			except KeyboardInterrupt:
+				print "Exit"
+				sys.exit(0)
+			except Exception as e:
+				print "Could not fetch. Sleep one minute and try again"
+				print str(e)
+				time.sleep(60)
 
 	if check:
 		if um.check():
