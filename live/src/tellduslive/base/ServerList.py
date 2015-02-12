@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import httplib, logging
+import httplib, logging, time
 import fcntl, socket, struct
 import xml.parsers.expat
 from board import Board
@@ -9,8 +9,11 @@ class ServerList():
 
 	def __init__(self):
 		self.list = []
+		self.listAge = 0
 
 	def popServer(self):
+		if (time.time() - self.listAge) > 1800:  # 30 minutes
+			self.list = []
 		if (self.list == []):
 			try:
 				self.retrieveServerList()
@@ -32,6 +35,7 @@ class ServerList():
 
 		p.StartElementHandler = self._startElement
 		p.Parse(response.read())
+		self.listAge = time.time()
 
 	def _startElement(self, name, attrs):
 		if (name == 'server'):
