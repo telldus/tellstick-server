@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+try:
+	from setuptools import setup
+except ImportError:
+	from distutils.core import setup
 
 setup(
 	name='GPIO',
 	version='0.1',
-	packages=find_packages('src'),
+	packages=['gpio'],
 	package_dir = {'':'src'},
 	extras_require = dict(cREQ = 'Base>=0.1'),
 )
