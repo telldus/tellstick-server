@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import httplib
+import httplib, logging
 import fcntl, socket, struct
 import xml.parsers.expat
 from board import Board
@@ -15,7 +15,7 @@ class ServerList():
 			try:
 				self.retrieveServerList()
 			except Exception as e:
-				print "Could not retrieve server list:", e
+				logging.error("Could not retrieve server list: %s", str(e))
 				return False
 
 		if (self.list == []):
