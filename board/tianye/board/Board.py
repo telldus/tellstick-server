@@ -10,6 +10,15 @@ class Board(object):
 		return '/etc'
 
 	@staticmethod
+	def gpioConfig():
+		return {
+			'zwave:reset': {
+				'type': 'gpio',
+				'port': '12',
+			},
+		}
+
+	@staticmethod
 	def liveServer():
 		return 'api.telldus.com'
 

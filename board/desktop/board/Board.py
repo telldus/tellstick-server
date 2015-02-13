@@ -14,6 +14,7 @@ class Board(object):
 		return {
 			'status:green': {'type': 'none'},
 			'status:red': {'type': 'none'},
+			'zwave:reset': {'type': 'none'},
 		}
 
 	@staticmethod

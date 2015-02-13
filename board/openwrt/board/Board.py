@@ -18,7 +18,8 @@ class Board(object):
 			'status:green': {
 				'type': 'gpio',
 				'port': '21'
-			}
+			},
+			'zwave:reset': {'type': 'none'},
 		}
 
 	@staticmethod
