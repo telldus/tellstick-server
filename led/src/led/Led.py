@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from base import Plugin, implements
+from board import Board
 from tellduslive.base import ITelldusLiveObserver, TelldusLive
 from gpio import Gpio
 import socket, struct, fcntl
@@ -23,7 +24,7 @@ class Led(Plugin):
 		self.setNetworkLed()
 
 	def setNetworkLed(self):
-		if Led.__getIp('eth0') == None:
+		if Led.__getIp(Board.networkInterface()) == None:
 			self.gpio.setPin('status:red', 1, freq=1)
 			self.gpio.setPin('status:green', 0)
 			return

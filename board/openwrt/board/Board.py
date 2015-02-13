@@ -23,6 +23,10 @@ class Board(object):
 		}
 
 	@staticmethod
+	def networkInterface():
+		return 'eth0.1'
+
+	@staticmethod
 	def liveServer():
 		return 'api.telldus.com'
 

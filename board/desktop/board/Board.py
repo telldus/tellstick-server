@@ -10,6 +10,10 @@ class Board(object):
 		return os.environ['HOME'] + '/.config/Telldus'
 
 	@staticmethod
+	def networkInterface():
+		return 'eth0'
+
+	@staticmethod
 	def gpioConfig():
 		return {
 			'status:green': {'type': 'none'},
