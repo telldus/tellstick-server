@@ -12,6 +12,14 @@ class Board(object):
 	@staticmethod
 	def gpioConfig():
 		return {
+			'status:red': {
+				'type': 'pwm',
+				'port': 'ehrpwm.2:0'
+			},
+			'status:green': {
+				'type': 'pwm',
+				'port': 'ehrpwm.2:1'
+			},
 			'zwave:reset': {
 				'type': 'gpio',
 				'port': '12',

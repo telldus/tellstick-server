@@ -86,6 +86,30 @@ class GpioPin(Pin):
 		else:
 			self._writeToFile('/sys/class/gpio/gpio%s/value' % self.pin['port'], '0')
 
+class PWMPin(Pin):
+	def __init__(self, pin):
+		super(PWMPin,self).__init__()
+		self.pin = pin
+		if os.path.exists('/sys/class/pwm/%s' % pin['port']) == False:
+			return
+		self._writeToFile('/sys/class/pwm/%s/request' % pin['port'], '1')
+		self._writeToFile('/sys/class/pwm/%s/run' % pin['port'], '1')
+		self._writeToFile('/sys/class/pwm/%s/period_freq' % pin['port'], '100')
+		self._writeToFile('/sys/class/pwm/%s/duty_percent' % pin['port'], '0')
+
+	def _setBrigtness(self, brightness):
+		return  # TODO(micke): Not implemented yet
+
+	def _setState(self, state):
+		self._writeToFile('/sys/class/pwm/%s/run' % self.pin['port'], '0')
+		self._writeToFile('/sys/class/pwm/%s/duty_percent' % self.pin['port'], '0')
+		self._writeToFile('/sys/class/pwm/%s/period_freq' % self.pin['port'], '100')
+		if state == 1:
+			self._writeToFile('/sys/class/pwm/%s/duty_percent' % self.pin['port'], '100')
+		else:
+			self._writeToFile('/sys/class/pwm/%s/duty_percent' % self.pin['port'], '0')
+		self._writeToFile('/sys/class/pwm/%s/run' % self.pin['port'], '1')
+
 class Gpio(Plugin):
 	def __init__(self):
 		super(Plugin,self).__init__()
@@ -103,6 +127,8 @@ class Gpio(Plugin):
 			return True
 		if pin['type'] == 'gpio':
 			self.pins[name] = GpioPin(pin)
+		elif pin['type'] == 'pwm':
+			self.pins[name] = PWMPin(pin)
 		elif pin['type'] == 'none':
 			# We don't have this pin on the board but is configured to not issue an warning
 			return False
