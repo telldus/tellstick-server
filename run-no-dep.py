@@ -6,6 +6,7 @@ plugins = {
 	'zwave.workaround': ['WorkaroundPlugin'],
 }
 startup = {
+	'led': ['Led'],
 	'log': ['Logger'],
 	'scheduler.base': ['Scheduler'],
 	'tellduslive.base': ['TelldusLive'],
