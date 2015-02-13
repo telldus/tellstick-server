@@ -245,8 +245,11 @@ class Scheduler(Plugin):
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():
-						#TODO this is really a 433-thing, so check if 433 is in transport instead
-						if 'e433' in runningJob['transport']:
+						device = self.deviceManager.device(runningJob['client_device_id'])
+						if not device:
+							print "Missing device, b: " + str(jobData['client_device_id'])
+							continue
+						if device.typeString() == 'e433':
 							#repeats for 433-devices only, TODO test
 							runningJob['reps'] = int(runningJob['reps']) - 1
 							if runningJob['reps'] > 0:
@@ -289,10 +292,6 @@ class Scheduler(Plugin):
 			return
 		method = jobData['method']
 		
-		if 'zwave' in jobData['transport']:
-			#TODO dimmer and whatnot, is there a general conversion-thingy?
-			action = 'turnoff' if method == 2 else 'turnon'
-			device.command(action, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
-		else:
-			pass
-			#TODO 433
+		#TODO dimmer and whatnot, is there a general conversion-thingy?
+		action = 'turnoff' if method == 2 else 'turnon'
+		device.command(action, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
