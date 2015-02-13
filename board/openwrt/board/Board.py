@@ -9,6 +9,19 @@ class Board(object):
 		return '/etc'
 
 	@staticmethod
+	def gpioConfig():
+		return {
+			'status:red': {
+				'type': 'gpio',
+				'port': '20'
+			},
+			'status:green': {
+				'type': 'gpio',
+				'port': '21'
+			}
+		}
+
+	@staticmethod
 	def liveServer():
 		return 'api.telldus.com'
 

@@ -1,33 +1,118 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin
-import logging, os
+from base import Plugin, Application
+from board import Board
+from threading import Thread
+import logging, os, time
 
-class Gpio(Plugin):
+class Pin(Thread):
 	def __init__(self):
-		super(Plugin,self).__init__()
+		super(Pin,self).__init__()
+		self.state = None  # Unknown
+		self.brightness = None
+		self.freq = 0
 
-	def initPWM(self, name):
-		if os.path.exists('/sys/class/pwm/%s' % name) == False:
+	def run(self):
+		s = 0
+		while(self.freq > 0):
+			s = 1-s
+			self._setState(s)
+			time.sleep(self.freq)
+		# Makes it possible for us to restart this thread
+		Thread.__init__(self)
+
+	def setPin(self, state, freq = 0, brightness = 100):
+		if self.brightness != brightness:
+			self._setBrigtness(brightness)
+			self.brightness = brightness
+		if self.state == state:
+			if self.freq != freq:
+				if self.freq == 0:
+					self.freq = freq
+					self.start()
+				else:
+					self.freq = freq
+				if freq == 0:
+					self._setState(self.state)
 			return
-		self.__writeToFile('/sys/class/pwm/%s/request' % name, '1')
-		self.__writeToFile('/sys/class/pwm/%s/run' % name, '1')
-		self.__writeToFile('/sys/class/pwm/%s/period_freq' % name, '100')
-		self.__writeToFile('/sys/class/pwm/%s/duty_percent' % name, '0')
+		self.state = state
+		if state == 0:
+			# Stop timer if running
+			if self.freq > 0:
+				self.freq = 0
+			self._setState(state)
+			return
+		if freq > 0:
+			# Blink
+			self.freq = freq
+			self.start()
+			return
+		self.freq = 0
+		self._setState(state)
 
-	def setPWM(self, name, freq=None, duty=None):
-		self.__writeToFile('/sys/class/pwm/%s/run' % name, '0')
-		self.__writeToFile('/sys/class/pwm/%s/duty_percent' % name, '0')
-		self.__writeToFile('/sys/class/pwm/%s/period_freq' % name, '100')
-		if duty is not None:
-			self.__writeToFile('/sys/class/pwm/%s/duty_percent' % name, str(duty))
-		if freq is not None:
-			self.__writeToFile('/sys/class/pwm/%s/period_freq' % name, str(freq))
-		self.__writeToFile('/sys/class/pwm/%s/run' % name, '1')
+	def _setBrigtness(self, brightness):
+		logging.warning("Set brightness not implemented")
 
-	def __writeToFile(self, path, value):
+	def _setState(self, state):
+		logging.warning("State not implemented")
+
+	def _writeToFile(self, path, value):
 		try:
 			with open(path, 'w') as f:
 				f.write(value)
 		except:
 			pass
+
+class GpioPin(Pin):
+	def __init__(self, pin):
+		super(GpioPin,self).__init__()
+		self.pin = pin
+		if os.path.exists('/sys/class/gpio/gpio%s' % pin['port']) == False:
+			if os.path.exists('/sys/class/gpio/export') == False:
+				return
+			# Export the gpio
+			self._writeToFile('/sys/class/gpio/export', pin['port'])
+		if os.path.exists('/sys/class/gpio/gpio%s' % pin['port']) == False:
+			logging.error('Gpio not available even though it is exported. Something is wrong!')
+			return
+		self._writeToFile('/sys/class/gpio/gpio%s/direction' % pin['port'], 'out')
+
+	def _setBrigtness(self, brightness):
+		return  # No PWM available for gpio pins
+
+	def _setState(self, state):
+		if state == 1:
+			self._writeToFile('/sys/class/gpio/gpio%s/value' % self.pin['port'], '1')
+		else:
+			self._writeToFile('/sys/class/gpio/gpio%s/value' % self.pin['port'], '0')
+
+class Gpio(Plugin):
+	def __init__(self):
+		super(Plugin,self).__init__()
+		Application().registerShutdown(self.shutdown)
+		self.pins = {}
+
+	def initPin(self, name):
+		config = Board.gpioConfig()
+		if name not in config:
+			logging.warning('GPIO %s not configured in board config', name)
+			return False
+		pin = config[name]
+		if name in self.pins:
+			# Already initiated
+			return True
+		if pin['type'] == 'gpio':
+			self.pins[name] = GpioPin(pin)
+		elif pin['type'] == 'none':
+			# We don't have this pin on the board but is configured to not issue an warning
+			return False
+		return True
+
+	def setPin(self, name, state, freq = 0, brightness = 100):
+		if name not in self.pins:
+			return False
+		self.pins[name].setPin(state, freq, brightness)
+
+	def shutdown(self):
+		for i in self.pins:
+			self.pins[i].setPin(0)

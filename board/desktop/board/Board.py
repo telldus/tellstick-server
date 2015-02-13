@@ -10,6 +10,13 @@ class Board(object):
 		return os.environ['HOME'] + '/.config/Telldus'
 
 	@staticmethod
+	def gpioConfig():
+		return {
+			'status:green': {'type': 'none'},
+			'status:red': {'type': 'none'},
+		}
+
+	@staticmethod
 	def liveServer():
 		return 'api.telldus.net'
 

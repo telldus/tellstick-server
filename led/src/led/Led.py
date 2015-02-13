@@ -8,15 +8,12 @@ import socket, struct, fcntl
 class Led(Plugin):
 	implements(ITelldusLiveObserver)
 
-	led2_red = 'ehrpwm.2:0'
-	led2_green = 'ehrpwm.2:1'
 
 	def __init__(self):
 		self.gpio = Gpio(self.context)
 		self.live = TelldusLive(self.context)
-		# LED2
-		self.gpio.initPWM(Led.led2_red)
-		self.gpio.initPWM(Led.led2_green)
+		self.gpio.initPin('status:red')
+		self.gpio.initPin('status:green')
 		self.setNetworkLed()
 
 	def liveRegistered(self, msg):
@@ -27,14 +24,15 @@ class Led(Plugin):
 
 	def setNetworkLed(self):
 		if Led.__getIp('eth0') == None:
-			self.gpio.setPWM(Led.led2_red, freq=1, duty=50)
+			self.gpio.setPin('status:red', 1, freq=1)
+			self.gpio.setPin('status:green', 0)
 			return
 		if self.live.isRegistered():
-			self.gpio.setPWM(Led.led2_red, freq=100, duty=0)
-			self.gpio.setPWM(Led.led2_green, freq=100, duty=50)
+			self.gpio.setPin('status:red', 0)
+			self.gpio.setPin('status:green', 1, brightness=50)
 		else:
-			self.gpio.setPWM(Led.led2_red, freq=100, duty=50)
-			self.gpio.setPWM(Led.led2_green, freq=100, duty=0)
+			self.gpio.setPin('status:red', 1, brightness=50)
+			self.gpio.setPin('status:green', 0)
 
 	@staticmethod
 	def __getIp(iface):
