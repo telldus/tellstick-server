@@ -219,6 +219,14 @@ class RF433(Plugin):
 					device.paramUpdated('')
 					break
 
+		elif action == 'remove':
+			deviceId = data['device']
+			for device in self.devices:
+				if device.id() == deviceId:
+					self.deviceManager.removeDevice(deviceId)
+					self.devices.remove(device)
+					return
+
 		else:
 			logging.warning("Unknown rf433 command %s", action)
 
