@@ -189,6 +189,7 @@ class RF433(Plugin):
 			'model': model,
 			'protocolParams': params
 		})
+		self.devices.append(device)
 		self.deviceManager.addDevice(device)
 
 	@TelldusLive.handler('rf433')
