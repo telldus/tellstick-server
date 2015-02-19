@@ -34,6 +34,8 @@ class RF433Msg(object):
 			return (None, None)
 		if data[0] == 'S':
 			return ('S', None)
+		if data[0] == 'N':
+			return ('N', None)
 		if data[0] == 'V':
 			try:
 				version = int(data[1:])
