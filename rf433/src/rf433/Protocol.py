@@ -54,6 +54,10 @@ class Protocol(object):
 		return value
 
 	@staticmethod
+	def checkBit(data, bitno):
+		return ((data>>bitno)&0x01)
+
+	@staticmethod
 	def decodeData(data):
 		if 'protocol' not in data:
 			return []
