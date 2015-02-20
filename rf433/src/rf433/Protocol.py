@@ -66,6 +66,9 @@ class Protocol(object):
 			decoded = ProtocolArctech.decodeData(data)
 			if decoded is not None:
 				retval.append(decoded)
+			decoded = ProtocolComen.decodeData(data)
+			if decoded is not None:
+				retval.append(decoded)
 		return retval
 
 	def stringForMethod(self, method):
