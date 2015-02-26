@@ -61,10 +61,13 @@ class RequestHandler(object):
 			arr = o.getMenuItems()
 			if type(arr) == list:
 				menu.extend(arr)
+		template = None
 		for o in self.observers:
 			if o.matchRequest(path):
 				template, data = o.handleRequest(path, params)
 				break
+		if template is None:
+			raise cherrypy.NotFound()
 		tmpl = self.loadTemplate(template)
 		data['menu'] = menu
 		stream = tmpl.generate(title='TellStick ZNet', **data)
