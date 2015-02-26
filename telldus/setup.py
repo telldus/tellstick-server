@@ -13,5 +13,9 @@ setup(
 	package_dir = {'':'src'},
 	extras_require = {
 		'telldus': ['Base>=0.1\nEvent>=0.1'],
-	}
+	},
+	package_data={'telldus' : [
+		'templates/*.html',
+		'htdocs/img/*.png'
+	]}
 )
