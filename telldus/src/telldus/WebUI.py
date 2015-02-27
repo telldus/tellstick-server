@@ -13,12 +13,14 @@ class WebUI(Plugin):
 	def getTemplatesDirs(self):
 		return [resource_filename('telldus', 'templates')]
 
-	def matchRequest(self, path):
-		if path == '':
+	def matchRequest(self, plugin, path):
+		if path == '' and plugin == '':
 			return True
 		return False
 
-	def handleRequest(self, path, params):
+	def handleRequest(self, plugin, path, params):
+		if plugin != '':
+			return None
 		if path == '':
 			return 'index.html', {}
 		return None

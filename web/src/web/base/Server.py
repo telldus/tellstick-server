@@ -2,16 +2,17 @@ import cherrypy, mimetypes, threading
 from base import Application, IInterface, ObserverCollection, Plugin
 from genshi.template import TemplateLoader, loader
 from pkg_resources import resource_filename, resource_exists, resource_stream
+import logging
 
 class IWebRequestHandler(IInterface):
 	"""Interface defenition for handling web requests"""
-	def handleRequest(paths, params):
+	def handleRequest(plugin, paths, params):
 		"""Handle a request. Return a tuple with template and data"""
 	def getMenuItems():
 		"""Return array with menu items"""
 	def getTemplatesDirs():
 		""" Location of templates provided by plugin. """
-	def matchRequest(path):
+	def matchRequest(plugin, path):
 		"""Return true if we handle this request"""
 
 class Server(Plugin):
@@ -63,8 +64,8 @@ class RequestHandler(object):
 				menu.extend(arr)
 		template = None
 		for o in self.observers:
-			if o.matchRequest(path):
-				template, data = o.handleRequest(path, params)
+			if o.matchRequest(plugin, path):
+				template, data = o.handleRequest(plugin, path, params)
 				break
 		if template is None:
 			raise cherrypy.NotFound()
