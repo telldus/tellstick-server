@@ -11,6 +11,11 @@ setup(
 	version='0.1',
 	packages=['telldus'],
 	package_dir = {'':'src'},
+	entry_points={ \
+		'telldus.plugins': [
+			'webui = telldus.WebUI',
+		]
+	},
 	extras_require = {
 		'telldus': ['Base>=0.1\nEvent>=0.1'],
 	},
