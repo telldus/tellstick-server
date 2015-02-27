@@ -21,6 +21,7 @@ setup(
 	},
 	package_data={'telldus' : [
 		'templates/*.html',
-		'htdocs/img/*.png'
+		'htdocs/img/*.png',
+		'htdocs/img/*.ico',
 	]}
 )
