@@ -58,19 +58,21 @@ class Application(object):
 	def registerShutdown(self, fn):
 		self.shutdown.append(fn)
 
-	def run(self, startup=[]):
-		for moduleClass in startup:
-			try:
-				if issubclass(moduleClass, Plugin):
-					m = moduleClass(self.pluginContext)
-				else:
-					m = moduleClass()
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
-				logging.error("Could not load %s", str(moduleClass))
-				logging.error(str(e))
-				self.printBacktrace(traceback.extract_tb(exc_traceback))
-		self.__loadPkgResourses()
+	def run(self, startup=None):
+		if startup is None:
+			self.__loadPkgResourses()
+		else:
+			for moduleClass in startup:
+				try:
+					if issubclass(moduleClass, Plugin):
+						m = moduleClass(self.pluginContext)
+					else:
+						m = moduleClass()
+				except Exception as e:
+					exc_type, exc_value, exc_traceback = sys.exc_info()
+					logging.error("Could not load %s", str(moduleClass))
+					logging.error(str(e))
+					self.printBacktrace(traceback.extract_tb(exc_traceback))
 		while 1:
 			with self.lock:
 				if not self.running:
