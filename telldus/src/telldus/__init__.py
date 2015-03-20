@@ -2,4 +2,7 @@
 
 from Device import Device, DeviceAbortException
 from DeviceManager import DeviceManager, IDeviceChange
-from DeviceEventFactory import DeviceEventFactory
+try:
+	from DeviceEventFactory import DeviceEventFactory
+except ImportError:
+	pass  # Events not available
