@@ -64,7 +64,12 @@ class ServerConnection(object):
 			return ServerConnection.MSG_RECEIVED
 
 		fileno = self.socket.fileno()
-		r, w, e = select.select([fileno], [], [], 5)
+		try:
+			r, w, e = select.select([fileno], [], [], 5)
+		except Exception as e:
+			logging.exception(e)
+			self.close()
+			return self.state
 		if fileno not in r:
 			return self.state
 		try:
