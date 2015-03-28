@@ -1,0 +1,2 @@
+To install a plugin, go to the plugin subdir and call:
+PYTHONUSERBASE="../plugins/" python setup.py develop --user
