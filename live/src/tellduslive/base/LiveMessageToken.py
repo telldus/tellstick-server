@@ -117,11 +117,11 @@ class LiveMessageToken(object):
 
 		elif (string[start] == 'l'):
 			start+=1
+			token.valueType = LiveMessageToken.TYPE_LIST
 			while (start < len(string) and string[start] != 's'):
 				start, listToken = LiveMessageToken.parseToken(string, start)
 				if (listToken.valueType == LiveMessageToken.TYPE_INVALID):
 					break
-				token.valueType = LiveMessageToken.TYPE_LIST
 				token.listVal.append(listToken)
 			start+=1
 
