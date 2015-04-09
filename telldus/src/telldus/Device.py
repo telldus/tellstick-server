@@ -152,6 +152,10 @@ class Device(object):
 	def typeString(self):
 		return ''
 
+	@staticmethod
+	def maskUnsupportedMethods(methods, supportedMethods):
+		return methods & supportedMethods
+
 class CachedDevice(Device):
 	def __init__(self, settings):
 		super(CachedDevice, self).__init__()
