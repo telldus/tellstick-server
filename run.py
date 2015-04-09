@@ -4,7 +4,7 @@
 import pkg_resources
 
 if __name__ == "__main__":
-	paths = ['plugins']
+	paths = ['plugins', '/usr/lib/telldus/plugins']
 
 	distributions, errors =  pkg_resources.working_set.find_plugins(pkg_resources.Environment(paths))
 	for dist in distributions:
