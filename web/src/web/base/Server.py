@@ -1,7 +1,7 @@
 import cherrypy, mimetypes, threading
 from base import Application, IInterface, ObserverCollection, Plugin
 from genshi.template import TemplateLoader, loader
-from pkg_resources import resource_filename, resource_exists, resource_stream
+from pkg_resources import resource_filename, resource_exists, resource_stream, resource_isdir
 import logging
 
 class IWebRequestHandler(IInterface):
@@ -55,7 +55,7 @@ class RequestHandler(object):
 	def handle(self, plugin, p, **params):
 		path = '/'.join(p)
 		# First check for the file in htdocs
-		if plugin != '' and resource_exists(plugin, 'htdocs/' + path):
+		if plugin != '' and resource_exists(plugin, 'htdocs/' + path) and resource_isdir(plugin, 'htdocs/' + path) is False:
 			mimetype, encoding = mimetypes.guess_type(path, strict=False)
 			if mimetype is not None:
 				cherrypy.response.headers['Content-Type'] = mimetype
