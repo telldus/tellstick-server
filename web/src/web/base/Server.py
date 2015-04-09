@@ -15,6 +15,10 @@ class IWebRequestHandler(IInterface):
 	def matchRequest(plugin, path):
 		"""Return true if we handle this request"""
 
+class WebResponseRedirect(object):
+	def __init__(self, url):
+		self.url = url
+
 class Server(Plugin):
 	def __init__(self):
 		super(Server,self).__init__()
@@ -66,8 +70,11 @@ class RequestHandler(object):
 		template = None
 		for o in self.observers:
 			if o.matchRequest(plugin, path):
-				template, data = o.handleRequest(plugin, path, params)
+				response = o.handleRequest(plugin, path, params)
 				break
+		if isinstance(response, WebResponseRedirect):
+			raise cherrypy.HTTPRedirect('%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
+		template, data = response
 		if template is None:
 			raise cherrypy.NotFound()
 		tmpl = self.loadTemplate(template)
