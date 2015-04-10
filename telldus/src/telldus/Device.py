@@ -54,7 +54,32 @@ class Device(object):
 		return self._id
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
-		pass
+		method = Device.methodStrToInt(action)
+
+		def triggerFail(reason):
+			if failure:
+				try:
+					failure(reason, *callbackArgs)
+				except DeviceAbortException:
+					return
+		def s():
+			if success:
+				try:
+					success(state=method, stateValue=value, *callbackArgs)
+				except DeviceAbortException:
+					return
+			self.setState(action, value, origin=origin)
+
+		if method == 0:
+			triggerFail(0)
+			return
+		try:
+			self._command(method, value, success=s, failure=triggerFail)
+		except:
+			triggerFail(0)
+
+	def _command(self, action, value, success, failure):
+		failure(0)
 
 	def confirmed(self):
 		return self._confirmed
@@ -151,6 +176,20 @@ class Device(object):
 
 	def typeString(self):
 		return ''
+
+	@staticmethod
+	def methodStrToInt(method):
+		if method == 'turnon':
+			return Device.TURNON
+		if method == 'turnoff':
+			return Device.TURNOFF
+		if method == 'dim':
+			return Device.DIM
+		if method == 'bell':
+			return Device.BELL
+		if method == 'learn':
+			return Device.LEARN
+		return 0
 
 	@staticmethod
 	def maskUnsupportedMethods(methods, supportedMethods):
