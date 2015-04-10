@@ -42,7 +42,7 @@ class SqueezeBox(Plugin):
 		try:
 			self.sc.connect()
 		except:
-			logger.error("Cannot connect to squeezebox server")
+			logging.error("Cannot connect to squeezebox server")
 			return
 		for player in self.sc.players:
 			self.deviceManager.addDevice(Player(player))
