@@ -8,6 +8,7 @@ plugins = {
 startup = {
 	'led': ['Led'],
 	'log': ['Logger'],
+	'rf433': ['RF433'],
 	'scheduler.base': ['Scheduler'],
 	'tellduslive.base': ['TelldusLive'],
 	'zwave.telldus': ['TelldusZWave'],
