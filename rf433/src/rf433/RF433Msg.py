@@ -42,6 +42,8 @@ class RF433Msg(object):
 			except:
 				return (None, None)
 			return ('V', version)
+		if data[0] == 'H':
+			return ('H', data[1:])
 		if data[0] == 'W':
 			# Incoming
 			lines = data[1:]

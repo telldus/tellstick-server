@@ -179,6 +179,7 @@ class RF433(Plugin):
 
 		self.deviceManager.finishedLoading('433')
 		self.dev.queue(RF433Msg('V', success=self.__version, failure=self.__noVersion))
+		self.dev.queue(RF433Msg('H', success=self.__hwVersion, failure=self.__noHWVersion))
 		self.live = TelldusLive(self.context)
 
 	def addDevice(self, protocol, model, name, params):
@@ -303,6 +304,12 @@ class RF433(Plugin):
 	def __noVersion(self):
 		logging.warning("Could not get firmware version for RF433, force upgrade")
 		self.dev.updateFirmware()
+
+	def __noHWVersion(self):
+		logging.warning("Could not get hw version for RF433")
+
+	def __hwVersion(self, version):
+		logging.debug("Got HW version %s", version)
 
 	def __version(self, version):
 		self.version = version
