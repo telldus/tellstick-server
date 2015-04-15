@@ -31,6 +31,10 @@ class Board(object):
 		return 'api.telldus.com'
 
 	@staticmethod
+	def rf433Port():
+		return '/dev/ttyUSB0'
+
+	@staticmethod
 	def zwavePort():
 		return '/dev/ttyACM0'
 
