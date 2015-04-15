@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from base import Application
-from pkg_resources import resource_filename
 import fcntl, os, select, serial, threading, time
 from RF433Msg import RF433Msg
 import logging
+try:
+	from pkg_resources import resource_filename
+except ImportError:
+	# pkg_resources not available, load firmware from filesystem
+	def resource_filename(module, filename):
+		raise Exception("Loading of firmware not implemented yet")
 
 class Adapter(threading.Thread):
 	BOOTLOADER_START = 0x7A00
