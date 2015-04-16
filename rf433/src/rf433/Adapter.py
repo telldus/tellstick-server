@@ -21,13 +21,18 @@ class Adapter(threading.Thread):
 		self.__waitForResponse = None
 		self.__setupHardware()
 		self.waitingForData = False
-		self.dev = serial.Serial(dev, 115200, timeout=0)
+		try:
+			self.dev = serial.Serial(dev, 115200, timeout=0)
+		except Exception as e:
+			logging.error("Could not open serial port: %s", e)
+			self.dev = None
 		Application().registerShutdown(self.__stop)
 		(self.readPipe, self.writePipe) = os.pipe()
 		fl = fcntl.fcntl(self.readPipe, fcntl.F_GETFL)
 		fcntl.fcntl(self.readPipe, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 		self.requireUpdate = False
-		self.start()
+		if self.dev is not None:
+			self.start()
 
 	def queue(self, msg):
 		self.__queue.append(msg)
