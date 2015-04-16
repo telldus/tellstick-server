@@ -86,6 +86,20 @@ class GpioPin(Pin):
 		else:
 			self._writeToFile('/sys/class/gpio/gpio%s/value' % self.pin['port'], '0')
 
+class LedPin(Pin):
+	def __init__(self, pin):
+		super(LedPin,self).__init__()
+		self.pin = pin
+
+	def _setBrigtness(self, brightness):
+		return  # No PWM available for led pins
+
+	def _setState(self, state):
+		if state == 1:
+			self._writeToFile('/sys/class/leds/%s/brightness' % self.pin['port'], '1')
+		else:
+			self._writeToFile('/sys/class/leds/%s/brightness' % self.pin['port'], '0')
+
 class PWMPin(Pin):
 	def __init__(self, pin):
 		super(PWMPin,self).__init__()
@@ -127,6 +141,8 @@ class Gpio(Plugin):
 			return True
 		if pin['type'] == 'gpio':
 			self.pins[name] = GpioPin(pin)
+		elif pin['type'] == 'led':
+			self.pins[name] = LedPin(pin)
 		elif pin['type'] == 'pwm':
 			self.pins[name] = PWMPin(pin)
 		elif pin['type'] == 'none':
