@@ -12,19 +12,19 @@ class Board(object):
 	def gpioConfig():
 		return {
 			'status:red': {
-				'type': 'gpio',
-				'port': '20'
+				'type': 'led',
+				'port': 'tellstick:red:status'
 			},
 			'status:green': {
-				'type': 'gpio',
-				'port': '21'
+				'type': 'led',
+				'port': 'tellstick:green:status'
 			},
 			'zwave:reset': {'type': 'none'},
 		}
 
 	@staticmethod
 	def networkInterface():
-		return 'eth0.1'
+		return 'eth0'
 
 	@staticmethod
 	def liveServer():
@@ -40,7 +40,7 @@ class Board(object):
 
 	@staticmethod
 	def product():
-		return 'tellstick-znet-offline'
+		return 'tellstick-znet-lite'
 
 	@staticmethod
 	def hw():
