@@ -5,6 +5,7 @@ from web.base import IWebRequestHandler, WebResponseRedirect
 from pkg_resources import resource_filename
 from upnp import SSDP, ISSDPNotifier
 from telldus import DeviceManager, Device, DeviceAbortException
+import colorsys
 import httplib, urlparse, json
 
 class Bridge(object):
@@ -16,6 +17,7 @@ class Light(Device):
 		super(Light,self).__init__()
 		self._nodeId = nodeId
 		self._bridge = bridge
+		self._type = 'unknown'
 
 	def _command(self, action, value, success, failure):
 		if action == Device.TURNON:
@@ -24,6 +26,13 @@ class Light(Device):
 			msg = '{"on": false}'
 		elif action == Device.DIM:
 			msg = '{"on": true, "bri": %s}' % value
+		elif action == Device.RGBW:
+			value = int(value, 16)
+			r = (value >> 24) & 0xFF
+			g = (value >> 16) & 0xFF
+			b = (value >> 8) & 0xFF
+			h, s, v = colorsys.rgb_to_hsv(r, g, b)
+			msg = '{"on": true, "hue": %i, "sat": %i}' % (h*65535, s*254)
 		else:
 			failure(0)
 			return
@@ -67,7 +76,15 @@ class Light(Device):
 		return False
 
 	def methods(self):
-		return 19
+		if self._type in ['Extended color light', 'Color light']:
+			return Device.TURNON | Device.TURNOFF | Device.DIM | Device.RGBW
+		if self._type in ['Dimmable light', 'Color temperature light']:
+			return Device.TURNON | Device.TURNOFF | Device.DIM
+		# Unknown type
+		return Device.TURNON | Device.TURNOFF | Device.DIM
+
+	def setType(self, type):
+		self._type = type
 
 class Hue(Plugin):
 	implements(IWebRequestHandler)
@@ -163,6 +180,8 @@ class Hue(Plugin):
 					light.setState(Device.TURNON)
 				else:
 					light.setState(Device.DIM, state['bri'])
+			if 'type' in lights[i]:
+				light.setType(lights[i]['type'])
 			self.deviceManager.addDevice(light)
 		self.deviceManager.finishedLoading('hue')
 
