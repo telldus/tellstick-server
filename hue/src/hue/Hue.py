@@ -17,26 +17,19 @@ class Light(Device):
 		self._nodeId = nodeId
 		self._bridge = bridge
 
-	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
-		def triggerFail(reason):
-			if failure:
-				try:
-					failure(reason, *callbackArgs)
-				except DeviceAbortException:
-					return
-
-		if action == 'turnon':
+	def _command(self, action, value, success, failure):
+		if action == Device.TURNON:
 			msg = '{"on": true, "bri": 254}'
-		elif action == 'turnoff':
+		elif action == Device.TURNOFF:
 			msg = '{"on": false}'
-		elif action == 'dim':
+		elif action == Device.DIM:
 			msg = '{"on": true, "bri": %s}' % value
 		else:
-			triggerFail(0)
+			failure(0)
 			return
 		retval = self._bridge.doCall('PUT', '/api/%s/lights/%s/state' % (self._bridge.username, self._nodeId), msg)
 		if len(retval) == 0 or 'success' not in retval[0]:
-			triggerFail(0)
+			failure(0)
 			return
 		state = 0
 		value = None
@@ -58,12 +51,8 @@ class Light(Device):
 					state = Device.DIM
 					value = bri
 		if state == 0:
-			triggerFail(0)
-		try:
-			success(state = state, stateValue = value, *callbackArgs)
-		except DeviceAbortException:
-			return
-		return
+			failure(0)
+		success()
 
 	def localId(self):
 		return self._nodeId
