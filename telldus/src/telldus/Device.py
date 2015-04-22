@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 class DeviceAbortException(Exception):
 	pass
 
@@ -75,7 +77,8 @@ class Device(object):
 			return
 		try:
 			self._command(method, value, success=s, failure=triggerFail)
-		except:
+		except Exception as e:
+			logging.exception(e)
 			triggerFail(0)
 
 	def _command(self, action, value, success, failure):
@@ -189,6 +192,7 @@ class Device(object):
 			return Device.BELL
 		if method == 'learn':
 			return Device.LEARN
+		logging.warning('Did not understand device method %s', method)
 		return 0
 
 	@staticmethod
