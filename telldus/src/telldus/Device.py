@@ -11,6 +11,7 @@ class Device(object):
 	BELL = 4
 	DIM = 16
 	LEARN = 32
+	RGBW = 1024
 
 	UNKNOWN = 0
 	TEMPERATURE = 1
@@ -192,6 +193,8 @@ class Device(object):
 			return Device.BELL
 		if method == 'learn':
 			return Device.LEARN
+		if method == 'rgbw':
+			return Device.RGBW
 		logging.warning('Did not understand device method %s', method)
 		return 0
 
