@@ -4,13 +4,9 @@ import time, random
 import threading
 
 from base import Application, Settings, IInterface, ObserverCollection, Plugin
-
-#from configobj import ConfigObj
-
 from board import Board
 from ServerList import *
 from ServerConnection import ServerConnection
-#from TelldusCore import *
 from LiveMessage import *
 
 class ITelldusLiveObserver(IInterface):
