@@ -7,6 +7,7 @@ from base import Application, Settings, IInterface, ObserverCollection, Plugin
 
 #from configobj import ConfigObj
 
+from board import Board
 from ServerList import *
 from ServerConnection import ServerConnection
 #from TelldusCore import *
@@ -159,7 +160,7 @@ class TelldusLive(Plugin):
 		msg.append({
 			'key': self.conn.publicKey,
 			'mac': TelldusLive.getMacAddr('eth0'),
-			'secret': TelldusLive.getSecret(),
+			'secret': Board.secret(),
 			'hash': 'sha1'
 		})
 		msg.append({
@@ -175,14 +176,3 @@ class TelldusLive(Plugin):
 		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
 		return ''.join(['%02X' % ord(char) for char in info[18:24]])
-
-	@staticmethod
-	def getSecret():
-		with open('/etc/board/uEnv.txt') as f:
-			for line in f.readlines():
-				args = line.strip().split('=')
-				if len(args) < 2:
-					continue
-				if args[0] == 'secret':
-					return args[1]
-		return ''
