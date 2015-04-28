@@ -39,6 +39,13 @@ class Board(object):
 		return '/dev/ttyACM0'
 
 	@staticmethod
+	def secret():
+		with open('/dev/mtd0', 'rb') as f:
+			f.seek(0x1FC20)
+			return f.read(10)
+		return ''
+
+	@staticmethod
 	def product():
 		return 'tellstick-znet-lite'
 
