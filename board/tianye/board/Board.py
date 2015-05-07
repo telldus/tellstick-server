@@ -47,6 +47,17 @@ class Board(object):
 		return 'tellstick-znet'
 
 	@staticmethod
+	def secret():
+		with open('/etc/board/uEnv.txt') as f:
+			for line in f.readlines():
+				args = line.strip().split('=')
+				if len(args) < 2:
+					continue
+				if args[0] == 'secret':
+					return args[1]
+		return ''
+
+	@staticmethod
 	def hw():
 		return '1'
 
