@@ -58,7 +58,7 @@ class Board(object):
 	def doUpgradeImage(type, path):
 		if type == 'firmware':
 			os.rename(path, '/var/firmware/core-image-tellstick-znet.img')
-		elif type == 'firmware':
+		elif type == 'kernel':
 			os.rename(path, '/var/firmware/uImage')
 		else:
 			return
