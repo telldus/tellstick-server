@@ -51,12 +51,7 @@ class UpgradeManager(object):
 			print el, "up to date"
 			return
 		print "Do upgrade", el
-		if el == 'firmware':
-			self._attrs = attrs
-			self._url = self._content
-			self._firmwareType = el
-
-		if el == 'kernel':
+		if el in ['firmware', 'kernel', 'u-boot']:
 			self._attrs = attrs
 			self._url = self._content
 			self._firmwareType = el
@@ -67,6 +62,15 @@ class UpgradeManager(object):
 				return f.readline().strip()
 		if imageType == 'kernel':
 			return platform.release()
+		if imageType == 'u-boot':
+			with open('/proc/cmdline') as f:
+				for v in f.readline().split(' '):
+					args = v.strip().split('=')
+					if len(args) < 2:
+						continue
+					if args[0] == 'ubootver':
+						return args[1]
+				return None
 		return None
 
 	def distribution(self):
@@ -159,7 +163,7 @@ class UpgradeManager(object):
 			self._product = None
 		if name == 'dist':
 			self._dist = None
-		if name in ['firmware', 'kernel']:
+		if name in ['firmware', 'kernel', 'u-boot']:
 			self.checkForUpgrade(el, attrs)
 		self._content = ''
 

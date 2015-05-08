@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Board config for TellStick ZNet Pro
-import os, random, time
+import os, random, time, logging
 from datetime import datetime, timedelta
 
 class Board(object):
@@ -71,6 +71,14 @@ class Board(object):
 			os.rename(path, '/var/firmware/core-image-tellstick-znet.img')
 		elif type == 'kernel':
 			os.rename(path, '/var/firmware/uImage')
+		elif type == 'u-boot':
+			retval = os.system("flash_erase /dev/mtd4 0 0")
+			if retval != 0:
+				logging.error("Could not erase flash!")
+			retval = os.system("nandwrite -p /dev/mtd4 %s" % path)
+			if retval != 0:
+				logging.error("Could not write u-boot image!")
+				return
 		else:
 			return
 		starttime = datetime.utcnow().replace(hour=0,minute=0,second=0,microsecond=0)
