@@ -36,14 +36,14 @@ class ServerConnection(object):
 		if self.state == ServerConnection.CLOSED:
 			return ServerConnection.CLOSED
 		if self.state == ServerConnection.CONNECTING:
-			self.socket = ssl.wrap_socket(
-				socket.socket(socket.AF_INET, socket.SOCK_STREAM),
-				ssl_version=ssl.PROTOCOL_TLSv1,
-				ca_certs="/etc/ssl/certs/ca-certificates.crt",
-				cert_reqs=ssl.CERT_REQUIRED
-			)
 			try:
-				self.socket.connect(self.server)
+				s = socket.create_connection(self.server)
+				self.socket = ssl.wrap_socket(
+					s,
+					ssl_version=ssl.PROTOCOL_TLSv1,
+					ca_certs="/etc/ssl/certs/ca-certificates.crt",
+					cert_reqs=ssl.CERT_REQUIRED
+				)
 				self.state = ServerConnection.CONNECTED
 			except socket.error as (error, errorString):
 				logging.error("%s %s", str(error), (errorString))
