@@ -227,7 +227,11 @@ class DeviceManager(Plugin):
 		for dev in self.store:
 			if 'type' not in dev or 'localId' not in dev:
 				continue  # This should not be possible
-			self.devices.append(CachedDevice(dev))
+			d = CachedDevice(dev)
+			# If we have loaded this device from cache 5 times in a row it's
+			# considered dead
+			if d.loadCount() < 5:
+				self.devices.append(d)
 
 	def save(self):
 		data = []
@@ -235,6 +239,7 @@ class DeviceManager(Plugin):
 			(state, stateValue) = d.state()
 			data.append({
 				"id": d.id(),
+				"loadCount": d.loadCount(),
 				"localId": d.localId(),
 				"type": d.typeString(),
 				"name": d.name(),

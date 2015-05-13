@@ -46,6 +46,7 @@ class Device(object):
 	def __init__(self):
 		super(Device,self).__init__()
 		self._id = 0
+		self._loadCount = 0
 		self._name = None
 		self._manager = None
 		self._state = Device.TURNOFF
@@ -91,9 +92,13 @@ class Device(object):
 	def loadCached(self, olddevice):
 		self._id = olddevice._id
 		self._name = olddevice._name
+		self._loadCount = 0
 		self.setParams(olddevice.params())
 		(state, stateValue) = olddevice.state()
 		self.setState(state, stateValue)
+
+	def loadCount(self):
+		return self._loadCount
 
 	def load(self, settings):
 		if 'id' in settings:
@@ -213,6 +218,8 @@ class CachedDevice(Device):
 		self.storedmethods = 0
 		if 'localId' in settings:
 			self._localId = settings['localId']
+		if 'loadCount' in settings:
+			self._loadCount = settings['loadCount']+1
 		if 'type' in settings:
 			self.mimikType = settings['type']
 		if 'methods' in settings:
