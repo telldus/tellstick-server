@@ -29,7 +29,7 @@ class TimeTriggerManager(object):
 		self.running = True
 		self.lastMinute = None
 		while self.running:
-			currentMinute = datetime.now().minute
+			currentMinute = datetime.utcnow().minute
 			if self.lastMinute is None or self.lastMinute is not currentMinute:
 				# new minute, check triggers
 				self.lastMinute = currentMinute
@@ -37,7 +37,7 @@ class TimeTriggerManager(object):
 					continue
 				triggersToRemove = []
 				for trigger in self.triggers[currentMinute]:
-					if trigger.hour == -1 or trigger.hour == datetime.now().hour:
+					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
 						if trigger.recalculate():
 							# suntime (time or active-status) was updated (new minute), move it around
 							triggersToRemove.append(trigger)
@@ -76,14 +76,14 @@ class TimeTrigger(Trigger):
 				self.hour = int(value)
 			else:
 				local_timezone = timezone(self.timezone)
-				day = date.today()
-				local_datetime = local_timezone.localize(datetime(day.year, day.month, day.day, int(value)))
-				utc_datetime = local_datetime.astimezone(pytz.utc)
+				currentDate = pytz.utc.localize(datetime.utcnow())
+				local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, int(value)))
+				utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 				if datetime.now().hour > utc_datetime.hour:
 					# retry it with new date (will have impact on daylight savings changes (but not sure it will actually help))
-					day = day + timedelta(days=1)
-				local_datetime = local_timezone.localize(datetime(day.year, day.month, day.day, int(value)))
-				utc_datetime = local_datetime.astimezone(pytz.utc)
+					currentDate = currentDate + timedelta(days=1)
+				local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, int(value)))
+				utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 				self.hour = utc_datetime.hour
 		if self.hour is not None and self.minute is not None:
 			self.manager.addTrigger(self)
@@ -101,7 +101,7 @@ class SuntimeTrigger(TimeTrigger):
 
 	def parseParam(self, name, value):
 		if name == 'sunStatus':
-			#rise = 1, set = 0
+			# rise = 1, set = 0
 			self.sunStatus = int(value)
 		elif name == 'offset':
 			self.offset = int(value)
@@ -113,18 +113,17 @@ class SuntimeTrigger(TimeTrigger):
 		sunCalc = SunCalculator()
 		currentHour = self.hour 
 		currentMinute = self.minute
-		runDate = datetime(date.today().year, date.today().month, date.today().day)
-		riseSet = sunCalc.nextRiseSet(timegm(runDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
 		if self.sunStatus == 0:
 			runTime = riseSet['sunset']
 		else:
 			runTime = riseSet['sunrise']
 		runTime = runTime + (self.offset*60)
 		utc_datetime = datetime.utcfromtimestamp(runTime)
-		
-		today = date.today()
-		tomorrow = today + timedelta(days=1)
-		if (utc_datetime.day != today.day or utc_datetime.month != today.month) and (utc_datetime.day != tomorrow.day or utc_datetime.month != tomorrow.month):
+
+		tomorrow = currentDate + timedelta(days=1)
+		if (utc_datetime.day != currentDate.day or utc_datetime.month != currentDate.month) and (utc_datetime.day != tomorrow.day or utc_datetime.month != tomorrow.month):
 			# no sunrise/sunset today or tomorrow
 			if self.active:
 				self.active = False
