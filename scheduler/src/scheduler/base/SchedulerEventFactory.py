@@ -135,6 +135,68 @@ class SuntimeTrigger(TimeTrigger):
 		self.minute = utc_datetime.minute
 		self.hour = utc_datetime.hour
 
+class TimeCondition(Condition):
+	def __init__(self, **kwargs):
+		super(TimeCondition,self).__init__(**kwargs)
+		self.fromMinute = None
+		self.fromHour = None
+		self.toMinute = None
+		self.toHour = None
+		self.s = Settings('telldus.scheduler')
+		self.timezone = self.s.get('tz', 'UTC')
+
+	def parseParam(self, name, value):
+		if name == 'fromMinute':
+			self.fromMinute = int(value)
+		elif name == 'toMinute':
+			self.toMinute = int(value)
+		elif name == 'fromHour':
+			self.fromHour = int(value)
+		elif name == 'toHour':
+			self.toHour = int(value)
+
+	def validate(self, success, failure):
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		local_timezone = timezone(self.timezone)
+
+		if not self.fromMinute or not self.toMinute or not self.fromHour or not self.toHour:
+			# validate that all parameters have been loaded
+			failure()
+		toTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0))
+		fromTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0))
+		if fromTime < toTime:
+			# condition interval passes midnight
+			if (currentDate >= fromTime and currentDate <= toTime):
+				success()
+			else:
+				failure()
+		else:
+			if (currentDate >= fromTime or currentDate <= toTime):
+				success()
+			else:
+				failure()
+
+class WeekdayCondition(Condition):
+	def __init__(self, **kwargs):
+		super(WeekdayCondition,self).__init__(**kwargs)
+		self.weekdays = None
+		self.s = Settings('telldus.scheduler')
+		self.timezone = self.s.get('tz', 'UTC')
+
+	def parseParam(self, name, value):
+		if name == 'weekdays':
+			self.weekdays = value
+
+	def validate(self, success, failure):
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		local_timezone = timezone(self.timezone)
+		local_datetime = local_timezone.normalize(currentDate.astimezone(local_timezone))
+		currentWeekday = local_datetime.weekday() + 1
+		if str(currentWeekday) in self.weekdays:
+			success()
+		else:
+			failure()
+
 class SchedulerEventFactory(Plugin):
 	implements(IEventFactory)
 
@@ -142,7 +204,10 @@ class SchedulerEventFactory(Plugin):
 		self.triggerManager = TimeTriggerManager()
 
 	def createCondition(self, type, params, **kwargs):
-		pass
+		if type == 'time':
+			return TimeCondition(**kwargs)
+		elif type == 'weekdays':
+			return WeekdayCondition(**kwargs)
 
 	def createTrigger(self, type, **kwargs):
 		if type == 'time':
