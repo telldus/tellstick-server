@@ -135,6 +135,42 @@ class SuntimeTrigger(TimeTrigger):
 		self.minute = utc_datetime.minute
 		self.hour = utc_datetime.hour
 
+class SuntimeCondition(Condition):
+	def __init__(self, **kwargs):
+		super(SuntimeCondition,self).__init__(**kwargs)
+		self.sunStatus = None
+		self.sunriseOffset = None
+		self.sunsetOffset = None
+		self.s = Settings('telldus.scheduler')
+		self.latitude = self.s.get('latitude', '55.699592')
+		self.longitude = self.s.get('longitude', '13.187836')
+
+	def parseParam(self, name, value):
+		if name == 'sunStatus':
+			self.sunStatus = int(value)
+		if name == 'sunriseOffset':
+			self.sunriseOffset = int(value)
+		if name == 'sunsetOffset':
+			self.sunsetOffset = int(value)
+
+	def validate(self, success, failure):
+		if self.sunStatus is None or self.sunriseOffset is None or self.sunsetOffset is None:
+			# condition has not finished loading, impossible to validate it correctly
+			failure()
+			return
+		sunCalc = SunCalculator()
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		currentStatus = 1
+		if (riseSet['sunrise'] + (self.sunriseOffset*60)) < (riseSet['sunset'] + (self.sunsetOffset*60)):
+			# the sun is down (with offset)
+			currentStatus = 0
+
+		if self.sunStatus == currentStatus:
+			success()
+		else:
+			failure()
+
 class TimeCondition(Condition):
 	def __init__(self, **kwargs):
 		super(TimeCondition,self).__init__(**kwargs)
@@ -204,7 +240,9 @@ class SchedulerEventFactory(Plugin):
 		self.triggerManager = TimeTriggerManager()
 
 	def createCondition(self, type, params, **kwargs):
-		if type == 'time':
+		if type == 'suntime':
+			return SuntimeCondition(**kwargs)
+		elif type == 'time':
 			return TimeCondition(**kwargs)
 		elif type == 'weekdays':
 			return WeekdayCondition(**kwargs)
