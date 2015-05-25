@@ -14,21 +14,21 @@ class ProtocolArctech(Protocol):
 			return (Device.TURNON | Device.TURNOFF | Device.DIM | Device.LEARN)
 		elif self.model == 'selflearning-bell':
 			return (Device.BELL | Device.LEARN)
-		elif self.model == 'bell':
+		elif self.model == Device.BELL:
 			return Device.BELL
 		return 0
 
 	def stringForMethod(self, method, data=None):
 		if self.model == 'codeswitch':
 			return self.stringForCodeSwitch(method)
-		elif self.model == 'bell':
+		elif self.model == Device.BELL:
 			return self.stringForBell()
 		elif self.model == 'selflearning-bell':
 			return self.stringForSelflearning(method, data, 1)
 
-		if method == 'turnon' and self.model == 'selflearning-dimmer':
+		if method == Device.TURNON and self.model == 'selflearning-dimmer':
 			# Workaround for not letting a dimmer do into "dimming mode"
-			return self.stringForSelflearning('dim', 255)
+			return self.stringForSelflearning(Device.DIM, 255)
 		return self.stringForSelflearning(method, data)
 
 	def stringForBell(self):
@@ -47,9 +47,9 @@ class ProtocolArctech(Protocol):
 		strReturn = self.codeSwitchTuple(intHouse)
 		strReturn = strReturn + self.codeSwitchTuple(self.intParameter('unit', 1, 16)-1)
 
-		if method == 'turnon':
+		if method == Device.TURNON:
 			strReturn = strReturn + '$k$k$kk$$kk$$kk$$k'
-		elif method == 'turnoff':
+		elif method == Device.TURNOFF:
 			strReturn = strReturn + '$k$k$kk$$kk$$k$k$k'
 		else:
 			return None
@@ -58,8 +58,8 @@ class ProtocolArctech(Protocol):
 	def stringForSelflearning(self, method, level, group=0):
 		intHouse = self.intParameter('house', 1, 67108863)
 		intCode = self.intParameter('unit', 1, 16)-1
-		if method == 'dim' and level == 0:
-			method = 'turnoff'
+		if method == Device.DIM and level == 0:
+			method = Device.TURNOFF
 		return self.stringSelflearningForCode(intHouse, intCode, method, level, group)
 
 	def codeSwitchTuple(self, intCode):
@@ -94,13 +94,13 @@ class ProtocolArctech(Protocol):
 			code = code + ZERO  # Group
 
 		# On/off
-		if method == 'dim':
+		if method == Device.DIM:
 			code = code + SHORT + SHORT + SHORT + SHORT
-		elif method == 'turnoff':
+		elif method == Device.TURNOFF:
 			code = code  + ZERO
-		elif method == 'turnon' or method == 'bell':
+		elif method == Device.TURNON or method == Device.BELL:
 			code = code + ONE
-		elif method == 'learn':
+		elif method == Device.LEARN:
 			code = code + ONE
 			retval['R'] = 25
 		else:
@@ -112,7 +112,7 @@ class ProtocolArctech(Protocol):
 			else:
 				code = code + ZERO
 
-		if method == 'dim':
+		if method == Device.DIM:
 			newLevel = level/16
 			for i in range(3, -1, -1):
 				if newLevel & (1 << i):

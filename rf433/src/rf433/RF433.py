@@ -74,50 +74,24 @@ class DeviceNode(RF433Node):
 		self._model = ''
 		self._protocolParams = {}
 
-	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
-		def triggerFail(reason):
-			if failure:
-				try:
-					failure(reason, *callbackArgs)
-				except DeviceAbortException:
-					return
-
+	def _command(self, action, value, success, failure):
 		protocol = Protocol.protocolInstance(self._protocol)
 		if not protocol:
 			logging.warning("Unknown protocol %s", self._protocol)
-			triggerFail(0)
+			failure(0)
 			return
 		protocol.setModel(self._model)
 		protocol.setParameters(self._protocolParams)
 		msg = protocol.stringForMethod(action, value)
 		if msg is None:
-			triggerFail(0)
+			failure(0)
 			logging.error("Could not encode rf-data for %s:%s %s", self._protocol, self._model, action)
 			return
 
 		def s(params):
-			if action == 'turnon':
-				s = Device.TURNON
-			elif action == 'turnoff':
-				s = Device.TURNOFF
-			elif action == 'dim':
-				s = Device.DIM
-			elif action == 'bell':
-				s = Device.BELL
-			elif action == 'learn':
-				s = Device.LEARN
-			else:
-				logging.warning("Unknown state %s", action)
-				return
-			if success:
-				try:
-					success(state=s, stateValue=None, *callbackArgs)
-				except DeviceAbortException:
-					return
-			self.setState(s, None, origin=origin)
-
+			success()
 		def f():
-			triggerFail(Device.FAILED_STATUS_NO_REPLY)
+			failure(Device.FAILED_STATUS_NO_REPLY)
 
 		prefixes = {}
 		if 'R' in msg:
