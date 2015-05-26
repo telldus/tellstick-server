@@ -25,6 +25,20 @@ class TimeTriggerManager(object):
 				self.triggers[trigger.minute] = []
 			self.triggers[trigger.minute].append(trigger)
 
+	def clearAll(self):
+		with self.timeLock:
+			self.triggers = {}  # empty all running triggers
+
+	def deleteEventTriggers(self, eventId):
+		with self.timeLock:
+			for minute in self.triggers:
+				triggersToRemove = []
+				for trigger in self.triggers[minute]:
+					if trigger.event.eventId == eventId:
+						triggersToRemove.append(trigger)
+				for trigger in triggersToRemove:
+					self.triggers[minute].remove(trigger)
+
 	def run(self):
 		self.running = True
 		self.lastMinute = None
@@ -239,6 +253,9 @@ class SchedulerEventFactory(Plugin):
 	def __init__(self):
 		self.triggerManager = TimeTriggerManager()
 
+	def clearAll(self):
+		self.triggerManager.clearAll()
+
 	def createCondition(self, type, params, **kwargs):
 		if type == 'suntime':
 			return SuntimeCondition(**kwargs)
@@ -255,3 +272,6 @@ class SchedulerEventFactory(Plugin):
 			trigger = SuntimeTrigger(manager=self.triggerManager, **kwargs)
 			return trigger
 		return None
+
+	def deleteEventTriggers(self, eventId):
+		self.triggerManager.deleteEventTriggers(eventId)

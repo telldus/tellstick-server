@@ -47,7 +47,7 @@ class Scheduler(Plugin):
 
 	def calculateNextRunTime(self, job):
 		"""Calculates nextRunTime for a job, depending on time, weekday and timezone."""
-		if not job['active']:
+		if not job['active'] or not job['weekdays']:
 			job['nextRunTime'] = 253402214400 #set to max value, only run just before the end of time
 			self.deleteJob(job['id'])	#just delete the job, until it's possible to edit schedules locally, inactive jobs has no place at all here
 			return False
@@ -118,7 +118,7 @@ class Scheduler(Plugin):
 
 	def checkNewlyLoadedJob(self, job):
 		"""Checks if any of the jobs (local or initially loaded) should be running right now"""
-		if not job['active']:
+		if not job['active'] or not job['weekdays']:
 			return
 
 		weekdays = [int(n) for n in job['weekdays'].split(',')]
