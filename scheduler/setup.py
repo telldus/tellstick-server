@@ -12,7 +12,8 @@ setup(
 	packages=['scheduler', 'scheduler.base'],
 	package_dir = {'':'src'},
 	entry_points={ \
-		'telldus.startup': ['c = scheduler.base:Scheduler [cREQ]']
+		'telldus.startup': ['c = scheduler.base:Scheduler [cREQ]'],
+		'telldus.plugins': ['c = scheduler.base:SchedulerEventFactory [cREQEvent]']
 	},
-	extras_require = dict(cREQ = "Base>=0.1\nTelldusLive>=0.1")
+	extras_require = dict(cREQ = "Base>=0.1\nTelldusLive>=0.1", cREQEvent = "Base>=0.1\nEvents>=0.1")
 )
