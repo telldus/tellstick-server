@@ -200,14 +200,14 @@ class TimeCondition(Condition):
 			failure()
 		toTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0))
 		fromTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0))
-		if fromTime < toTime:
-			# condition interval passes midnight
-			if (currentDate >= fromTime and currentDate <= toTime):
+		if fromTime > toTime:
+			if (currentDate >= fromTime or currentDate <= toTime):
 				success()
 			else:
 				failure()
 		else:
-			if (currentDate >= fromTime or currentDate <= toTime):
+			# condition interval passes midnight
+			if (currentDate >= fromTime and currentDate <= toTime):
 				success()
 			else:
 				failure()
