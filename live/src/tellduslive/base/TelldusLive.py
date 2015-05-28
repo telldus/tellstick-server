@@ -3,7 +3,7 @@
 import time, random
 import threading
 
-from base import Application, Settings, IInterface, ObserverCollection, Plugin
+from base import Application, Settings, IInterface, ObserverCollection, Plugin, mainthread
 from board import Board
 from ServerList import *
 from ServerConnection import ServerConnection
@@ -31,6 +31,7 @@ class TelldusLive(Plugin):
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
 
+	@mainthread
 	def handleMessage(self, message):
 		if (message.name() == "notregistered"):
 			params = message.argument(0).dictVal
@@ -74,7 +75,6 @@ class TelldusLive(Plugin):
 
 	def run(self):
 		self.running = True
-		app = Application()
 
 		wait = 0
 		pongTimer, self.pingTimer = (0, 0)
@@ -103,7 +103,7 @@ class TelldusLive(Plugin):
 				if msg is None:
 					continue
 				pongTimer = time.time()
-				app.queue(self.handleMessage, msg)
+				self.handleMessage(msg)
 
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
