@@ -20,6 +20,11 @@ class Event(object):
 		self.triggers = {}
 		self.evaluatingConditions = []
 
+	""" Should always be called when deleting an event """
+	def close(self):
+		for triggerId in self.triggers:
+			self.triggers[triggerId].close()
+
 	def loadActions(self, data):
 		for id in data:
 			action = self.manager.requestAction(event=self, id=id, **data[id])

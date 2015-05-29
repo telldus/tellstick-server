@@ -15,10 +15,6 @@ class IEventFactory(IInterface):
 		"""This method is called when a condition is needed"""
 	def createTrigger(type, **kwargs):
 		"""This method is called when a trigger is needed"""
-	def deleteEventTriggers(eventId):
-		"""This method is called when an event is deleted"""
-	def deleteTrigger(id):
-		"""This method is called when a single trigger is deleted"""
 
 class EventManager(Plugin):
 	implements(ITelldusLiveObserver)
@@ -84,9 +80,9 @@ class EventManager(Plugin):
 	@TelldusLive.handler('one-event-deleted')
 	def receiveDeletedEventFromServer(self, msg):
 		eventId = msg.argument(0).toNative()['eventId']
-		for observer in self.observers:
-			observer.deleteEventTriggers(eventId)
-		del self.events[eventId]
+		if eventId in self.events:
+			self.events[eventId].close()
+			del self.events[eventId]
 		storeddata = self.s.get('events', {})
 		storeddata[eventId] = ""
 		self.s['events'] = storeddata
@@ -95,9 +91,8 @@ class EventManager(Plugin):
 	def receiveEventFromServer(self, msg):
 		data = msg.argument(0).toNative()
 		eventId = data['eventId']
-		for observer in self.observers:
-			observer.deleteEventTriggers(eventId)
 		if eventId in self.events:
+			self.events[eventId].close()
 			del self.events[eventId]
 		self.loadEvent(eventId, data)
 		storeddata = self.s.get('events', {})

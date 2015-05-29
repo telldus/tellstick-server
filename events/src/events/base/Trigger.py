@@ -6,6 +6,9 @@ class Trigger(object):
 		self.event = event
 		self.id = id
 
+	def close(self):
+		pass
+
 	def loadParams(self, params):
 		for param in params:
 			self.parseParam(param, params[param])

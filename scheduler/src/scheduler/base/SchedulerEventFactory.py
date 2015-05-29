@@ -29,15 +29,13 @@ class TimeTriggerManager(object):
 		with self.timeLock:
 			self.triggers = {}  # empty all running triggers
 
-	def deleteEventTriggers(self, eventId):
+	def deleteTrigger(self, trigger):
 		with self.timeLock:
 			for minute in self.triggers:
-				triggersToRemove = []
-				for trigger in self.triggers[minute]:
-					if trigger.event.eventId == eventId:
-						triggersToRemove.append(trigger)
-				for trigger in triggersToRemove:
+				try:
 					self.triggers[minute].remove(trigger)
+				except:
+					pass
 
 	def run(self):
 		self.running = True
@@ -80,6 +78,9 @@ class TimeTrigger(Trigger):
 		self.active = True  # TimeTriggers are always active
 		self.s = Settings('telldus.scheduler')
 		self.timezone = self.s.get('tz', 'UTC')
+
+	def close(self):
+		self.manager.deleteTrigger(self)
 
 	def parseParam(self, name, value):
 		if name == 'minute':
@@ -272,6 +273,3 @@ class SchedulerEventFactory(Plugin):
 			trigger = SuntimeTrigger(manager=self.triggerManager, **kwargs)
 			return trigger
 		return None
-
-	def deleteEventTriggers(self, eventId):
-		self.triggerManager.deleteEventTriggers(eventId)
