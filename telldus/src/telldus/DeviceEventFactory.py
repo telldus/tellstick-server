@@ -14,6 +14,10 @@ class DeviceEventFactory(Plugin):
 		self.sensorTriggers = []
 		self.deviceManager = DeviceManager(self.context)
 
+	def clearAll(self):
+		self.deviceTriggers = []
+		self.sensorTriggers = []
+
 	def createAction(self, type, params, **kwargs):
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
@@ -32,14 +36,20 @@ class DeviceEventFactory(Plugin):
 
 	def createTrigger(self, type, **kwargs):
 		if type == 'device':
-			trigger = DeviceTrigger(**kwargs)
+			trigger = DeviceTrigger(self, **kwargs)
 			self.deviceTriggers.append(trigger)
 			return trigger
 		if type == 'sensor':
-			trigger = SensorTrigger(**kwargs)
+			trigger = SensorTrigger(self, **kwargs)
 			self.sensorTriggers.append(trigger)
 			return trigger
 		return None
+
+	def deleteTrigger(self, trigger):
+		if trigger in self.deviceTriggers:
+			self.deviceTriggers.remove(trigger)
+		elif trigger in self.sensorTriggers:
+			self.sensorTriggers.remove(trigger)
 
 	def sensorValueUpdated(self, device, valueType, value, scale):
 		for trigger in self.sensorTriggers:
@@ -110,10 +120,14 @@ class DeviceCondition(Condition):
 			failure()
 
 class DeviceTrigger(Trigger):
-	def __init__(self, **kwargs):
+	def __init__(self, factory, **kwargs):
 		super(DeviceTrigger,self).__init__(**kwargs)
 		self.deviceId = 0
 		self.method = 0
+		self.factory = factory
+
+	def close(self):
+		self.factory.deleteTrigger(self)
 
 	def parseParam(self, name, value):
 		if name == 'clientDeviceId':
@@ -181,13 +195,17 @@ class SensorCondition(Condition):
 			return value < condition
 
 class SensorTrigger(Trigger):
-	def __init__(self, *args, **kwargs):
+	def __init__(self, factory, *args, **kwargs):
 		super(SensorTrigger, self).__init__(*args, **kwargs)
 		self.isTriggered = False
 		self.requireReload = False
 		self.reloadValue = 1
 		self.firstValue = True
 		self.scale = None
+		self.factory = factory
+
+	def close(self):
+		self.factory.deleteTrigger(self)
 
 	def parseParam(self, name, value):
 		if name == 'clientSensorId':
