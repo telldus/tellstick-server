@@ -73,9 +73,9 @@ class EventManager(Plugin):
 		self.events = {}
 		for observer in self.observers:
 			observer.clearAll()
-			for eventId in data:
-				if eventId not in self.events:
-					self.loadEvent(eventId, data[eventId])
+		for eventId in data:
+			if eventId not in self.events:
+				self.loadEvent(eventId, data[eventId])
 
 	@TelldusLive.handler('one-event-deleted')
 	def receiveDeletedEventFromServer(self, msg):
