@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin, implements, IInterface, ObserverCollection, Settings
+from base import Plugin, implements, IInterface, mainthread, ObserverCollection, Settings
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 from Event import Event
 from UrlAction import UrlAction
 import logging
-import threading
 
 class IEventFactory(IInterface):
 	def clearAll():
@@ -27,7 +26,6 @@ class EventManager(Plugin):
 	observers = ObserverCollection(IEventFactory)
 
 	def __init__(self):
-		self.eventLock = threading.Lock()
 		self.events = {}
 		self.s = Settings('telldus.event')
 		self.live = TelldusLive(self.context)
@@ -40,14 +38,14 @@ class EventManager(Plugin):
 		event.loadTriggers(data['triggers'])
 		self.events[eventId] = event
 
+	@mainthread
 	def loadLocalEvents(self):
-		with self.eventLock:
-			if len(self.events) == 0:
-				# only load local events if no report has been received (highly improbable though)
-				data = self.s.get('events', {})
-				for eventId in data:
-					if eventId not in self.events and data[eventId] != "":
-						self.loadEvent(eventId, data[eventId])
+		if len(self.events) == 0:
+			# only load local events if no report has been received (highly improbable though)
+			data = self.s.get('events', {})
+			for eventId in data:
+				if eventId not in self.events and data[eventId] != "":
+					self.loadEvent(eventId, data[eventId])
 
 	def requestAction(self, type, **kwargs):
 		for observer in self.observers:
@@ -75,11 +73,10 @@ class EventManager(Plugin):
 	@TelldusLive.handler('events-report')
 	def receiveEventsFromServer(self, msg):
 		data = msg.argument(0).toNative()
-		with self.eventLock:
-			self.s['events'] = data
-			self.events = {}
-			for observer in self.observers:
-				observer.clearAll()
+		self.s['events'] = data
+		self.events = {}
+		for observer in self.observers:
+			observer.clearAll()
 			for eventId in data:
 				if eventId not in self.events:
 					self.loadEvent(eventId, data[eventId])
