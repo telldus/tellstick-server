@@ -120,7 +120,7 @@ class SuntimeTrigger(TimeTrigger):
 			self.sunStatus = int(value)
 		elif name == 'offset':
 			self.offset = int(value)
-		if self.sunStatus and self.offset is not None:
+		if self.sunStatus is not None and self.offset is not None:
 			self.recalculate()
 			self.manager.addTrigger(self)
 
