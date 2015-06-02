@@ -84,7 +84,7 @@ class EventManager(Plugin):
 			self.events[eventId].close()
 			del self.events[eventId]
 		storeddata = self.s.get('events', {})
-		storeddata[eventId] = ""
+		storeddata[str(eventId)] = ""
 		self.s['events'] = storeddata
 
 	@TelldusLive.handler('one-event-report')
@@ -96,7 +96,7 @@ class EventManager(Plugin):
 			del self.events[eventId]
 		self.loadEvent(eventId, data)
 		storeddata = self.s.get('events', {})
-		storeddata[eventId] = data
+		storeddata[str(eventId)] = data
 		self.s['events'] = storeddata
 
 	@TelldusLive.handler('event-conditionresult')
