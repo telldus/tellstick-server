@@ -103,11 +103,11 @@ class DeviceManager(Plugin):
 		return l
 
 	def sensorValueUpdated(self, device, valueType, value, scale):
-		if not self.live.registered:
-			return
 		if device.isSensor() == False:
 			return
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
+		if not self.live.registered:
+			return
 		msg = LiveMessage("SensorEvent")
 		sensor = {
 			'name': device.name(),
@@ -130,8 +130,6 @@ class DeviceManager(Plugin):
 		self.live.send(msg)
 
 	def stateUpdated(self, device, ackId = None, origin = None):
-		if not self.live.registered:
-			return
 		if device.isDevice() == False:
 			return
 		extras = {}
@@ -143,6 +141,8 @@ class DeviceManager(Plugin):
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
 		self.observers.stateChanged(device, state, stateValue)
+		if not self.live.registered:
+			return
 		msg = LiveMessage("DeviceEvent")
 		msg.append(device.id())
 		msg.append(state)
