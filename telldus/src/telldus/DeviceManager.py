@@ -261,7 +261,7 @@ class DeviceManager(Plugin):
 			(state, stateValue) = d.state()
 			device = {
 				'id': d.id(),
-				'name': str(d.name()),
+				'name': d.name().encode('utf-8'),
 				'methods': d.methods(),
 				'state': state,
 				'stateValue': stateValue,
