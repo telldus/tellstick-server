@@ -95,7 +95,8 @@ class Device(object):
 		self._loadCount = 0
 		self.setParams(olddevice.params())
 		(state, stateValue) = olddevice.state()
-		self.setState(state, stateValue)
+		self._state = state
+		self._stateValue = stateValue
 
 	def loadCount(self):
 		return self._loadCount
@@ -107,8 +108,6 @@ class Device(object):
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
-		if 'state' in settings and 'stateValue' in settings:
-			self.setState(settings['state'], settings['stateValue'])
 
 	def localId(self):
 		return 0
