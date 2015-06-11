@@ -213,7 +213,7 @@ class DeviceManager(Plugin):
 			for dev in self.devices:
 				if dev.id() != args['device']:
 					continue
-				dev.setName(args['name'])
+				dev.setName(args['name'].decode('UTF-8'))
 				self.__sendDeviceReport()
 				return
 
