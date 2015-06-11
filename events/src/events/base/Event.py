@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from base import mainthread
+from base import mainthread, Settings
 from Action import Action, RemoteAction
 from Condition import Condition, RemoteCondition
 from ConditionContext import ConditionContext
@@ -19,19 +19,29 @@ class Event(object):
 		self.conditions = {}
 		self.triggers = {}
 		self.evaluatingConditions = []
+		self.s = Settings('telldus.event')
 
 	""" Should always be called when deleting an event """
 	def close(self):
 		for triggerId in self.triggers:
 			self.triggers[triggerId].close()
+		for actionId in self.actions:
+			self.actions[actionId].close()
 
 	def loadActions(self, data):
+		# check for running action delays
+		storedActions = None
+		storeddata = self.s.get('events', {})
+		if str(self.eventId) in storeddata:
+			if 'actions' in storeddata[str(self.eventId)]:
+				storedActions = storeddata[str(self.eventId)]['actions']
 		for id in data:
 			action = self.manager.requestAction(event=self, id=id, **data[id])
 			if not action:
 				action = RemoteAction(event=self, id=id, **data[id])
 			if 'params' in data[id]:
 				action.loadParams(data[id]['params'])
+			action.compareStoredDelay(storedActions)
 			self.actions[id] = action
 
 	def loadConditions(self, data):
