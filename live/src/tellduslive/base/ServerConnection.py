@@ -38,12 +38,9 @@ class ServerConnection(object):
 		if self.state == ServerConnection.CONNECTING:
 			try:
 				s = socket.create_connection(self.server)
-				self.socket = ssl.wrap_socket(
-					s,
-					ssl_version=ssl.PROTOCOL_TLSv1,
-					ca_certs="/etc/ssl/certs/ca-certificates.crt",
-					cert_reqs=ssl.CERT_REQUIRED
-				)
+				ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+				ctx.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+				self.socket = ctx.wrap_socket(s)
 				self.state = ServerConnection.CONNECTED
 			except socket.error as (error, errorString):
 				logging.error("%s %s", str(error), (errorString))
