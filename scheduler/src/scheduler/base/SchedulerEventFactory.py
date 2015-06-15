@@ -210,9 +210,10 @@ class TimeCondition(Condition):
 		currentDate = pytz.utc.localize(datetime.utcnow())
 		local_timezone = timezone(self.timezone)
 
-		if not self.fromMinute or not self.toMinute or not self.fromHour or not self.toHour:
+		if self.fromMinute is None or self.toMinute is None or self.fromHour is None or self.toHour is None:
 			# validate that all parameters have been loaded
 			failure()
+			return
 		toTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0))
 		fromTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0))
 		if fromTime > toTime:
