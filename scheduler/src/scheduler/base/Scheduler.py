@@ -246,7 +246,8 @@ class Scheduler(Plugin):
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():
 						if 'client_device_id' not in runningJob:
-							print "Missing client_device_id, this is an error, perhaps refetch jobs? " + str(runningJob['client_device_id'])
+							print "Missing client_device_id, this is an error, perhaps refetch jobs? " + str(client_device_id)
+							continue
 						device = self.deviceManager.device(runningJob['client_device_id'])
 						if not device:
 							print "Missing device, b: " + str(runningJob['client_device_id'])
