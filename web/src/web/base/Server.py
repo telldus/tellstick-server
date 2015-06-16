@@ -68,10 +68,13 @@ class RequestHandler(object):
 			if type(arr) == list:
 				menu.extend(arr)
 		template = None
+		response = None
 		for o in self.observers:
 			if o.matchRequest(plugin, path):
 				response = o.handleRequest(plugin, path, params)
 				break
+		if response is None:
+			raise cherrypy.NotFound()
 		if isinstance(response, WebResponseRedirect):
 			raise cherrypy.HTTPRedirect('%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
 		template, data = response
