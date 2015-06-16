@@ -24,7 +24,7 @@ class Server(Plugin):
 		super(Server,self).__init__()
 		mimetypes.init()
 		cherrypy.config.update({
-			'server.socket_host': '0.0.0.0',
+			'server.socket_host': '::',
 			'server.socket_port': 80,
 		})
 		cherrypy.tree.mount(RequestHandler(self.context))
