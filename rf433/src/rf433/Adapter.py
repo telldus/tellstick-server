@@ -17,22 +17,18 @@ class Adapter(threading.Thread):
 	def __init__(self, handler, dev):
 		super(Adapter,self).__init__()
 		self.handler = handler
+		self.devUrl = dev
+		self.dev = None
 		self.__queue = []
 		self.__waitForResponse = None
 		self.__setupHardware()
 		self.waitingForData = False
-		try:
-			self.dev = serial.serial_for_url(dev, 115200, timeout=0)
-		except Exception as e:
-			logging.error("Could not open serial port: %s", e)
-			self.dev = None
 		Application().registerShutdown(self.__stop)
 		(self.readPipe, self.writePipe) = os.pipe()
 		fl = fcntl.fcntl(self.readPipe, fcntl.F_GETFL)
 		fcntl.fcntl(self.readPipe, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 		self.requireUpdate = False
-		if self.dev is not None:
-			self.start()
+		self.start()
 
 	def queue(self, msg):
 		self.__queue.append(msg)
@@ -48,6 +44,13 @@ class Adapter(threading.Thread):
 		state = 0
 
 		while self.running:
+			if self.dev is None:
+				time.sleep(1)
+				try:
+					self.dev = serial.serial_for_url(self.devUrl, 115200, timeout=0)
+				except Exception as e:
+					self.dev = None
+				continue
 			if self.requireUpdate and state == 0:
 				self.requireUpdate = False
 				state = 2
@@ -224,7 +227,14 @@ class Adapter(threading.Thread):
 				i = [self.dev.fileno()]
 			r, w, e = select.select(i, [], [], 1)
 			if self.dev.fileno() in r:
-				return self.dev.read()
+				try:
+					return self.dev.read()
+				except serial.SerialException as e:
+					self.dev.close()
+					self.dev = None
+					logging.warning('Serial port lost')
+					logging.exception(e)
+					return ''
 			if self.readPipe in r:
 				try:
 					while True:
