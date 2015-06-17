@@ -22,7 +22,7 @@ class Adapter(threading.Thread):
 		self.__setupHardware()
 		self.waitingForData = False
 		try:
-			self.dev = serial.Serial(dev, 115200, timeout=0)
+			self.dev = serial.serial_for_url(dev, 115200, timeout=0)
 		except Exception as e:
 			logging.error("Could not open serial port: %s", e)
 			self.dev = None
