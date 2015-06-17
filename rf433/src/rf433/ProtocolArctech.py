@@ -128,9 +128,41 @@ class ProtocolArctech(Protocol):
 	def decodeData(data):
 		if 'model' not in data or 'data' not in data:
 			return None
+		if data['model'] == 'selflearning':
+			return ProtocolArctech.decodeDataSelflearning(data)
 		if data['model'] == 'codeswitch':
 			return ProtocolArctech.decodeDataCodeSwitch(data)
 		return None
+
+	@staticmethod
+	def decodeDataSelflearning(data):
+		value = int(data['data'], 16)
+
+		house = (value & 0xFFFFFFC0) >> 6
+		group = (value & 0x20) >> 5
+		methodCode = (value & 0x10) >> 4
+		unit = (value & 0xF)
+		unit = unit+1
+
+		if house < 1 or house > 67108863 or unit < 1 or unit > 16:
+			# not arctech selflearning
+			return None
+
+		method = 0
+		if Protocol.checkBit(value, 4):
+			method = Device.TURNON
+		else:
+			method = Device.TURNOFF
+
+		retval = {}
+		retval['class'] = 'command'
+		retval['protocol'] = 'arctech'
+		retval['model'] = 'selflearning'
+		retval['house'] = str(house)
+		retval['unit'] = str(unit)
+		retval['group'] = group
+		retval['method'] = method
+		return retval
 
 	@staticmethod
 	def decodeDataCodeSwitch(data):
