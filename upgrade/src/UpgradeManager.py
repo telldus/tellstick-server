@@ -4,6 +4,7 @@
 import getopt, hashlib, httplib, os, sys, time
 import platform, urllib2, urlparse
 import xml.parsers.expat
+import gnupg
 from board import Board
 
 class UpgradeManager(object):
@@ -99,28 +100,17 @@ class UpgradeManager(object):
 		if int(attrs['size']) > freeSpace:
 			print "Not enough RAM to download image"
 			return (None, None)
-		u = urllib2.urlopen(url)
-		meta = u.info()
-		fileSize = int(meta.getheaders("Content-Length")[0])
-		if fileSize != int(attrs['size']):
-			print "Size mismatch", fileSize, int(attrs['size'])
+
+		if not self._downloadFile(url, downloadFilename, size=int(attrs['size'])):
 			return (None, None)
-		print "Downloading bytes: %s" % (fileSize)
-		f = open(downloadFilename, 'wb')
-		fileSizeDl = 0
-		blockSz = 8192
-		while True:
-			buffer = u.read(blockSz)
-			if not buffer:
-					break
-			fileSizeDl += len(buffer)
-			f.write(buffer)
-			status = "%10d  [%3.2f%%]\r" % (fileSizeDl, fileSizeDl * 100. / fileSize)
-			print status,
-		f.close()
-		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
+		if not self._downloadFile('%s.asc' % url, '%s.asc' % downloadFilename):
 			os.remove(downloadFilename)
 			return (None, None)
+		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
+			os.remove(downloadFilename)
+			os.remove('%s.asc' % downloadFilename)
+			return (None, None)
+		os.remove('%s.asc' % downloadFilename)
 		return (self._firmwareType, downloadFilename)
 
 	def verifyFile(self, filename, size, checksum):
@@ -136,10 +126,42 @@ class UpgradeManager(object):
 		if sha1.hexdigest() != checksum:
 			print "Checksum mismatch", sha1.hexdigest(), checksum
 			return False
+		# Check signature
+		gpg = gnupg.GPG(keyring='/etc/upgrade/telldus.gpg')
+		v = gpg.verify_file(open(filename), '%s.asc' % filename)
+		if v.valid is not True:
+			print "Could not verify signature:", v.status
+			return False
 		return True
 
 	def _characterDataHandler(self, c):
 		self._content = self._content + c
+
+	def _downloadFile(self, url, downloadFilename, size=None):
+		try:
+			u = urllib2.urlopen(url)
+		except Exception as e:
+			print "Error downloading:", e
+			return False
+		meta = u.info()
+		fileSize = int(meta.getheaders("Content-Length")[0])
+		if size is not None and fileSize != size:
+			print "Size mismatch", fileSize, size
+			return False
+		print "Downloading bytes: %s" % (fileSize)
+		f = open(downloadFilename, 'wb')
+		fileSizeDl = 0
+		blockSz = 8192
+		while True:
+			buffer = u.read(blockSz)
+			if not buffer:
+					break
+			fileSizeDl += len(buffer)
+			f.write(buffer)
+			status = "%10d  [%3.2f%%]\r" % (fileSizeDl, fileSizeDl * 100. / fileSize)
+			print status,
+		f.close()
+		return True
 
 	def _startElement(self, name, attrs):
 		self._queue.append((name, attrs))
