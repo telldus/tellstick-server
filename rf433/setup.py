@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+try:
+	from setuptools import setup
+except ImportError:
+	from distutils.core import setup
 
 setup(
 	name='RF433',
 	version='0.1',
-	packages=find_packages('src'),
+	packages=['rf433'],
 	package_dir = {'':'src'},
 	entry_points={ \
 		'telldus.startup': ['c = rf433:RF433 [cREQ]'],
