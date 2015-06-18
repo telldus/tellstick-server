@@ -146,10 +146,6 @@ class TelldusLive(Plugin):
 			return fn
 		return call
 
-	def __firmwareVersion(self):
-		with open('/etc/builddate') as f:
-			return f.readline().strip()
-
 	def __sendRegisterMessage(self):
 		print("Send register")
 		msg = LiveMessage('Register')
@@ -161,7 +157,7 @@ class TelldusLive(Plugin):
 		})
 		msg.append({
 			'protocol': 2,
-			'version': self.__firmwareVersion(),
+			'version': Board.firmwareVersion(),
 			'os': 'linux',
 			'os-version': 'telldus'
 		})

@@ -10,6 +10,11 @@ class Board(object):
 		return '/etc'
 
 	@staticmethod
+	def firmwareVersion():
+		with open('/etc/builddate') as f:
+			return f.readline().strip()
+
+	@staticmethod
 	def gpioConfig():
 		return {
 			'status:red': {

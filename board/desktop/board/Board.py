@@ -2,12 +2,16 @@
 
 # Board config for desktop
 
-import os
+import os, subprocess
 
 class Board(object):
 	@staticmethod
 	def configDir():
 		return os.environ['HOME'] + '/.config/Telldus'
+
+	@staticmethod
+	def firmwareVersion():
+		return subprocess.check_output(['git', 'describe'])[1:]
 
 	@staticmethod
 	def networkInterface():
