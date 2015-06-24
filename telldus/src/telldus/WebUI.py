@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from base import implements, Plugin
-from web.base import IWebRequestHandler
-from pkg_resources import resource_filename
+try:
+	from web.base import IWebRequestHandler
+except ImportError:
+	# No webserver available
+	from base import IInterface as IWebRequestHandler
+try:
+	from pkg_resources import resource_filename
+except ImportError:
+	def pkg_resources():
+		return None
 from DeviceManager import DeviceManager
 
 class WebUI(Plugin):

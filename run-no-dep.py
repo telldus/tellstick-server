@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 plugins = {
-	'telldus': ['DeviceManager'],
+	'telldus': ['DeviceManager', 'WebUI'],
 	'zwave.workaround': ['WorkaroundPlugin'],
 }
 startup = {
