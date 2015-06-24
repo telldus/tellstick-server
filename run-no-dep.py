@@ -12,6 +12,7 @@ startup = {
 	'scheduler.base': ['Scheduler'],
 	'tellduslive.base': ['TelldusLive'],
 	'zwave.telldus': ['TelldusZWave'],
+	#STARTUP#
 }
 
 def loadClasses(cls):
