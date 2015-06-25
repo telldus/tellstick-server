@@ -129,7 +129,7 @@ class Scheduler(Plugin):
 			if (currentDate.weekday() + 1) in weekdays:
 				#check for this day (today or yesterday)
 				runTime = self.calculateRunTimeForDay(currentDate, job)
-				runTimeMax = runTime + job['reps'] * 3 + job['retry_interval'] * 60 * (job['retries'] + 1) + 70 + job['random_interval'] * 60 + job['offset'] * 60
+				runTimeMax = runTime + job['reps'] * 3 + job['retry_interval'] * 60 * (job['retries'] + 1) + 70 + job['random_interval'] * 60
 				jobId = job['id']
 				executedJobs = self.s.get('executedJobs', {})
 				if (str(jobId) not in executedJobs or executedJobs[str(jobId)] < runTime) and  time.time() > runTime and time.time() < runTimeMax:
@@ -234,7 +234,7 @@ class Scheduler(Plugin):
 
 			if jobCopy:
 				jobCopy['originalRepeats'] = job['reps']
-				jobCopy['maxRunTime'] = jobCopy['nextRunTime'] + jobCopy['reps'] * 3 + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) + 70 + jobCopy['random_interval'] * 60 + jobCopy['offset'] * 60 #approximate maxRunTime, sanity check
+				jobCopy['maxRunTime'] = jobCopy['nextRunTime'] + jobCopy['reps'] * 3 + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) + 70 + jobCopy['random_interval'] * 60 #approximate maxRunTime, sanity check
 				self.runningJobs[jobId] = jobCopy
 				self.calculateNextRunTime(job)
 				with self.jobsLock:
