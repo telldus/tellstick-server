@@ -11,6 +11,9 @@ class Device(object):
 	BELL = 4
 	DIM = 16
 	LEARN = 32
+	UP = 128
+	DOWN = 256
+	STOP = 512
 	RGBW = 1024
 
 	UNKNOWN = 0
@@ -197,6 +200,12 @@ class Device(object):
 			return Device.BELL
 		if method == 'learn':
 			return Device.LEARN
+		if method == 'up':
+			return Device.UP
+		if method == 'down':
+			return Device.DOWN
+		if method == 'stop':
+			return Device.STOP
 		if method == 'rgbw':
 			return Device.RGBW
 		logging.warning('Did not understand device method %s', method)
@@ -204,6 +213,15 @@ class Device(object):
 
 	@staticmethod
 	def maskUnsupportedMethods(methods, supportedMethods):
+		# Up -> Off
+		if (methods & Device.UP) and not (supportedMethods & Device.UP):
+			methods = methods | Device.OFF
+
+		# Down -> On
+		if (methods & Device.DOWN) and not (supportedMethods & Device.DOWN):
+			methods = methods | Device.ON
+
+		# Cut of the rest of the unsupported methods we don't have a fallback for
 		return methods & supportedMethods
 
 class CachedDevice(Device):

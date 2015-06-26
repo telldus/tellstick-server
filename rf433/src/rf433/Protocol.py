@@ -119,6 +119,8 @@ class Protocol(object):
 			return ProtocolComen()
 		if (protocol == 'fineoffset'):
 			return ProtocolFineoffset()
+		if (protocol == 'hasta'):
+			return ProtocolHasta()
 		if (protocol == 'mandolyn'):
 			return ProtocolMandolyn()
 		if (protocol == 'oregon'):
@@ -128,5 +130,6 @@ class Protocol(object):
 from ProtocolArctech import *
 from ProtocolComen import *
 from ProtocolFineoffset import *
+from ProtocolHasta import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
