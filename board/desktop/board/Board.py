@@ -30,6 +30,10 @@ class Board(object):
 		return 'api.telldus.net'
 
 	@staticmethod
+	def product():
+		return 'tellstick-znet-desktop'
+
+	@staticmethod
 	def rf433Port():
 		return '/dev/ttyUSB1'
 
