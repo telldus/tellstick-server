@@ -32,7 +32,7 @@ class RemoteSupport(Plugin):
 		thr.start()
 
 	def waitForConnection(self, client, transport):
-		chan = transport.accept(20)
+		chan = transport.accept(60)
 		if chan is None:
 			transport.close()
 			TelldusLive(self.context).pushToWeb('remotesupport', 'disconnected', None)
