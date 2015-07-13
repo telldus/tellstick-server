@@ -253,10 +253,10 @@ class Scheduler(Plugin):
 						if not device:
 							print "Missing device, b: " + str(runningJob['client_device_id'])
 							continue
-						if device.typeString() == 'e433':
-							#repeats for 433-devices only, TODO test
+						if device.typeString() == '433' and runningJob['originalRepeats'] > 1:
+							#repeats for 433-devices only
 							runningJob['reps'] = int(runningJob['reps']) - 1
-							if runningJob['reps'] > 0:
+							if runningJob['reps'] >= 0:
 								runningJob['nextRunTime'] = time.time() + 3
 								jobsToRun.append(runningJob)
 								continue
