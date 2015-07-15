@@ -4,6 +4,7 @@ from base import Plugin, implements
 from events.base import IEventFactory, Action, Condition, Trigger
 from Device import Device
 from DeviceManager import DeviceManager, IDeviceChange
+from threading import Timer
 
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
@@ -93,6 +94,13 @@ class DeviceAction(Action):
 			m = 'dim'
 		elif self.method == Device.BELL:
 			m = 'bell'
+		if device.typeString() == '433' and self.repeats > 1:
+			i = 1
+			while i < self.repeats:
+				t = Timer(3*i, device.command, [m, self.value], {'origin':'Event'})
+				t.start()
+				i += 1
+
 		device.command(m, self.value, origin='Event')
 
 class DeviceCondition(Condition):
