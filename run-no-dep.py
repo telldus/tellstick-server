@@ -4,6 +4,7 @@
 plugins = {
 	'telldus': ['DeviceManager', 'WebUI'],
 	'zwave.workaround': ['WorkaroundPlugin'],
+	#PLUGINS#
 }
 startup = {
 	'led': ['Led'],
