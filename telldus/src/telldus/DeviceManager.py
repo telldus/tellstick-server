@@ -115,6 +115,8 @@ class DeviceManager(Plugin):
 			'model': 'n/a',
 			'sensor_id': device.id(),
 		}
+		if device.battery():
+			sensor['battery'] = device.battery().level
 		msg.append(sensor)
 		values = device.sensorValues()
 		valueList = []
@@ -218,6 +220,7 @@ class DeviceManager(Plugin):
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
 				self.__sendDeviceReport()
+				self.__sendSensorReport()
 				return
 
 	def liveRegistered(self, msg):
@@ -270,6 +273,8 @@ class DeviceManager(Plugin):
 				'stateValue': stateValue,
 				'transport': d.typeString()
 			}
+			if d.battery():
+				device['battery'] = d.battery().level
 			l.append(device)
 		msg = LiveMessage("DevicesReport")
 		msg.append(l)
@@ -289,6 +294,8 @@ class DeviceManager(Plugin):
 				'model': 'n/a',
 				'sensor_id': d.id(),
 			}
+			if d.battery():
+				sensor['battery'] = d.battery().level
 			sensorFrame.append(sensor)
 			valueList = []
 			# TODO(micke): Add current values

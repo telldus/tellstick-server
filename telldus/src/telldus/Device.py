@@ -49,6 +49,7 @@ class Device(object):
 	def __init__(self):
 		super(Device,self).__init__()
 		self._id = 0
+		self._battery = None
 		self._loadCount = 0
 		self._name = None
 		self._manager = None
@@ -59,6 +60,9 @@ class Device(object):
 
 	def id(self):
 		return self._id
+
+	def battery(self):
+		return self._battery
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
 		method = Device.methodStrToInt(action)
@@ -100,6 +104,7 @@ class Device(object):
 		(state, stateValue) = olddevice.state()
 		self._state = state
 		self._stateValue = stateValue
+		self._battery = olddevice._battery
 
 	def loadCount(self):
 		return self._loadCount
@@ -245,6 +250,8 @@ class CachedDevice(Device):
 			self._state = settings['state']
 		if 'stateValue' in settings:
 			self._stateValue = settings['stateValue']
+		if 'battery' in settings:
+			self._battery = settings['battery']
 
 	def localId(self):
 		return self._localId
