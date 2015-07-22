@@ -79,7 +79,7 @@ class Device(object):
 					success(state=method, stateValue=value, *callbackArgs)
 				except DeviceAbortException:
 					return
-			self.setState(action, value, origin=origin)
+			self.setState(method, value, origin=origin)
 
 		if method == 0:
 			triggerFail(0)
@@ -116,6 +116,8 @@ class Device(object):
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
+		#if 'state' in settings and 'stateValue' in settings:
+		#	self.setState(settings['state'], settings['stateValue'])
 
 	def localId(self):
 		return 0
