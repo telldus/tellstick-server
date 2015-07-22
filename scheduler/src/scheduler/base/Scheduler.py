@@ -174,6 +174,13 @@ class Scheduler(Plugin):
 		self.calculateJobs(jobs)
 
 	def liveRegistered(self, msg):
+		if 'latitude' in msg and msg['latitude'] != self.latitude:
+			self.latitude = msg['latitude']
+		if 'longitude' in msg and msg['longitude'] != self.longitude:
+			self.longitude = msg['longitude']
+		if 'tz' in msg and msg['tz'] != self.timezone:
+			self.timezone = msg['tz']
+
 		self.requestJobsFromServer()
 
 	@TelldusLive.handler('scheduler-remove')
@@ -193,9 +200,7 @@ class Scheduler(Plugin):
 		else:
 			scheduleDict = msg.argument(0).toNative()
 			jobs = scheduleDict['jobs']
-			self.timezone = scheduleDict['tz']
 		self.s['jobs'] = jobs
-		self.s['tz'] = self.timezone
 		self.calculateJobs(jobs)
 
 	@TelldusLive.handler('scheduler-update')
@@ -206,9 +211,7 @@ class Scheduler(Plugin):
 		else:
 			scheduleDict = msg.argument(0).toNative()
 			job = scheduleDict['job']
-			self.timezone = scheduleDict['tz']
 
-		self.s['tz'] = self.timezone
 		active = self.calculateNextRunTime(job)
 		self.deleteJob(job['id']) #delete the job if it already exists (update)
 		if active:

@@ -15,6 +15,8 @@ class IEventFactory(IInterface):
 		"""This method is called when a condition is needed"""
 	def createTrigger(type, **kwargs):
 		"""This method is called when a trigger is needed"""
+	def recalcTrigger():
+		"""This method is called when triggers needs to be recalculated"""
 
 class EventManager(Plugin):
 	implements(ITelldusLiveObserver)
@@ -24,7 +26,11 @@ class EventManager(Plugin):
 	def __init__(self):
 		self.events = {}
 		self.s = Settings('telldus.event')
+		self.schedulersettings = Settings('telldus.scheduler')
 		self.live = TelldusLive(self.context)
+		self.timezone = self.schedulersettings.get('tz', 'UTC')
+		self.latitude = self.schedulersettings.get('latitude', '55.699592')
+		self.longitude = self.schedulersettings.get('longitude', '13.187836')
 		self.loadLocalEvents()
 
 	def loadEvent(self, eventId, data):
@@ -34,6 +40,24 @@ class EventManager(Plugin):
 		event.loadTriggers(data['triggers'])
 		self.events[eventId] = event
 
+	def liveRegistered(self, msg):
+		changed = False
+		if 'latitude' in msg and msg['latitude'] != self.latitude:
+			changed = True
+			self.latitude = msg['latitude']
+			self.schedulersettings['latitude'] = self.latitude
+		if 'longitude' in msg and msg['longitude'] != self.longitude:
+			changed = True
+			self.longitude = msg['longitude']
+			self.schedulersettings['longitude'] = self.longitude
+		if 'tz' in msg and msg['tz'] != self.timezone:
+			changed = True
+			self.timezone = msg['tz']
+			self.schedulersettings['tz'] = self.timezone
+
+		if changed:
+			self.recalcTriggers()
+
 	@mainthread
 	def loadLocalEvents(self):
 		if len(self.events) == 0:
@@ -42,6 +66,10 @@ class EventManager(Plugin):
 			for eventId in data:
 				if eventId not in self.events and data[eventId] != "":
 					self.loadEvent(eventId, data[eventId])
+
+	def recalcTriggers(self):
+		for observer in self.observers:
+			observer.recalcTrigger()
 
 	def requestAction(self, type, **kwargs):
 		for observer in self.observers:

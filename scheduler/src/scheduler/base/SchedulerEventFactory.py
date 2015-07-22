@@ -37,6 +37,25 @@ class TimeTriggerManager(object):
 				except:
 					pass
 
+	def recalcAll(self):
+		# needs to recalc all triggers, for example longitude/latitude/timezone has changed
+		triggersToRemove = {}
+		for minute in self.triggers:
+			for trigger in self.triggers[minute]:
+				if trigger.recalculate():
+					# trigger was updated (new minute), move it around
+					if minute not in triggersToRemove:
+						triggersToRemove[minute] = []
+					triggersToRemove[minute].append(trigger)
+
+		with self.timeLock:
+			for minute in triggersToRemove:
+				for trigger in triggersToRemove[minute]:
+					self.triggers[minute].remove(trigger)
+					if trigger.minute not in self.triggers:
+						self.triggers[trigger.minute] = []
+					self.triggers[trigger.minute].append(trigger)
+
 	def run(self):
 		self.running = True
 		self.lastMinute = None
@@ -50,7 +69,7 @@ class TimeTriggerManager(object):
 				triggersToRemove = []
 				for trigger in self.triggers[currentMinute]:
 					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
-						if trigger.recalculate():
+						if type(trigger) is SuntimeTrigger and trigger.recalculate():
 							# suntime (time or active-status) was updated (new minute), move it around
 							triggersToRemove.append(trigger)
 						if trigger.active:
@@ -75,6 +94,7 @@ class TimeTrigger(Trigger):
 		self.manager = manager
 		self.minute = None
 		self.hour = None
+		self.setHour = None  # this is the hour actually set (not recalculated to UTC)
 		self.active = True  # TimeTriggers are always active
 		self.s = Settings('telldus.scheduler')
 		self.timezone = self.s.get('tz', 'UTC')
@@ -86,6 +106,7 @@ class TimeTrigger(Trigger):
 		if name == 'minute':
 			self.minute = int(value)
 		elif name == 'hour':
+			self.setHour = int(value)
 			# recalculate hour to UTC
 			if int(value) == -1:
 				self.hour = int(value)
@@ -104,7 +125,24 @@ class TimeTrigger(Trigger):
 			self.manager.addTrigger(self)
 
 	def recalculate(self):
-		return False  # no need to recalculate anything
+		if self.hour == -1:
+			return False
+		self.timezone = self.s.get('tz', 'UTC')
+		currentHour = self.hour
+		local_timezone = timezone(self.timezone)
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour))
+		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+		if datetime.now().hour > utc_datetime.hour:
+			# retry it with new date (will have impact on daylight savings changes (but not sure it will actually help))
+			currentDate = currentDate + timedelta(days=1)
+		local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour))
+		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+		self.hour = utc_datetime.hour
+		if currentHour == self.hour:
+			#no change
+			return False
+		return True
 
 class SuntimeTrigger(TimeTrigger):
 	def __init__(self, manager, **kwargs):
@@ -125,8 +163,10 @@ class SuntimeTrigger(TimeTrigger):
 			self.manager.addTrigger(self)
 
 	def recalculate(self):
+		self.latitude = self.s.get('latitude', '55.699592')
+		self.longitude = self.s.get('longitude', '13.187836')
 		sunCalc = SunCalculator()
-		currentHour = self.hour 
+		currentHour = self.hour
 		currentMinute = self.minute
 		currentDate = pytz.utc.localize(datetime.utcnow())
 		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
@@ -149,6 +189,7 @@ class SuntimeTrigger(TimeTrigger):
 		self.active = True
 		self.minute = utc_datetime.minute
 		self.hour = utc_datetime.hour
+		return True
 
 class SuntimeCondition(Condition):
 	def __init__(self, **kwargs):
@@ -274,3 +315,6 @@ class SchedulerEventFactory(Plugin):
 			trigger = SuntimeTrigger(manager=self.triggerManager, **kwargs)
 			return trigger
 		return None
+
+	def recalcTrigger(self):
+		self.triggerManager.recalcAll()
