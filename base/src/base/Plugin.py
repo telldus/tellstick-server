@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 class PluginContext(object):
 	def __init__(self):
 		self.components = {}
@@ -33,7 +35,12 @@ class ObserverCollection(property):
 		classes = PluginMeta._registry.get(self.interface, ())
 		if not hasattr(component, 'context'):
 			raise AttributeError("'%s' object has no attribute '%s'" % (repr(component), 'context'))
-		c = [cls(component.context) for cls in classes]
+		c = []
+		for cls in classes:
+			try:
+				c.append(cls(component.context))
+			except Exception as e:
+				logging.exception(e)
 		return Observers(self.interface, c)
 
 class IInterface(object):
