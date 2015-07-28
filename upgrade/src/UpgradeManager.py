@@ -132,6 +132,7 @@ class UpgradeManager(object):
 		if v.valid is not True:
 			print "Could not verify signature:", v.status
 			return False
+		print "File verified successfully"
 		return True
 
 	def _characterDataHandler(self, c):
