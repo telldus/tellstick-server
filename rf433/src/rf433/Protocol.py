@@ -103,6 +103,8 @@ class Protocol(object):
 			return ['house', 'unit']
 		if (protocol == 'everflourish'):
 			return ['house', 'unit']
+		if (protocol == 'fuhaote'):
+			return ['code']
 		if (protocol == 'sartano'):
 			return ['code']
 		if (protocol == 'x10'):
@@ -117,6 +119,8 @@ class Protocol(object):
 			return ProtocolArctech()
 		if (protocol == 'comen'):
 			return ProtocolComen()
+		if (protocol == 'fuhaote'):
+			return ProtocolFuhaote()
 		if (protocol == 'fineoffset'):
 			return ProtocolFineoffset()
 		if (protocol == 'hasta'):
@@ -130,6 +134,7 @@ class Protocol(object):
 from ProtocolArctech import *
 from ProtocolComen import *
 from ProtocolFineoffset import *
+from ProtocolFuhaote import *
 from ProtocolHasta import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
