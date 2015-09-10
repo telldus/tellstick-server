@@ -28,7 +28,6 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 	implements(IZWObserver)
 	rf433 = None
 	zwave = None
-	socket = None
 
 	def handle(self):
 		data = self.request[0].strip()
@@ -60,11 +59,14 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 		msg.append({
 			'version': CommandHandler.zwave.controller.version()
 		})
-		self.socket.sendto(msg.toByteArray(), self.client_address)
+		try:
+			self.socket.sendto(msg.toByteArray(), self.client_address)
+		except:
+			# for example if socket isn't set
+			pass
 
 	def zwaveReady(self):
-		if self.socket:
-			self.sendVersion()
+		self.sendVersion()
 
 class Server(Plugin):
 
