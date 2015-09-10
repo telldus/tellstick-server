@@ -10,7 +10,7 @@ from ServerConnection import ServerConnection
 from LiveMessage import *
 
 class ITelldusLiveObserver(IInterface):
-	def liveConnected(params):
+	def liveConnected():
 		"""This method is called when we have succesfully connected to a Live! server"""
 	def liveRegistered(params):
 		"""This method is called when we have succesfully registered with a Live! server"""
