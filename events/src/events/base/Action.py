@@ -24,7 +24,7 @@ class Action(object):
 			self.timeout.cancel()
 
 	def compareStoredDelay(self, storedActions):
-		if str(self.id) not in storedActions:
+		if not storedActions or str(self.id) not in storedActions:
 			return
 		storedAction = storedActions[str(self.id)]
 		if 'delayExecTime' not in storedAction or storedAction['delay'] != self.delay or self.delayPolicy != "continue" or storedAction['delayPolicy'] != self.delayPolicy:
