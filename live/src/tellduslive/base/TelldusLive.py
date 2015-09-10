@@ -10,6 +10,8 @@ from ServerConnection import ServerConnection
 from LiveMessage import *
 
 class ITelldusLiveObserver(IInterface):
+	def liveConnected(params):
+		"""This method is called when we have succesfully connected to a Live! server"""
 	def liveRegistered(params):
 		"""This method is called when we have succesfully registered with a Live! server"""
 	def liveDisconnected():
@@ -21,6 +23,7 @@ class TelldusLive(Plugin):
 	def __init__(self):
 		print("Telldus Live! loading")
 		self.supportedMethods = 0
+		self.connected = False
 		self.registered = False
 		self.serverList = ServerList()
 		Application().registerShutdown(self.stop)
@@ -34,12 +37,16 @@ class TelldusLive(Plugin):
 	@mainthread
 	def handleMessage(self, message):
 		if (message.name() == "notregistered"):
+			self.connected = True
+			self.registered = False
 			params = message.argument(0).dictVal
 			self.s['uuid'] = params['uuid'].stringVal
 			print("This client isn't activated, please activate it using this url:\n%s" % params['url'].stringVal)
+			self.observers.liveConnected()
 			return
 
 		if (message.name() == "registered"):
+			self.connected = True
 			self.registered = True
 			self.observers.liveRegistered(message.argument(0).toNative())
 			return
@@ -57,6 +64,7 @@ class TelldusLive(Plugin):
 
 		if (message.name() == "disconnect"):
 			self.conn.close()
+			self.connected = False
 			self.registered = False
 			self.observers.liveDisconnected()
 			return
@@ -69,6 +77,8 @@ class TelldusLive(Plugin):
 		if not handled:
 			print "Did not understand: %s" % message.toByteArray()
 
+	def isConnected(self):
+		return self.connected
 
 	def isRegistered(self):
 		return self.registered
@@ -107,6 +117,7 @@ class TelldusLive(Plugin):
 
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
+				self.connected = False
 				self.registered = False
 				print("Disconnected, reconnect in %i seconds" % wait)
 				self.observers.liveDisconnected()
@@ -115,6 +126,7 @@ class TelldusLive(Plugin):
 				if (time.time() - pongTimer >= 360):  # No pong received
 					self.conn.close()
 					wait = random.randint(10, 50)
+					self.connected = False
 					self.registered = False
 					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
 					self.observers.liveDisconnected()
