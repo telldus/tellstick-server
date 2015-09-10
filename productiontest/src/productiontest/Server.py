@@ -25,15 +25,15 @@ class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 		return ''.join(['%02X' % ord(char) for char in info[18:24]])
 
 class CommandHandler(SocketServer.BaseRequestHandler):
-	implements(IZWObserver)
 	rf433 = None
-	zwave = None
+	context = None
 
 	def handle(self):
 		data = self.request[0].strip()
 		self.socket = self.request[1]
 		if data == "B:reglistener":
-			self.sendVersion()
+			server = Server(CommandHandler.context)
+			server.reglistener(self.socket, self.client_address)
 
 		msg = LiveMessage.fromByteArray(data)
 		if msg.name() == 'send':
@@ -52,32 +52,42 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 			return
 		CommandHandler.rf433.dev.queue(RF433Msg('S', msg['S'], {}))
 
-	def sendVersion(self):
-		if not CommandHandler.zwave.controller.version():
-			return  #nothing or not finished yet
-		msg = LiveMessage("zwaveinfo")
-		msg.append({
-			'version': CommandHandler.zwave.controller.version()
-		})
-		try:
-			self.socket.sendto(msg.toByteArray(), self.client_address)
-		except:
-			# for example if socket isn't set
-			pass
-
-	def zwaveReady(self):
-		self.sendVersion()
-
 class Server(Plugin):
+	implements(IZWObserver)
 
 	def __init__(self):
+		self.listener = None
 		CommandHandler.rf433 = RF433(self.context)
-		CommandHandler.zwave = TelldusZWave(self.context)
+		CommandHandler.context = self.context
+		self.zwave = TelldusZWave(self.context)
 		Application().registerShutdown(self.__stop)
 		self.autoDiscovery = SocketServer.UDPServer(('0.0.0.0', 30303), AutoDiscoveryHandler)
 		self.commandSocket = SocketServer.UDPServer(('0.0.0.0', 42314), CommandHandler)
 		Thread(target=self.__autoDiscoveryStart).start()
 		Thread(target=self.__commandSocketStart).start()
+
+	def reglistener(self, socket, clientAddress):
+		self.listener = socket
+		self.clientAddress = clientAddress
+		self.sendVersion()
+	
+	def zwaveReady(self):
+		self.sendVersion()
+
+	def sendVersion(self):
+		if not self.zwave.controller.version():
+			return  # nothing or not finished yet
+		if not self.listener:
+			return  # No listener registered
+		msg = LiveMessage("zwaveinfo")
+		msg.append({
+			'version': self.zwave.controller.version()
+		})
+		try:
+			self.listener.sendto(msg.toByteArray(), self.clientAddress)
+		except:
+			# for example if listener isn't set
+			pass
 
 	def __autoDiscoveryStart(self):
 		self.autoDiscovery.serve_forever()
