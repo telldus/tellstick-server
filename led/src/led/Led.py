@@ -17,6 +17,9 @@ class Led(Plugin):
 		self.gpio.initPin('status:green')
 		self.setNetworkLed()
 
+	def liveConnected(self):
+		self.setNetworkLed()
+
 	def liveRegistered(self, msg):
 		self.setNetworkLed()
 
@@ -28,6 +31,10 @@ class Led(Plugin):
 			# We check live status first since we might have connection on another network interface
 			self.gpio.setPin('status:red', 0)
 			self.gpio.setPin('status:green', 1, brightness=50)
+			return
+		if self.live.isConnected():
+			self.gpio.setPin('status:red', 0)
+			self.gpio.setPin('status:green', 1, brightness=50, freq=1)
 			return
 		if Led.__getIp(Board.networkInterface()) == None:
 			self.gpio.setPin('status:red', 1, freq=1)
