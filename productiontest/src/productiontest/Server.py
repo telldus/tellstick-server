@@ -5,6 +5,7 @@ from board import Board
 from tellduslive.base import LiveMessage
 from rf433 import RF433, RF433Msg, Protocol
 from threading import Thread
+from zwave.telldus import TelldusZWave
 import SocketServer
 import socket, fcntl, struct
 import logging
@@ -25,10 +26,19 @@ class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 
 class CommandHandler(SocketServer.BaseRequestHandler):
 	rf433 = None
+	zwave = None
 
 	def handle(self):
 		data = self.request[0].strip()
 		socket = self.request[1]
+		if data == "B:reglistener":
+			msg = LiveMessage("zwaveinfo")
+			msg.append({
+				'version': CommandHandler.zwave.controller.version()
+			})
+			socket.sendto(msg.toByteArray(), self.client_address)
+
+
 		msg = LiveMessage.fromByteArray(data)
 		if msg.name() == 'send':
 			self.handleSend(msg.argument(0).toNative())
@@ -49,6 +59,7 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 class Server(Plugin):
 	def __init__(self):
 		CommandHandler.rf433 = RF433(self.context)
+		CommandHandler.zwave = TelldusZWave(self.context)
 		Application().registerShutdown(self.__stop)
 		self.autoDiscovery = SocketServer.UDPServer(('0.0.0.0', 30303), AutoDiscoveryHandler)
 		self.commandSocket = SocketServer.UDPServer(('0.0.0.0', 42314), CommandHandler)
