@@ -14,5 +14,5 @@ setup(
 	entry_points={ \
 		'telldus.startup': ['c = productiontest:Server [cREQ]']
 	},
-	extras_require = dict(cREQ = 'Base>=0.11\nBoard>=0.1\nTelldusLive>=0.1\nRF433>=0.1'),
+	extras_require = dict(cREQ = 'Base>=0.1\nBoard>=0.1\nTelldusLive>=0.1\nRF433>=0.1\nZWave>=0.1'),
 )

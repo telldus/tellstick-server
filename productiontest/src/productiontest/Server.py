@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from base import Application, Plugin
+from base import Application, implements, Plugin
 from board import Board
 from tellduslive.base import LiveMessage
 from rf433 import RF433, RF433Msg, Protocol
 from threading import Thread
-from zwave.telldus import TelldusZWave
+from zwave.telldus import IZWObserver, TelldusZWave
 import SocketServer
 import socket, fcntl, struct
 import logging
@@ -25,19 +25,16 @@ class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 		return ''.join(['%02X' % ord(char) for char in info[18:24]])
 
 class CommandHandler(SocketServer.BaseRequestHandler):
+	implements(IZWObserver)
 	rf433 = None
 	zwave = None
+	socket = None
 
 	def handle(self):
 		data = self.request[0].strip()
-		socket = self.request[1]
+		self.socket = self.request[1]
 		if data == "B:reglistener":
-			msg = LiveMessage("zwaveinfo")
-			msg.append({
-				'version': CommandHandler.zwave.controller.version()
-			})
-			socket.sendto(msg.toByteArray(), self.client_address)
-
+			self.sendVersion()
 
 		msg = LiveMessage.fromByteArray(data)
 		if msg.name() == 'send':
@@ -56,7 +53,21 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 			return
 		CommandHandler.rf433.dev.queue(RF433Msg('S', msg['S'], {}))
 
+	def sendVersion(self):
+		if not CommandHandler.zwave.controller.version():
+			return  #nothing or not finished yet
+		msg = LiveMessage("zwaveinfo")
+		msg.append({
+			'version': CommandHandler.zwave.controller.version()
+		})
+		self.socket.sendto(msg.toByteArray(), self.client_address)
+
+	def zwaveReady(self):
+		if self.socket:
+			self.sendVersion()
+
 class Server(Plugin):
+
 	def __init__(self):
 		CommandHandler.rf433 = RF433(self.context)
 		CommandHandler.zwave = TelldusZWave(self.context)
