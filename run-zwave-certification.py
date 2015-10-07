@@ -3,6 +3,7 @@
 
 import sys
 sys.path.append('plugins/lib64/python2.7/site-packages/')
+sys.path.append('plugins/lib/python2.7/site-packages')
 
 import pkg_resources
 
