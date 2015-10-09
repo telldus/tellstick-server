@@ -119,6 +119,8 @@ class Protocol(object):
 			return ProtocolArctech()
 		if (protocol == 'comen'):
 			return ProtocolComen()
+		if (protocol == 'everflourish'):
+			return ProtocolEverflourish()
 		if (protocol == 'fuhaote'):
 			return ProtocolFuhaote()
 		if (protocol == 'fineoffset'):
@@ -133,6 +135,7 @@ class Protocol(object):
 
 from ProtocolArctech import *
 from ProtocolComen import *
+from ProtocolEverflourish import *
 from ProtocolFineoffset import *
 from ProtocolFuhaote import *
 from ProtocolHasta import *
