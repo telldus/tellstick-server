@@ -58,7 +58,7 @@ class Adapter(threading.Thread):
 			if state == 0:
 				x = self.__readByte(interruptable=True)
 				if x == '':
-					if self.__waitForResponse is not None and self.__waitForResponse.queued + 3 < time.time():
+					if self.__waitForResponse is not None and self.__waitForResponse.queued + 5 < time.time():
 						self.__waitForResponse.timeout()
 						self.__waitForResponse = None
 					if len(self.__queue) and self.__waitForResponse is None:
