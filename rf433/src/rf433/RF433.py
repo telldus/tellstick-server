@@ -94,6 +94,8 @@ class DeviceNode(RF433Node):
 			failure(Device.FAILED_STATUS_NO_REPLY)
 
 		prefixes = {}
+		if 'P' in msg:
+			prefixes['P'] = msg['P']
 		if 'R' in msg:
 			prefixes['R'] = msg['R']
 		if 'S' in msg:
