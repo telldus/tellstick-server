@@ -131,6 +131,8 @@ class Protocol(object):
 			return ProtocolMandolyn()
 		if (protocol == 'oregon'):
 			return ProtocolOregon()
+		if (protocol == 'risingsun'):
+			return ProtocolRisingSun()
 		return None
 
 from ProtocolArctech import *
@@ -141,3 +143,4 @@ from ProtocolFuhaote import *
 from ProtocolHasta import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
+from ProtocolRisingSun import *
