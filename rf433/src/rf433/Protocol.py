@@ -133,6 +133,8 @@ class Protocol(object):
 			return ProtocolOregon()
 		if (protocol == 'risingsun'):
 			return ProtocolRisingSun()
+		if (protocol == 'sartano'):
+			return ProtocolSartano()
 		if (protocol == 'x10'):
 			return ProtocolX10()
 		return None
@@ -146,4 +148,5 @@ from ProtocolHasta import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
 from ProtocolRisingSun import *
+from ProtocolSartano import *
 from ProtocolX10 import *
