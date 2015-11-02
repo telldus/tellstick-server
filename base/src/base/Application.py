@@ -45,6 +45,8 @@ class Application(object):
 		self.lock = threading.RLock()
 		self.running = True
 		self.shutdown = []
+		self.waitingMaintenanceJobs = []
+		self.maintenanceJobHandler = None
 		self.pluginContext = PluginContext()
 		self.__isJoining = False
 		self.__tasks = []
@@ -54,6 +56,18 @@ class Application(object):
 		Application._mainThread = threading.currentThread()
 		if run:
 			self.run()
+
+	def registerMaintenanceJobHandler(self, fn):
+		# (there can be only one...)
+		self.maintenanceJobHandler = fn
+		for job in self.waitingMaintenanceJobs:
+			self.maintenanceJobHandler(job)
+
+	def registerMaintenanceJob(self, job):
+		if self.maintenanceJobHandler:
+			self.maintenanceJobHandler(job)
+		else:
+			self.waitingMaintenanceJobs.append(job)
 
 	def registerShutdown(self, fn):
 		self.shutdown.append(fn)

@@ -19,9 +19,13 @@ class Scheduler(Plugin):
 		self.running = False
 		#self.runningJobsLock = threading.Lock() #TODO needed?
 		self.jobsLock = threading.Lock()
+		self.maintenanceJobsLock = threading.Lock()
+		self.maintenanceJobs = []
+		self.lastMaintenanceJobId = 0
 		self.runningJobs = {} #id:s as keys
 		self.s = Settings('telldus.scheduler')
 		Application().registerShutdown(self.stop)
+		Application().registerMaintenanceJobHandler(self.addMaintenanceJobGeneric)
 		self.jobs = []
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
@@ -32,6 +36,23 @@ class Scheduler(Plugin):
 
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
+
+	def addMaintenanceJobGeneric(self, job):
+		self.addMaintenanceJob(job['nextRunTime'], job['callback'], job['recurrence'])
+
+	def addMaintenanceJob(self, nextRunTime, timeoutCallback, recurrence=0):
+		""" nextRunTime - GMT timestamp, timeoutCallback - the method to run,
+		recurrence - when to repeat it, in seconds
+		Returns: An id for the newly added job (for removal and whatnot)
+		Note, if the next nextRunTime needs to be calculated, it's better to do that
+		in the callback-method, and add a new job from there, instead of using "recurrence" """
+		jobData = {'nextRunTime': nextRunTime, 'callback': timeoutCallback, 'recurrence': recurrence}
+		with self.maintenanceJobsLock:
+			self.lastMaintenanceJobId = self.lastMaintenanceJobId + 1
+			jobData['id'] = self.lastMaintenanceJobId  # add an ID, make it possible to remove it someday
+			self.maintenanceJobs.append(jobData)
+			self.maintenanceJobs.sort(key=lambda jobData: jobData['nextRunTime'])
+			return self.lastMaintenanceJobId
 
 	def calculateJobs(self, jobs):
 		"""Calculate nextRunTime for all jobs in the supplied list, order it and assign it to self.jobs"""
@@ -227,6 +248,12 @@ class Scheduler(Plugin):
 	def run(self):
 		self.running = True
 		while self.running:
+			maintenanceJob = None
+			with self.maintenanceJobsLock:
+				if len(self.maintenanceJobs) > 0 and self.maintenanceJobs[0]['nextRunTime'] < time.time():
+					maintenanceJob = self.maintenanceJobs.pop(0)
+			self.runMaintenanceJob(maintenanceJob)
+
 			jobCopy = None
 			with self.jobsLock:
 				if len(self.jobs) > 0 and self.jobs[0]['nextRunTime'] < time.time():
@@ -309,3 +336,11 @@ class Scheduler(Plugin):
 		elif method == Device.BELL:
 			action = 'bell'
 		device.command(action, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
+
+	@mainthread
+	def runMaintenanceJob(self, jobData):
+		if not jobData:
+			return
+		if jobData['recurrence']:
+			self.addMaintenanceJob(time.time() + jobData['recurrence'], jobData['callback'], jobData['recurrence'])  # readd the job for another run
+		jobData['callback']()
