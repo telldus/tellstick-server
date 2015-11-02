@@ -72,7 +72,7 @@ class Scheduler(Plugin):
 			job['nextRunTime'] = 253402214400 #set to max value, only run just before the end of time
 			self.deleteJob(job['id'])	#just delete the job, until it's possible to edit schedules locally, inactive jobs has no place at all here
 			return False
-		today = date.today().weekday()
+		today = datetime.now(timezone(self.timezone)).weekday()  # normalize?
 		weekdays = [int(n) for n in job['weekdays'].split(',')]
 		runToday = False
 		firstWeekdayToRun = None
@@ -88,7 +88,7 @@ class Scheduler(Plugin):
 			elif today > weekday and (firstWeekdayToRun is None or weekday < firstWeekdayToRun):
 				firstWeekdayToRun = weekday
 
-		todayDate = date.today()
+		todayDate = datetime.now(timezone(self.timezone)).date()  # normalize?
 		if runToday:
 			#this weekday is included in the ones that this schedule should be run on
 			runTimeToday = self.calculateRunTimeForDay(todayDate, job)
