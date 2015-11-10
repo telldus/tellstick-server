@@ -60,8 +60,8 @@ class ServerConnection(object):
 		if len(self.msgs):
 			return ServerConnection.MSG_RECEIVED
 
-		fileno = self.socket.fileno()
 		try:
+			fileno = self.socket.fileno()
 			r, w, e = select.select([fileno], [], [], 5)
 		except Exception as e:
 			logging.exception(e)
