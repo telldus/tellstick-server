@@ -314,8 +314,9 @@ class Scheduler(Plugin):
 		executedJobs = self.s.get('executedJobs', {})
 		executedJobs[str(jobId)] = time.time() #doesn't work well with int type, for some reason
 		self.s['executedJobs'] = executedJobs
-		executedJobsTest = self.s.get('executedJobs', {})
-		self.runningJobs[jobId]['retries'] = 0
+		#executedJobsTest = self.s.get('executedJobs', {})
+		if jobId in self.runningJobs:
+			self.runningJobs[jobId]['retries'] = 0
 
 	@mainthread
 	def runJob(self, jobData):
