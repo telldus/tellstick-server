@@ -148,7 +148,7 @@ class DeviceManager(Plugin):
 		msg = LiveMessage("DeviceEvent")
 		msg.append(device.id())
 		msg.append(state)
-		msg.append(stateValue)
+		msg.append(str(stateValue))
 		msg.append(extras)
 		self.live.send(msg)
 
