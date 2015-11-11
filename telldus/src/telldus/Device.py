@@ -107,6 +107,29 @@ class Device(object):
 	def confirmed(self):
 		return self._confirmed
 
+	def containingDevices(self):
+		return []
+
+	def flattenContainingDevices(self):
+		devices = []
+		ids = []
+		toCheck = list(self.containingDevices())
+		while len(toCheck):
+			d = toCheck.pop()
+			if type(d) is int:
+				d = self._manager.device(d)
+			if d is None:
+				continue
+			if d is self:
+				# Ignore ourself
+				continue
+			if d.id() in ids:
+				continue
+			devices.append(d)
+			ids.append(d.id())
+			toCheck.extend(d.containingDevices())
+		return devices
+
 	def loadCached(self, olddevice):
 		self._id = olddevice._id
 		self._name = olddevice._name
