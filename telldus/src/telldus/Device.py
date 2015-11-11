@@ -67,7 +67,10 @@ class Device(object):
 		return self._battery
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
-		method = Device.methodStrToInt(action)
+		if type(action) == str:
+			method = Device.methodStrToInt(action)
+		else:
+			method = action
 
 		def triggerFail(reason):
 			if failure:
