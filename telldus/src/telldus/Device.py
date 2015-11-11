@@ -162,6 +162,9 @@ class Device(object):
 	def isSensor(self):
 		return False
 
+	def manager(self):
+		return self._manager
+
 	def methods(self):
 		return 0
 
