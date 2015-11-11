@@ -15,7 +15,7 @@ class Player(Device):
 		else:
 			self.setState(Device.TURNOFF)
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		if action == Device.TURNON:
 			self.p.set_power_state(True)
 			self.p.play()

@@ -66,7 +66,13 @@ class Device(object):
 	def battery(self):
 		return self._battery
 
-	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[]):
+	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[], ignore=None):
+		# Prevent loops from groups and similar
+		if ignore is None:
+			ignore = []
+		if self.id() in ignore:
+			return
+		ignore.append(self.id())
 		if type(action) == str:
 			method = Device.methodStrToInt(action)
 		else:
@@ -90,12 +96,12 @@ class Device(object):
 			triggerFail(0)
 			return
 		try:
-			self._command(method, value, success=s, failure=triggerFail)
+			self._command(method, value, success=s, failure=triggerFail, ignore=ignore)
 		except Exception as e:
 			logging.exception(e)
 			triggerFail(0)
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		failure(0)
 
 	def confirmed(self):

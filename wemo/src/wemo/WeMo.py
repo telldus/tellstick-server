@@ -22,7 +22,7 @@ class WeMoSwitch(WeMoDevice):
 	def __init__(self, device):
 		super(WeMoSwitch,self).__init__(device)
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		if action == Device.TURNON:
 			self.device.on()
 			success()
@@ -43,7 +43,7 @@ class WeMoLight(Device):
 		self.attr = bridge.light_attributes(light)
 		self.setName(self.attr['name'])
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		if action == Device.TURNON:
 			dim = 255
 			state = 1

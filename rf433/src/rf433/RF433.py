@@ -74,7 +74,7 @@ class DeviceNode(RF433Node):
 		self._model = ''
 		self._protocolParams = {}
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		protocol = Protocol.protocolInstance(self._protocol)
 		if not protocol:
 			logging.warning("Unknown protocol %s", self._protocol)

@@ -19,7 +19,7 @@ class Light(Device):
 		self._bridge = bridge
 		self._type = 'unknown'
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		if action == Device.TURNON:
 			msg = '{"on": true, "bri": 254}'
 		elif action == Device.TURNOFF:

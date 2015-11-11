@@ -16,7 +16,7 @@ class DummyDevice(Device):
 	def __init__(self):
 		super(DummyDevice,self).__init__()
 
-	def _command(self, action, value, success, failure):
+	def _command(self, action, value, success, failure, **kwargs):
 		'''This method is called when someone want to control this device
 
 		action is the method id to execute. This could be for instance:
