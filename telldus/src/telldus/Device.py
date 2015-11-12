@@ -172,6 +172,9 @@ class Device(object):
 	def methods(self):
 		return 0
 
+	def model(self):
+		return ''
+
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id
 
@@ -181,6 +184,9 @@ class Device(object):
 	def paramUpdated(self, param):
 		if self._manager:
 			self._manager.save()
+
+	def protocol(self):
+		return self.typeString()
 
 	def sensorValue(self, valueType, scale):
 		if valueType not in self._sensorValues:

@@ -59,6 +59,8 @@ class DeviceManager(Plugin):
 					'methods': device.methods(),
 					'state': state,
 					'stateValue': stateValue,
+					'protocol': device.protocol(),
+					'model': device.model(),
 					'transport': device.typeString()
 				}
 				msg = LiveMessage("DeviceAdded")
@@ -271,6 +273,8 @@ class DeviceManager(Plugin):
 				'methods': d.methods(),
 				'state': state,
 				'stateValue': stateValue,
+				'protocol': d.protocol(),
+				'model': d.model(),
 				'transport': d.typeString()
 			}
 			if d.battery():
