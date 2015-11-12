@@ -84,13 +84,17 @@ class Device(object):
 					failure(reason, *callbackArgs)
 				except DeviceAbortException:
 					return
-		def s():
+		def s(state=None, stateValue=None):
+			if state is None:
+				state = method
+			if stateValue is None:
+				stateValue = value
 			if success:
 				try:
-					success(state=method, stateValue=value, *callbackArgs)
+					success(state=state, stateValue=stateValue, *callbackArgs)
 				except DeviceAbortException:
 					return
-			self.setState(method, value, origin=origin)
+			self.setState(state, stateValue, origin=origin)
 
 		if method == 0:
 			triggerFail(0)
