@@ -147,7 +147,7 @@ class Hue(Plugin):
 			return True
 		return False
 
-	def handleRequest(self, plugin, path, params):
+	def handleRequest(self, plugin, path, params, **kwargs):
 		if plugin != 'hue' or path != '':
 			return None
 		if 'select' in params:

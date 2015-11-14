@@ -15,6 +15,13 @@ class IWebRequestHandler(IInterface):
 	def matchRequest(plugin, path):
 		"""Return true if we handle this request"""
 
+class WebRequest(object):
+	def __init__(self, request):
+		self.__request = request
+
+	def base(self):
+		return self.__request.base
+
 class WebResponseRedirect(object):
 	def __init__(self, url):
 		self.url = url
@@ -71,7 +78,7 @@ class RequestHandler(object):
 		response = None
 		for o in self.observers:
 			if o.matchRequest(plugin, path):
-				response = o.handleRequest(plugin, path, params)
+				response = o.handleRequest(plugin, path, params, request=WebRequest(cherrypy.request))
 				break
 		if response is None:
 			raise cherrypy.NotFound()
