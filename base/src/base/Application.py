@@ -6,6 +6,7 @@ try:
 except ImportError:
 	pkg_resources = None
 import threading
+import time
 import traceback
 import signal
 import sys
@@ -45,6 +46,7 @@ class Application(object):
 		self.lock = threading.RLock()
 		self.running = True
 		self.shutdown = []
+		self.scheduledTasks = []
 		self.waitingMaintenanceJobs = []
 		self.maintenanceJobHandler = None
 		self.pluginContext = PluginContext()
@@ -68,6 +70,25 @@ class Application(object):
 			self.maintenanceJobHandler(job)
 		else:
 			self.waitingMaintenanceJobs.append(job)
+
+	@mainthread
+	def registerScheduledTask(self, fn, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False, strictInterval=False, args=None, kwargs=None):
+		seconds = seconds + (minutes*60) + (hours*3600) + (days*86400)
+		nextRuntime = int(time.time())
+		if not runAtOnce:
+			nextRuntime = nextRuntime + seconds
+		if args is None:
+			args = []
+		if kwargs is None:
+			kwargs = {}
+		self.scheduledTasks.append({
+			'interval': seconds,
+			'strictInterval': strictInterval,
+			'nextRuntime': nextRuntime,
+			'fn': fn,
+			'args': args,
+			'kwargs': kwargs,
+		})
 
 	def registerShutdown(self, fn):
 		self.shutdown.append(fn)
@@ -161,6 +182,16 @@ class Application(object):
 	def __nextTask(self):
 		self.__taskLock.acquire()
 		try:
+			# Check scheduled tasks first
+			ts = time.time()
+			for job in self.scheduledTasks:
+				if ts >= job['nextRuntime']:
+					if job['strictInterval']:
+						while job['nextRuntime'] < ts:
+							job['nextRuntime'] = job['nextRuntime'] + job['interval']
+					else:
+						job['nextRuntime'] = ts + job['interval']
+					return (job['fn'], job['args'], job['kwargs'])
 			while len(self.__tasks) == 0:
 				if (self.__isJoining == True):
 					break
