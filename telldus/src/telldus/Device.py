@@ -279,6 +279,16 @@ class Device(object):
 		# Cut of the rest of the unsupported methods we don't have a fallback for
 		return methods & supportedMethods
 
+class Sensor(Device):
+	def isDevice(self):
+		return False
+
+	def isSensor(self):
+		return True
+
+	def name(self):
+		return self._name if self._name is not None else 'Sensor %i' % self._id
+
 class CachedDevice(Device):
 	def __init__(self, settings):
 		super(CachedDevice, self).__init__()
