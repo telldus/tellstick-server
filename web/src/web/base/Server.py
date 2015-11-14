@@ -83,6 +83,8 @@ class RequestHandler(object):
 		if response is None:
 			raise cherrypy.NotFound()
 		if isinstance(response, WebResponseRedirect):
+			if response.url[:4] == 'http':
+				raise cherrypy.HTTPRedirect(response.url)
 			raise cherrypy.HTTPRedirect('%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
 		template, data = response
 		if template is None:
