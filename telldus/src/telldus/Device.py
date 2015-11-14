@@ -174,7 +174,7 @@ class Device(object):
 		return 0
 
 	def model(self):
-		return ''
+		return 'n/a'
 
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id

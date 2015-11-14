@@ -113,8 +113,8 @@ class DeviceManager(Plugin):
 		msg = LiveMessage("SensorEvent")
 		sensor = {
 			'name': device.name(),
-			'protocol': device.typeString(),
-			'model': 'n/a',
+			'protocol': device.protocol(),
+			'model': device.model(),
 			'sensor_id': device.id(),
 		}
 		if device.battery():
@@ -294,8 +294,8 @@ class DeviceManager(Plugin):
 			sensorFrame = []
 			sensor = {
 				'name': d.name(),
-				'protocol': d.typeString(),
-				'model': 'n/a',
+				'protocol': d.protocol(),
+				'model': d.model(),
 				'sensor_id': d.id(),
 			}
 			if d.battery():
