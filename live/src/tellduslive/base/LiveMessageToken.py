@@ -34,6 +34,10 @@ class LiveMessageToken(object):
 			for key in value:
 				self.dictVal[key] = LiveMessageToken(value[key])
 
+		elif (type(value) is float):
+			self.valueType = self.TYPE_STRING
+			self.stringVal = str(value)
+
 	def toJSON(self):
 		if (self.valueType == LiveMessageToken.TYPE_INT):
 			return '%d' % self.intVal
