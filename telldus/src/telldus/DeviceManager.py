@@ -3,7 +3,7 @@
 from Device import CachedDevice, DeviceAbortException
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
-from base import Settings, ObserverCollection, IInterface, Plugin, implements
+from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements
 import time
 
 class IDeviceChange(IInterface):
@@ -51,6 +51,7 @@ class DeviceManager(Plugin):
 		
 		if not cachedDevice:
 			self.observers.deviceAdded(device)
+			Application.signal('deviceAdded', device)
 			if self.live.registered and device.isDevice():
 				(state, stateValue) = device.state()
 				deviceDict = {
@@ -86,6 +87,7 @@ class DeviceManager(Plugin):
 		isDevice = True
 		for i, device in enumerate(self.devices):
 			if device.id() == deviceId:
+				Application.signal('deviceRemoved', deviceId)
 				self.observers.deviceRemoved(deviceId)
 				isDevice = self.devices[i].isDevice()
 				del self.devices[i]
@@ -107,6 +109,7 @@ class DeviceManager(Plugin):
 	def sensorValueUpdated(self, device, valueType, value, scale):
 		if device.isSensor() == False:
 			return
+		Application.signal('sensorValueUpdated', device, valueType, value, scale)
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
 		if not self.live.registered:
 			return
@@ -145,6 +148,7 @@ class DeviceManager(Plugin):
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
 		self.observers.stateChanged(device, state, stateValue)
+		Application.signal('deviceStateChanged', device, state, stateValue)
 		if not self.live.registered:
 			return
 		msg = LiveMessage("DeviceEvent")
@@ -168,6 +172,7 @@ class DeviceManager(Plugin):
 			extras['origin'] = 'Unknown'
 		(state, stateValue) = device.state()
 		self.observers.stateChanged(device, state, stateValue)
+		Application.signal('deviceStateChanged', device, state, stateValue)
 		msg = LiveMessage('DeviceFailEvent')
 		msg.append(device.id())
 		msg.append(state)
