@@ -1,4 +1,7 @@
-import cherrypy, mimetypes, threading
+import cherrypy, json, mimetypes, threading
+from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
+from ws4py.websocket import WebSocket
+from ws4py.messaging import TextMessage
 from base import Application, IInterface, ObserverCollection, Plugin
 from genshi.template import TemplateLoader, loader
 from pkg_resources import resource_filename, resource_exists, resource_stream, resource_isdir
@@ -22,6 +25,9 @@ class WebRequest(object):
 	def base(self):
 		return self.__request.base
 
+class WebSocketHandler(WebSocket):
+	pass
+
 class WebResponseRedirect(object):
 	def __init__(self, url):
 		self.url = url
@@ -34,10 +40,24 @@ class Server(Plugin):
 			'server.socket_host': '::',
 			'server.socket_port': 80,
 		})
-		cherrypy.tree.mount(RequestHandler(self.context))
+		cherrypy.tree.mount(RequestHandler(self.context), '', config = {
+			'/ws': {
+				'tools.websocket.on': True,
+				'tools.websocket.handler_cls': WebSocketHandler
+			}
+		})
 		cherrypy.engine.autoreload.unsubscribe()
+		WebSocketPlugin(cherrypy.engine).subscribe()
+		cherrypy.tools.websocket = WebSocketTool()
 		cherrypy.engine.start()
 		Application().registerShutdown(self.stop)
+
+	def webSocketSend(self, module, action, data):
+		cherrypy.engine.publish('websocket-broadcast', json.dumps({
+			'module': module,
+			'action': action,
+			'data': data,
+		}))
 
 	def stop(self):
 		cherrypy.engine.exit()

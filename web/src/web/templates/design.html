@@ -5,6 +5,7 @@
 			<title py:with="title = list(select('title/text()'))">
 				TellStick ZNet: <py:if test="title">$title</py:if>
 			</title>
+			<script src="/web/js/jquery-2.1.4.min.js"></script>
 			${select('*[local-name()!="title"]')}
 		</head>
 	</py:match>
@@ -25,7 +26,7 @@
 
 			<div id="footer">
 				<hr />
-				<p class="legalese">© 2014 Telldus Technologies AB</p>
+				<p class="legalese">© 2016 Telldus Technologies AB</p>
 			</div>
 		</body>
 	</py:match>

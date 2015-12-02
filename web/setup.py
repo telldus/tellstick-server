@@ -13,6 +13,7 @@ setup(
 	},
 	extras_require = dict(cREQ = "Base>=0.1"),
 	package_data={'web' : [
-		'templates/*.html'
+		'templates/*.html',
+		'htdocs/js/*.js',
 	]}
 )

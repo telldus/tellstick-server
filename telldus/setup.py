@@ -23,5 +23,6 @@ setup(
 		'templates/*.html',
 		'htdocs/img/*.png',
 		'htdocs/img/*.ico',
+		'htdocs/js/*.js',
 	]}
 )
