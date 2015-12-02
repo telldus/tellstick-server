@@ -227,7 +227,9 @@ class Device(object):
 		if self._manager:
 			self._manager.sensorValueUpdated(self, valueType, value, scale)
 
-	def setState(self, state, stateValue = '', ack=None, origin=None):
+	def setState(self, state, stateValue = None, ack=None, origin=None):
+		if stateValue is None:
+			stateValue = ''
 		self._state = state
 		self._stateValue = stateValue
 		if self._manager:
