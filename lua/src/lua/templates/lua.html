@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+	<xi:include href="design.html" />
+	<head>
+		<title>Lua scripts</title>
+		<script src="/telldus/js/telldus.js"></script>
+		<script src="/lua/edit.js"></script>
+		<script src="/lua/codemirror-compressed.js"></script>
+		<link rel="stylesheet" href="/lua/codemirror.css" />
+		<link rel="stylesheet" href="/lua/neat.css" />
+		<style>
+			.CodeMirror, #log {border: 1px solid black;}
+			#log {height: 100%; overflow:auto;}
+		</style>
+	</head>
+	<body>
+		<div id="content">
+			<ul>
+				<li py:for="script in scripts"><a href="?edit=${script.name}">${script.name}</a></li>
+			</ul>
+			<div py:if="script">
+				<h1>Edit script ${script.name}</h1>
+				<table width="100%">
+					<tr>
+						<td width="50%">
+							<form id="codeForm">
+								<textarea id="code" name="code">${script.code}</textarea>
+								<input type="hidden" name="script" value="${script.name}" />
+							</form>
+						</td>
+						<td width="50%" valign="top" style="height: 300px">
+							<div id="log" />
+						</td>
+					</tr>
+					<tr>
+						<td><input type="button" id="save" value="Save and run" /></td>
+						<td><input type="button" id="clearLog" value="Clear" /></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</body>
+</html>

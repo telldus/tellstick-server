@@ -36,6 +36,10 @@ class Board(object):
 		return 'api.telldus.com'
 
 	@staticmethod
+	def luaScriptPath():
+		return '/usr/lib/telldus/scripts/lua'
+
+	@staticmethod
 	def rf433Port():
 		return '/dev/ttyUSB0'
 

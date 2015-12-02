@@ -30,6 +30,10 @@ class Board(object):
 		return 'api.telldus.net'
 
 	@staticmethod
+	def luaScriptPath():
+		return '/usr/lib/telldus/scripts/lua'
+
+	@staticmethod
 	def product():
 		return 'tellstick-znet-desktop'
 
