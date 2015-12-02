@@ -53,8 +53,8 @@ class Application(object):
 		self.__isJoining = False
 		self.__tasks = []
 		self.__taskLock = threading.Condition(threading.Lock())
-		signal.signal(signal.SIGINT, self.signal)
-		signal.signal(signal.SIGTERM, self.signal)
+		signal.signal(signal.SIGINT, self.__signal)
+		signal.signal(signal.SIGTERM, self.__signal)
 		Application._mainThread = threading.currentThread()
 		if run:
 			self.run()
@@ -151,7 +151,12 @@ class Application(object):
 		for f in bt:
 			logging.error(str(f))
 
-	def signal(self, signum, frame):
+	@staticmethod
+	def signal(msg, *args, **kwargs):
+		signalManager = SignalManager(Application._instance.pluginContext)
+		signalManager.signal(msg, *args, **kwargs)
+
+	def __signal(self, signum, frame):
 		logging.info("Signal %d caught" % signum)
 		self.quit()
 
@@ -203,3 +208,5 @@ class Application(object):
 				return self.__tasks.pop(0)
 		finally:
 			self.__taskLock.release()
+
+from SignalManager import SignalManager

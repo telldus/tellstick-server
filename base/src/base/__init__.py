@@ -2,5 +2,6 @@
 
 
 from Application import Application, mainthread
-from Settings import Settings
 from Plugin import IInterface, Plugin, PluginContext, ObserverCollection, implements
+from Settings import Settings
+from SignalManager import ISignalObserver, slot
