@@ -74,7 +74,7 @@ class Device(object):
 		if self.id() in ignore:
 			return
 		ignore.append(self.id())
-		if type(action) == str:
+		if type(action) == str or type(action) == unicode:
 			method = Device.methodStrToInt(action)
 		else:
 			method = action
