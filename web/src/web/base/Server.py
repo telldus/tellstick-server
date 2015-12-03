@@ -115,6 +115,9 @@ class RequestHandler(object):
 		return stream.render('html', doctype='html')
 
 	def __call__(self, plugin = '', *args, **kwargs):
+		if plugin == 'ws':
+			# Ignore, this is for websocket
+			return
 		path = [x for x in args]
 		return self.handle(plugin, path, **kwargs)
 RequestHandler.exposed = True
