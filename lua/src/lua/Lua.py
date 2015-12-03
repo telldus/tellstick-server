@@ -101,6 +101,8 @@ class Lua(Plugin):
 				continue
 			with open(script.filename, 'w') as f:
 				f.write(code)
+			# overlayfs does not support inofify for filechanges so we need to signal manually
+			script.reload()
 			break
 
 	@slot()
