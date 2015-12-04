@@ -61,7 +61,7 @@ class Lua(Plugin):
 	def fileRemoved(self, filename):
 		for i, script in enumerate(self.scripts):
 			if script.filename == filename:
-				script.unload()
+				script.shutdown()
 				del self.scripts[i]
 				break
 
@@ -114,3 +114,5 @@ class Lua(Plugin):
 	def shutdown(self):
 		self.fileobserver.stop()
 		self.fileobserver.join()
+		for script in self.scripts:
+			script.shutdown()
