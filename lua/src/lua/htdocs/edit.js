@@ -7,7 +7,7 @@ $(document).ready(function() {
 	});
 	$.ws.onMessage(function(module, action, data) {
 		if (module == 'lua' && action == 'log') {
-			$('#log').append('<p>' + data + '</p>');
+			$('#log').append($('<p>').text(data));
 			$('#log').animate({
 				scrollTop: $('#log').height()
 			}, 300);
