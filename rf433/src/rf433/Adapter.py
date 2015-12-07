@@ -246,8 +246,4 @@ class Adapter(threading.Thread):
 			self.waitingForData = False
 
 	def __send(self, msg):
-		for c in msg:
-			if type(c) == str:
-				self.dev.write(c)
-			else:
-				self.dev.write(chr(c))
+		self.dev.write(bytearray(msg))
