@@ -85,23 +85,14 @@ class DeviceAction(Action):
 		device = self.manager.device(self.deviceId)
 		if device is None:
 			return
-		m = None
-		if self.method == Device.TURNON:
-			m = 'turnon'
-		elif self.method == Device.TURNOFF:
-			m = 'turnoff'
-		elif self.method == Device.DIM:
-			m = 'dim'
-		elif self.method == Device.BELL:
-			m = 'bell'
 		if device.typeString() == '433' and self.repeats > 1:
 			i = 1
 			while i < self.repeats:
-				t = Timer(3*i, device.command, [m, self.value], {'origin':'Event'})
+				t = Timer(3*i, device.command, [self.method, self.value], {'origin':'Event'})
 				t.start()
 				i += 1
 
-		device.command(m, self.value, origin='Event')
+		device.command(self.method, self.value, origin='Event')
 
 class DeviceCondition(Condition):
 	def __init__(self, manager, **kwargs):
