@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from tellduslive.base import LiveMessage
+import logging
 import time
 
 class Condition(object):
@@ -12,7 +13,11 @@ class Condition(object):
 
 	def loadParams(self, params):
 		for param in params:
-			self.parseParam(param, params[param])
+			try:
+				self.parseParam(param, params[param])
+			except Exception as e:
+				logging.error(str(e))
+				logging.error("Could not parse condition param, %s - %s" % (param, params[param]))
 
 	def parseParam(self, name, value):
 		pass

@@ -3,6 +3,7 @@
 from base import Application, mainthread, Settings
 from tellduslive.base import LiveMessage
 from threading import Timer
+import logging
 import time
 
 class Action(object):
@@ -55,7 +56,11 @@ class Action(object):
 
 	def loadParams(self, params):
 		for param in params:
-			self.parseParam(param, params[param])
+			try:
+				self.parseParam(param, params[param])
+			except Exception as e:
+				logging.error(str(e))
+				logging.error("Could not parse action param, %s - %s" % (param, params[param]))
 
 	def parseParam(self, name, value):
 		pass
