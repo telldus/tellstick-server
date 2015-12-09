@@ -320,23 +320,16 @@ class Scheduler(Plugin):
 
 	@mainthread
 	def runJob(self, jobData):
-		#TODO statevalue too, possible to send to 433 with callback-method on success
-		print "Run"
 		device = self.deviceManager.device(jobData['client_device_id'])
 		if not device:
 			print "Missing device: " + str(jobData['client_device_id'])
 			return
 		method = jobData['method']
+		value = None
+		if 'value' in jobData:
+			value = jobData['value']
 
-		if method == Device.TURNON:
-			action = 'turnon'
-		elif method == Device.TURNOFF:
-			action = 'turnoff'
-		elif method == Device.DIM:
-			action = 'dim'
-		elif method == Device.BELL:
-			action = 'bell'
-		device.command(action, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
+		device.command(method, value=value, origin='Scheduler', success=self.successfulJobRun, callbackArgs=[jobData['id']])
 
 	@mainthread
 	def runMaintenanceJob(self, jobData):

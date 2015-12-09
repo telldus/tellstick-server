@@ -78,7 +78,13 @@ class Device(object):
 			method = Device.methodStrToInt(action)
 		else:
 			method = action
-
+		if method == Device.DIM:
+			if value is None:
+				value = 0  # this is an error, but at least won't crash now
+			else:
+				value = int(value)
+		else:
+			value = None
 		def triggerFail(reason):
 			if failure:
 				try:
