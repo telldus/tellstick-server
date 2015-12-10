@@ -127,6 +127,8 @@ class Protocol(object):
 			return ProtocolFineoffset()
 		if (protocol == 'hasta'):
 			return ProtocolHasta()
+		if (protocol == 'kangtai'):
+			return ProtocolKangtai()
 		if (protocol == 'mandolyn'):
 			return ProtocolMandolyn()
 		if (protocol == 'oregon'):
@@ -147,6 +149,7 @@ from ProtocolEverflourish import *
 from ProtocolFineoffset import *
 from ProtocolFuhaote import *
 from ProtocolHasta import *
+from ProtocolKangtai import *
 from ProtocolMandolyn import *
 from ProtocolOregon import *
 from ProtocolRisingSun import *
