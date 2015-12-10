@@ -26,7 +26,7 @@ class WebUI(Plugin):
 			return True
 		return False
 
-	def handleRequest(self, plugin, path, params):
+	def handleRequest(self, plugin, path, params, **kwargs):
 		if plugin != '':
 			return None
 		if path == '':
