@@ -137,6 +137,8 @@ class Protocol(object):
 			return ProtocolSartano()
 		if (protocol == 'x10'):
 			return ProtocolX10()
+		if (protocol == 'yidong'):
+			return ProtocolYidong()
 		return None
 
 from ProtocolArctech import *
@@ -150,3 +152,4 @@ from ProtocolOregon import *
 from ProtocolRisingSun import *
 from ProtocolSartano import *
 from ProtocolX10 import *
+from ProtocolYidong import *
