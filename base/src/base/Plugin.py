@@ -65,9 +65,13 @@ class PluginMeta(type):
 		self = context.components.get(cls)
 		if self is None:
 			self = cls.__new__(cls)
+			# If the class implements any observer pattern before our __init__
+			# function has been called the observed function may be called before
+			# the class has been initialized completely. A proper fix should be to
+			# not call observed functions before the class has been fully loaded.
+			context.components[cls] = self
 			self.context = context
 			self.__init__()
-			context.components[cls] = self
 		return self
 
 class Plugin(object):
