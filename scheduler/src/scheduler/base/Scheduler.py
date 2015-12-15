@@ -211,7 +211,7 @@ class Scheduler(Plugin):
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
 			self.s['jobs'] = self.jobs #save to storage
-			self.live.pushToWeb('scheduler', 'removed', job['id'])
+			self.live.pushToWeb('scheduler', 'removed', jobId)
 
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
