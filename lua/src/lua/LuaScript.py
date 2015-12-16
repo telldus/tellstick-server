@@ -3,9 +3,32 @@
 from base import Application
 from telldus import DeviceManager
 from web.base import Server
-from lupa import LuaRuntime
+from lupa import LuaRuntime, lua_type
 from threading import Thread, Condition, Lock
 import os, types
+
+# Whitelist functions known to be safe.
+safeFunctions = {
+	'_VERSION': [],
+	'assert': [],
+	'coroutine': ['create', 'resume', 'running', 'status', 'wrap', 'yield'],
+	'error': [],
+	'ipairs': [],
+	'math': ['abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', 'deg', 'exp', 'floor', 'fmod', 'frexp', 'huge', 'ldexp', 'log', 'log10', 'max', 'min', 'modf', 'pi', 'pow', 'rad', 'random', 'randomseed', 'sin', 'sinh', 'sqrt', 'tan', 'tanh'],
+	'next': [],
+	'os': ['clock', 'date', 'difftime', 'time'],
+	'pairs': [],
+	'pcall': [],
+	'print': [],
+	'select': [],
+	'string': ['byte', 'char', 'find', 'format', 'gmatch', 'gsub', 'len', 'lower', 'match', 'rep', 'reverse', 'sub', 'upper'],
+	'table': ['concat', 'insert', 'maxn', 'remove', 'sort'],
+	'tonumber': [],
+	'tostring': [],
+	'type': [],
+	'unpack': [],
+	'xpcall': []
+}
 
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
@@ -102,8 +125,8 @@ class LuaScript(object):
 			attribute_handlers=(self.__getter,self.__setter)
 		)
 		setattr(self.lua.globals(), 'print', self.p)
-		# Remove dangerous functions
-		del self.lua.globals().os['exit']
+		# Remove potentially dangerous functions
+		self.__sandboxInterpreter()
 		self.lua.globals().deviceManager = DeviceManager(self.context)
 		try:
 			self.__setState(LuaScript.RUNNING)
@@ -113,6 +136,21 @@ class LuaScript(object):
 		except Exception as e:
 			self.__setState(LuaScript.ERROR)
 			self.p("Could not execute lua script %s", e)
+
+	def __sandboxInterpreter(self):
+		for obj in self.lua.globals():
+			if obj == '_G':
+				# Allow _G here to not start recursion
+				continue
+			if obj not in safeFunctions:
+				del self.lua.globals()[obj]
+				continue
+			if lua_type(self.lua.globals()[obj]) != 'table':
+				continue
+			funcs = safeFunctions[obj]
+			for func in self.lua.globals()[obj]:
+				if func not in funcs:
+					del self.lua.globals()[obj][func]
 
 	def __setState(self, newState):
 		with self.__stateLock:
