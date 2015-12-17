@@ -170,7 +170,10 @@ class LuaScript(object):
 		if type(attribute) in [int, str, unicode, float, types.NoneType]:
 			# Allow primitive attributes directly
 			return attribute
-		if type(attribute) not in [types.FunctionType, types.MethodType]:
+		if type(attribute) == types.MethodType:
+			# Get the unbound method to support obj:method() calling convention in Lua
+			attribute = getattr(obj.__class__, attrName)
+		elif type(attribute) != types.FunctionType:
 			raise AttributeError('type "%s" is not allowed in Lua code' % type(attribute))
 		condition = Condition()
 		retval = []
