@@ -176,13 +176,13 @@ class LuaScript(object):
 		elif type(attribute) != types.FunctionType:
 			raise AttributeError('type "%s" is not allowed in Lua code' % type(attribute))
 		condition = Condition()
-		retval = []
+		retval = {}
 		def mainThreadCaller(args, kwargs):
 			# This is called from the main thread. Do the actual call here
 			try:
-				retval.append(attribute(*args, **kwargs))
-			except:
-				pass
+				retval['return'] = attribute(*args, **kwargs)
+			except Exception, e:
+				retval['error'] = str(e)
 			condition.acquire()
 			try:
 				condition.notifyAll()
@@ -196,8 +196,10 @@ class LuaScript(object):
 			try:
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
-				if len(retval):
-					return retval.pop()
+				if 'error' in retval:
+					raise AttributeError(retval['error'])
+				elif 'return' in retval:
+					return retval['return']
 			finally:
 				condition.release()
 			raise AttributeError('The call to the function "%s" timed out' % attrName)
