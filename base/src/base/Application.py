@@ -12,8 +12,11 @@ import signal
 import sys
 from Plugin import Plugin, PluginContext
 
-# Decorator
 class mainthread(object):
+	""".. py:decorator:: mainthread
+
+	This decorator forces a method to be run in the main thread regardless of
+	which thread calls the method."""
 	def __init__(self, f):
 		self.__f = f
 
@@ -31,6 +34,11 @@ class mainthread(object):
 		return __call__
 
 class Application(object):
+	"""
+	This is the main application object in the server. There can only be once
+	instance of this object. The default constructor returns the instance of this
+	object.
+	"""
 	_instance = None
 	_initialized = False
 	_mainThread = None
@@ -75,6 +83,25 @@ class Application(object):
 
 	@mainthread
 	def registerScheduledTask(self, fn, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False, strictInterval=False, args=None, kwargs=None):
+		"""
+		Register a semi regular scheduled task to run at a predefined interval.
+		All calls will be made by the main thread.
+
+		  :fn: The function to be called.
+		  :seconds: The interval in seconds. Optional.
+		  :minutes: The interval in minutes. Optional.
+		  :hours: The interval in hours. Optional.
+		  :days: The interval in days. Optional.
+		  :runAtOnce: If the function should be called right away or wait one interval?
+		  :strictInterval: Set this to True if the interval should be strict. That means if the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55 seconds.
+		  :args: Any args to be supplied to the function. Supplied as \*args.
+		  :kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
+
+		.. note::
+		    The interval in which this task is run is not exact and can be delayed
+		    one minute depending on the server load.
+
+		"""
 		seconds = seconds + (minutes*60) + (hours*3600) + (days*86400)
 		nextRuntime = int(time.time())
 		if not runAtOnce:
@@ -93,6 +120,8 @@ class Application(object):
 		})
 
 	def registerShutdown(self, fn):
+		"""Register shutdown method. The method fn will be called the the server
+		shuts down. Use this to clean up resources on shutdown."""
 		self.shutdown.append(fn)
 
 	def run(self, startup=None):
@@ -125,8 +154,11 @@ class Application(object):
 				self.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
 			fn()
-	
+
 	def queue(self, fn, *args, **kwargs):
+		"""Queue a function to be executed later. All tasks in this queue will be
+		run by the main thread. This is a thread safe function and can safely be
+		used to syncronize with the main thread"""
 		if self.__isJoining == True:
 			return False
 		self.__taskLock.acquire()

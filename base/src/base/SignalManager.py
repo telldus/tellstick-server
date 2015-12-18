@@ -4,7 +4,7 @@ from Application import Application
 from Plugin import IInterface, ObserverCollection, Plugin
 
 class ISignalObserver(IInterface):
-	pass
+	"""Implement this IInterface to recieve signals using the decorator :func:`@slot`"""
 
 class SignalManager(Plugin):
 	observers = ObserverCollection(ISignalObserver)
@@ -18,6 +18,14 @@ class SignalManager(Plugin):
 
 	@staticmethod
 	def slot(message = ''):
+		""".. py:decorator:: slot
+
+		This is a decorator for receiveing signals. The class must implement
+		:class:`ISignalObserver`
+
+		Args:
+		  :message: This is the signal name to receive
+		"""
 		def call(fn):
 			import sys
 			frame = sys._getframe(1)
