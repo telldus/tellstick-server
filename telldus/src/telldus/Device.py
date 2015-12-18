@@ -6,29 +6,32 @@ class DeviceAbortException(Exception):
 	pass
 
 class Device(object):
-	TURNON  = 1
-	TURNOFF = 2
-	BELL = 4
-	DIM = 16
-	LEARN = 32
-	UP = 128
-	DOWN = 256
-	STOP = 512
-	RGBW = 1024
+	"""
+	A base class for a device. Any plugin adding devices must subclass this class.
+	"""
+	TURNON  = 1  #: Device flag for devices supporting the on method.
+	TURNOFF = 2  #: Device flag for devices supporting the off method.
+	BELL = 4     #: Device flag for devices supporting the bell method.
+	DIM = 16     #: Device flag for devices supporting the dim method.
+	LEARN = 32   #: Device flag for devices supporting the learn method.
+	UP = 128     #: Device flag for devices supporting the up method.
+	DOWN = 256   #: Device flag for devices supporting the down method.
+	STOP = 512   #: Device flag for devices supporting the stop method.
+	RGBW = 1024  #: Device flag for devices supporting the rgbw method.
 
-	UNKNOWN = 0
-	TEMPERATURE = 1
-	HUMIDITY = 2
-	RAINRATE = 4
-	RAINTOTAL = 8
-	WINDDIRECTION = 16
-	WINDAVERAGE	= 32
-	WINDGUST = 64
-	UV = 128
-	WATT = 256
-	LUMINANCE = 512
-	DEW_POINT = 1024
-	BAROMETRIC_PRESSURE = 2048
+	UNKNOWN = 0                 #: Sensor type flag for an unknown type
+	TEMPERATURE = 1             #: Sensor type flag for temperature
+	HUMIDITY = 2                #: Sensor type flag for humidity
+	RAINRATE = 4                #: Sensor type flag for rain rate
+	RAINTOTAL = 8               #: Sensor type flag for rain total
+	WINDDIRECTION = 16          #: Sensor type flag for wind direction
+	WINDAVERAGE	= 32            #: Sensor type flag for wind average
+	WINDGUST = 64               #: Sensor type flag for wind gust
+	UV = 128                    #: Sensor type flag for uv
+	WATT = 256                  #: Sensor type flag for watt
+	LUMINANCE = 512             #: Sensor type flag for luminance
+	DEW_POINT = 1024            #: Sensor type flag for dew point
+	BAROMETRIC_PRESSURE = 2048  #: Sensor type flag for barometric pressure
 
 	SCALE_UNKNOWN = 0
 	SCALE_TEMPERATURE_CELCIUS = 0
@@ -68,6 +71,14 @@ class Device(object):
 		return self._battery
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[], ignore=None):
+		"""This method executes a method with the device. This method must not be
+		subclassed. Please subclass :func:`_command()` instead.
+
+		  :param action: description
+		  :return: return description
+
+		Here below is the results of the :func:`Device.methods()` docstring.
+		"""
 		# Prevent loops from groups and similar
 		if ignore is None:
 			ignore = []
@@ -113,6 +124,7 @@ class Device(object):
 			triggerFail(0)
 
 	def _command(self, action, value, success, failure, **kwargs):
+		"""Reimplement this method to execute an action to this device."""
 		failure(0)
 
 	def confirmed(self):
@@ -165,18 +177,34 @@ class Device(object):
 		#	self.setState(settings['state'], settings['stateValue'])
 
 	def localId(self):
+		"""
+		This method must be reimplemented in the subclass. Return a unique id for
+		this device type.
+		"""
 		return 0
 
 	def isDevice(self):
+		"""
+		Return True if this is a device.
+		"""
 		return True
 
 	def isSensor(self):
+		"""
+		Return True if this is a sensor.
+		"""
 		return False
 
 	def manager(self):
 		return self._manager
 
 	def methods(self):
+		"""
+		Return the methods this supports. This is an or-ed in of device method flags.
+
+		Example:
+		return Device.TURNON | Device.TURNOFF
+		"""
 		return 0
 
 	def model(self):
@@ -249,10 +277,19 @@ class Device(object):
 		return (self._state, self._stateValue)
 
 	def typeString(self):
+		"""
+		Must be reimplemented by subclass. Return the type (transport) of this
+		device. All devices from a plugin must have the same type.
+		"""
 		return ''
 
 	@staticmethod
 	def methodStrToInt(method):
+		"""Convenience method to convert method string to constants.
+
+		Example:
+		"turnon" => Device.TURNON
+		"""
 		if method == 'turnon':
 			return Device.TURNON
 		if method == 'turnoff':
@@ -288,6 +325,7 @@ class Device(object):
 		return methods & supportedMethods
 
 class Sensor(Device):
+	"""A convenience class for sensors."""
 	def isDevice(self):
 		return False
 

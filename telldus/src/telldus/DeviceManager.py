@@ -7,6 +7,8 @@ from base import Application, Settings, ObserverCollection, IInterface, Plugin, 
 import time
 
 class IDeviceChange(IInterface):
+	"""Implement this IInterface to recieve notifications on device changes"""
+
 	def deviceAdded(device):
 		"""This method is called when a device is added"""
 	def deviceConfirmed(device):
@@ -19,6 +21,7 @@ class IDeviceChange(IInterface):
 		"""Called when the state of a device changed"""
 
 class DeviceManager(Plugin):
+	"""The devicemanager holds and manages all the devices in the server"""
 	implements(ITelldusLiveObserver)
 
 	observers = ObserverCollection(IDeviceChange)
@@ -32,6 +35,12 @@ class DeviceManager(Plugin):
 		self.__load()
 
 	def addDevice(self, device):
+		"""Call this function to register a new device to the device manager.
+
+		.. note::
+		    The :func:`localId` function in the device must return a unique id for
+		    the transport type returned by :func:`typeString`
+		"""
 		cachedDevice = None
 		for i, delDevice in enumerate(self.devices):
 			# Delete the cached device from loaded devices, since it is replaced by a confirmed/specialised one
@@ -72,6 +81,11 @@ class DeviceManager(Plugin):
 			self.observers.deviceConfirmed(device)
 
 	def device(self, deviceId):
+		"""Retrieves a device.
+
+		Returns:
+		  the device specified by `deviceId` or None of no device was found
+		"""
 		for d in self.devices:
 			if d.id() == deviceId:
 				return d
@@ -84,6 +98,12 @@ class DeviceManager(Plugin):
 				self.removeDevice(device.id())
 
 	def removeDevice(self, deviceId):
+		"""Removes a device.
+
+		.. warning::
+		    This function may only be called by the module supplying the device
+		    since removing of a device may be transport specific.
+		"""
 		isDevice = True
 		for i, device in enumerate(self.devices):
 			if device.id() == deviceId:
@@ -99,6 +119,14 @@ class DeviceManager(Plugin):
 			self.live.send(msg)
 
 	def retrieveDevices(self, deviceType = None):
+		"""Retrieve a list of devices.
+
+		Args:
+		    :deviceType: If this parameter is set only devices with this type is returned
+
+		Returns:
+		    Returns a list of devices
+		"""
 		l = []
 		for d in self.devices:
 			if deviceType is not None and d.typeString() != deviceType:
