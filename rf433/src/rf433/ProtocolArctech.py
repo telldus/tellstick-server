@@ -50,7 +50,7 @@ class ProtocolArctech(Protocol):
 		if method == Device.TURNON:
 			strReturn = strReturn + '$k$k$kk$$kk$$kk$$k'
 		elif method == Device.TURNOFF:
-			strReturn = strReturn + '$k$k$kk$$kk$$k$k$k'
+			strReturn = strReturn + self.offCode()
 		else:
 			return None
 		return {'S': strReturn}
@@ -71,6 +71,9 @@ class ProtocolArctech(Protocol):
 				strReturn = strReturn + '$k$k'
 			intCode = intCode >> 1
 		return strReturn
+
+	def offCode(self):
+		return '$k$k$kk$$kk$$k$k$k'
 
 	def stringSelflearningForCode(self, intHouse, intCode, method, level, group):
 		retval = {}

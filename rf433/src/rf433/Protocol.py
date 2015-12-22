@@ -137,6 +137,8 @@ class Protocol(object):
 			return ProtocolRisingSun()
 		if (protocol == 'sartano'):
 			return ProtocolSartano()
+		if (protocol == 'waveman'):
+			return ProtocolWaveman()
 		if (protocol == 'x10'):
 			return ProtocolX10()
 		if (protocol == 'yidong'):
@@ -154,5 +156,6 @@ from ProtocolMandolyn import *
 from ProtocolOregon import *
 from ProtocolRisingSun import *
 from ProtocolSartano import *
+from ProtocolWaveman import *
 from ProtocolX10 import *
 from ProtocolYidong import *
