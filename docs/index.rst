@@ -15,4 +15,5 @@ interpret signals and messages from devices.
 .. toctree::
 
    intro
+   lua
    reference
