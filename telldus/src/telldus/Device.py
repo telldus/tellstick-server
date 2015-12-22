@@ -18,6 +18,7 @@ class Device(object):
 	DOWN = 256   #: Device flag for devices supporting the down method.
 	STOP = 512   #: Device flag for devices supporting the stop method.
 	RGBW = 1024  #: Device flag for devices supporting the rgbw method.
+	THERMOSTAT = 2048  #: Device flag for devices supporting thermostat methods.
 
 	UNKNOWN = 0                 #: Sensor type flag for an unknown type
 	TEMPERATURE = 1             #: Sensor type flag for temperature
@@ -94,6 +95,8 @@ class Device(object):
 				value = 0  # this is an error, but at least won't crash now
 			else:
 				value = int(value)
+		elif method == Device.THERMOSTAT:
+			pass
 		else:
 			value = None
 		def triggerFail(reason):
