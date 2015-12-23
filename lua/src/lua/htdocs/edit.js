@@ -26,4 +26,16 @@ $(document).ready(function() {
 	$('#clearLog').on('click', function() {
 		$('#log').empty();
 	})
+	$('#newScript').on('click', function() {
+		var scriptName = prompt('Enter name of new script.\nAllowed chars: a-z, A-Z, 0-9 and -');
+		if (!scriptName) {
+			return;
+		}
+		$.post(
+			'/lua/new',
+			{'name': scriptName}
+		).done(function() {
+			alert('New file created. Please reload page to see it in the menu');
+		});
+	});
 });

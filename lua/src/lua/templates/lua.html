@@ -18,6 +18,7 @@
 			<ul>
 				<li py:for="script in scripts"><a href="?edit=${script.name}">${script.name}</a></li>
 			</ul>
+			<button id="newScript">New script</button>
 			<div py:if="script">
 				<h1>Edit script ${script.name}</h1>
 				<table width="100%">

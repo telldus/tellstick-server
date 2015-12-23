@@ -71,7 +71,7 @@ class Lua(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':
 			return False
-		if path in ['', 'save']:
+		if path in ['', 'new', 'save']:
 			return True
 		return False
 
@@ -81,6 +81,16 @@ class Lua(Plugin):
 			if 'script' not in cherrypy.request.body.params or 'code' not in cherrypy.request.body.params:
 				return 'empty.html', {}
 			self.saveScript(cherrypy.request.body.params['script'], cherrypy.request.body.params['code'])
+			return 'empty.html', {}
+		elif path == 'new':
+			okChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
+			if 'name' not in params:
+				return 'empty.html', {}
+			name = ''.join([c for c in params['name'] if c in okChars])
+			if len(name) == 0:
+				return 'empty.html', {}
+			with open('%s/%s.lua' % (Board.luaScriptPath(), name), 'w') as f:
+				f.write('-- Empty file')
 			return 'empty.html', {}
 		elif 'edit' in params:
 			for s in self.scripts:
