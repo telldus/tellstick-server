@@ -21,7 +21,7 @@ import subprocess
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
-paths = ['base/src', 'board/desktop', 'telldus/src', 'live/src']
+paths = ['base/src', 'board/desktop', 'telldus/src', 'live/src', 'lua/src', 'web/src']
 for path in paths:
 	sys.path.insert(0, os.path.abspath('../%s' % path))
 

@@ -2,6 +2,8 @@
 Lua
 ---
 
+.. autoclass:: lua.List
+  :members:
 
 .. toctree::
 

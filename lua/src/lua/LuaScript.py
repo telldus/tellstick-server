@@ -31,6 +31,29 @@ safeFunctions = {
 	'xpcall': []
 }
 
+class List(object):
+	"""
+	This object is available in Lua code as the object :class:`list` and is
+	a helper class for working with Python lists.
+	"""
+	len = len
+	@staticmethod
+	def new(*args):
+		"""Create a new Python list for use with Python code.
+
+		Example:
+		local pythonList = list.new(1, 2, 3, 4)
+		"""
+		return list(args)
+
+	@staticmethod
+	def slice(collection, start = None, end = None, step = None):
+		"""Retrieve the start, stop and step indices from the slice object `list`.
+		Treats indices greater than length as errors.
+
+		This can be used for slicing python lists (e.g. l[0:10:2])."""
+		return collection[slice(start,end,step)]
+
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
@@ -152,6 +175,7 @@ class LuaScript(object):
 			for func in self.lua.globals()[obj]:
 				if func not in funcs:
 					del self.lua.globals()[obj][func]
+		self.lua.globals().list = List
 
 	def __setState(self, newState):
 		with self.__stateLock:
