@@ -8,6 +8,7 @@ plugins = {
 }
 startup = {
 	'events.base': ['EventManager'],
+	'group': ['Group'],
 	'led': ['Led'],
 	'log': ['Logger'],
 	'rf433': ['RF433'],
