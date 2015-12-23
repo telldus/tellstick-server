@@ -24,11 +24,6 @@ class FileChangedHandler(FileSystemEventHandler):
 			return
 		self.parent.fileRemoved(event.src_path)
 
-	def on_modified(self, event):
-		if event.is_directory:
-			return
-		self.parent.fileModified(event.src_path)
-
 class Lua(Plugin):
 	implements(IWebRequestHandler)
 	implements(ISignalObserver)
@@ -51,12 +46,6 @@ class Lua(Plugin):
 		script = LuaScript(filename, self.context)
 		self.scripts.append(script)
 		script.load()
-
-	def fileModified(self, filename):
-		for script in self.scripts:
-			if script.filename == filename:
-				script.reload()
-				break
 
 	def fileRemoved(self, filename):
 		for i, script in enumerate(self.scripts):
