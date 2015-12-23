@@ -196,9 +196,13 @@ class LuaScript(object):
 		# returned directly but any access to functions returns a proxy method
 		# instead. A call to the proxy method send a call to the main thread, blocks
 		# and then wait for it to be executed.
-		if not hasattr(obj, attrName):
+		if type(attrName) == int:
+			# obj is probably a list
+			attribute = obj[attrName]
+		elif not hasattr(obj, attrName):
 			raise AttributeError('object has no attribute "%s"' % attrName)
-		attribute = getattr(obj, attrName)
+		else:
+			attribute = getattr(obj, attrName)
 		if type(attribute) in [int, str, unicode, float, types.NoneType]:
 			# Allow primitive attributes directly
 			return attribute
