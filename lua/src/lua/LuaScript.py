@@ -20,6 +20,7 @@ safeFunctions = {
 	'pairs': [],
 	'pcall': [],
 	'print': [],
+	'python': ['as_attrgetter', 'as_itemgetter', 'as_function', 'enumerate', 'iter', 'iterex'],
 	'select': [],
 	'string': ['byte', 'char', 'find', 'format', 'gmatch', 'gsub', 'len', 'lower', 'match', 'rep', 'reverse', 'sub', 'upper'],
 	'table': ['concat', 'insert', 'maxn', 'remove', 'sort'],
