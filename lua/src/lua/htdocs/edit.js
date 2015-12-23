@@ -5,7 +5,9 @@ $(document).ready(function() {
 			matchBrackets: true,
 			theme: "neat",
 			lineNumbers: true,
-			indentWithTabs: true
+			indentWithTabs: true,
+			indentUnit: 4,
+			tabSize: 4
 		});
 	}
 	$.ws.onMessage(function(module, action, data) {
