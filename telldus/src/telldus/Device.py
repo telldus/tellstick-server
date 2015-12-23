@@ -311,6 +311,8 @@ class Device(object):
 			return Device.STOP
 		if method == 'rgbw':
 			return Device.RGBW
+		if method == 'thermostat':
+			return Device.THERMOSTAT
 		logging.warning('Did not understand device method %s', method)
 		return 0
 
