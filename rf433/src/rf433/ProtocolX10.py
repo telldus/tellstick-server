@@ -2,7 +2,6 @@
 
 from Protocol import Protocol
 from telldus import Device
-import logging
 
 class ProtocolX10(Protocol):
 	HOUSES = [6,0xE,2,0xA,1,9,5,0xD,7,0xF,3,0xB,0,8,4,0xC]
@@ -96,5 +95,4 @@ class ProtocolX10(Protocol):
 
 		strReturn = strReturn + strComplement
 		strReturn = strReturn + STOP_CODE
-		logging.info(['%X' % ord(x) for x in strReturn])
 		return {'S': strReturn}
