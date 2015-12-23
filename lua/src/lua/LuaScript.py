@@ -209,8 +209,8 @@ class LuaScript(object):
 		if type(attribute) == types.MethodType:
 			# Get the unbound method to support obj:method() calling convention in Lua
 			attribute = getattr(obj.__class__, attrName)
-		elif type(attribute) != types.FunctionType:
-			raise AttributeError('type "%s" is not allowed in Lua code' % type(attribute))
+		elif type(attribute) not in [types.FunctionType, types.BuiltinFunctionType]:
+			raise AttributeError('type "%s" is not allowed in Lua code. Trying to access attribute %s in object %s' % (type(attribute), attrName, obj))
 		condition = Condition()
 		retval = {}
 		def mainThreadCaller(args, kwargs):
