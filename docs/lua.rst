@@ -8,3 +8,4 @@ Lua
 .. toctree::
 
   lua/example-realwind
+  lua/example-zipato-rfid
