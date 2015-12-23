@@ -1,10 +1,13 @@
 $(document).ready(function() {
-	var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-		matchBrackets: true,
-		theme: "neat",
-		lineNumbers: true,
-		indentWithTabs: true
-	});
+	var codeElement = document.getElementById("code");
+	if (codeElement) {
+		var editor = CodeMirror.fromTextArea(codeElement, {
+			matchBrackets: true,
+			theme: "neat",
+			lineNumbers: true,
+			indentWithTabs: true
+		});
+	}
 	$.ws.onMessage(function(module, action, data) {
 		if (module == 'lua' && action == 'log') {
 			$('#log').append($('<p>').text(data));
