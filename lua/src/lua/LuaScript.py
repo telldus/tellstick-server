@@ -61,6 +61,7 @@ class LuaScript(object):
 		self.filename = filename
 		self.name = os.path.basename(filename)
 		self.context = context
+		self.__allowedSignals = []
 		self.__queue = []
 		self.__thread = Thread(target=self.__run, name=self.name)
 		self.__threadLock = Condition(Lock())
@@ -71,7 +72,7 @@ class LuaScript(object):
 	def call(self, name, *args):
 		if self.state() not in [LuaScript.RUNNING, LuaScript.IDLE]:
 			return
-		if name not in self.lua.globals():
+		if name not in self.__allowedSignals:
 			return
 		self.__threadLock.acquire()
 		try:
@@ -155,6 +156,12 @@ class LuaScript(object):
 		try:
 			self.__setState(LuaScript.RUNNING)
 			self.lua.execute(self.code)
+			# Register which signals the script accepts so we don't need to access
+			# the interpreter from any other thread. That leads to locks.
+			self.__allowedSignals = []
+			for func in self.lua.globals():
+				if func.startswith('on'):
+					self.__allowedSignals.append(func)
 			self.__setState(LuaScript.IDLE)
 			self.p("Script %s loaded", self.name)
 		except Exception as e:
