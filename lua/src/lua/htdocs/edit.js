@@ -16,8 +16,6 @@ $(document).ready(function() {
 			$('#log').animate({
 				scrollTop: $('#log').height()
 			}, 300);
-			var elem = document.getElementById('log');
-			elem.scrollTop = elem.scrollHeight;
 		}
 	});
 	$('#save').on('click', function() {
