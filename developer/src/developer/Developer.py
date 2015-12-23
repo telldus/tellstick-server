@@ -3,6 +3,7 @@
 from base import Application, Plugin
 from threading import Thread
 import os, re, sys, time, traceback
+import code, signal
 
 # Get the cwd as soon as possible
 _module__file__base = os.getcwd()
@@ -12,6 +13,7 @@ class Developer(Plugin):
 		self.running = True
 		self.mtimes = {}
 		self.thread = Thread(target=self.run).start()
+		signal.signal(signal.SIGUSR1, self.debugshell)  # Register handler
 		Application().registerShutdown(self.stop)
 
 	def checkModifiedFiles(self):
@@ -29,6 +31,18 @@ class Developer(Plugin):
 				# File was changed or deleted
 				print("Restarting because %s changed." % filename)
 				Application().quit()
+
+	def debugshell(self, sig, frame):
+		"""Interrupt running process, and provide a python prompt for
+		interactive debugging."""
+		d={'_frame':frame}         # Allow access to frame object.
+		d.update(frame.f_globals)  # Unless shadowed by global
+		d.update(frame.f_locals)
+
+		i = code.InteractiveConsole(d)
+		message  = "Signal received : entering python shell.\nTraceback:\n"
+		message += ''.join(traceback.format_stack(frame))
+		i.interact(message)
 
 	def run(self):
 		while self.running:
