@@ -23,6 +23,9 @@ class Observers(object):
 				m(*args, **kwargs)
 		return fn
 
+	def __len__(self):
+		return len(self.observers)
+
 	def __iter__(self):
 		return iter(self.observers)
 
