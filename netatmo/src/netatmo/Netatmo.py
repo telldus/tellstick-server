@@ -43,6 +43,7 @@ class Netatmo(Plugin):
 		'CO2': (Sensor.UNKNOWN, Sensor.SCALE_UNKNOWN),
 		#'Noise':,
 		#'Pressure': (Sensor.BAROMETRIC_PRESSURE, Sensor.SCALE_UNKNOWN),
+		'Rain': (Sensor.RAINTOTAL, Sensor.SCALE_RAINTOTAL_MM),
 	}
 	products = {
 #		'NAMain': {}  # Base station
