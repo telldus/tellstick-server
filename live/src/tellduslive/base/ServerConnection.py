@@ -12,6 +12,7 @@ class ServerConnection(object):
 		self.state = ServerConnection.CLOSED
 		self.msgs = []
 		self.server = None
+		self.useSSL = True
 
 	def close(self):
 			self.state = ServerConnection.CLOSED
@@ -22,6 +23,8 @@ class ServerConnection(object):
 				pass
 
 	def connect(self, address, port):
+		if not self.useSSL:
+			port = port + 2
 		self.server = (address, port)
 		self.state = ServerConnection.CONNECTING
 		logging.info("Connecting to %s:%i" % (address, port))
@@ -40,7 +43,10 @@ class ServerConnection(object):
 				s = socket.create_connection(self.server)
 				ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 				ctx.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
-				self.socket = ctx.wrap_socket(s)
+				if self.useSSL:
+					self.socket = ctx.wrap_socket(s)
+				else:
+					self.socket = s
 				self.state = ServerConnection.CONNECTED
 			except socket.error as (error, errorString):
 				logging.error("%s %s", str(error), (errorString))
@@ -69,19 +75,13 @@ class ServerConnection(object):
 			return self.state
 		if fileno not in r:
 			return self.state
-		try:
-			resp = self.socket.recv(1024)
-		except socket.error as e:
-			# Timeout
-			logging.error("Socket error: %s", str(e))
-			return ServerConnection.READY
-		except Exception as e:
-			logging.error(str(e))
-		dataLeft = self.socket.pending()
-		while dataLeft:
-			resp += self.socket.recv(dataLeft)
-			dataLeft = self.socket.pending()
+		if self.useSSL:
+			resp = self._readSSL()
+		else:
+			resp = self._read()
 
+		if resp is None:
+			return ServerConnection.READY
 		if (resp == ''):
 			logging.warning("Empty response, disconnected? %s", str(self.state))
 			if self.state == ServerConnection.CLOSED:
@@ -101,8 +101,47 @@ class ServerConnection(object):
 			return
 		signedMessage = msg.toSignedMessage('sha1', self.privateKey)
 		try:
-			self.socket.write(signedMessage)
+			if self.useSSL:
+				self.socket.write(signedMessage)
+			else:
+				self.socket.send(signedMessage)
 		except Exception as e:
 			logging.error('ERROR, could not write to socket. Close and reconnect')
 			logging.error(str(e))
 			self.close()
+
+	def _readSSL(self):
+		try:
+			resp = self.socket.recv(1024)
+		except ssl.SSLError, e:
+			if e.args[0] == ssl.SSL_ERROR_WANT_READ:
+				pass
+			logging.error("SSLSocket error: %s", str(e))
+			return None
+		except socket.error as e:
+			# Timeout
+			logging.error("Socket error: %s", str(e))
+			return None
+		except Exception as e:
+			logging.error(str(e))
+		dataLeft = self.socket.pending()
+		while dataLeft:
+			resp += self.socket.recv(dataLeft)
+			dataLeft = self.socket.pending()
+		return resp
+
+	def _read(self):
+		hasMoreData = True
+		request = ''
+		buffSize = 1024
+		while (hasMoreData):
+			try:
+				packet = self.socket.recv(buffSize)
+				if (len(packet) < buffSize):
+					hasMoreData = False
+				request = request + packet
+			except socket.error, (err, errstr):
+				if (err == errno.EAGAIN):
+					return None
+				return ''  # is not alive
+		return request
