@@ -2,14 +2,14 @@ import cherrypy, json, mimetypes, threading
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
 from ws4py.messaging import TextMessage
-from base import Application, IInterface, ObserverCollection, Plugin
+from base import Application, implements, IInterface, ObserverCollection, Plugin
 from genshi.template import TemplateLoader, loader
 from pkg_resources import resource_filename, resource_exists, resource_stream, resource_isdir
 import logging
 
 class IWebRequestHandler(IInterface):
-	"""Interface defenition for handling web requests"""
-	def handleRequest(plugin, paths, params):
+	"""Interface definition for handling web requests"""
+	def handleRequest(plugin, paths, params, request):
 		"""Handle a request. Return a tuple with template and data"""
 	def getMenuItems():
 		"""Return array with menu items"""
