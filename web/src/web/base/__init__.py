@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from Server import Server, IWebRequestHandler, WebResponseJson, WebResponseRedirect
+from Server import Server, IWebRequestHandler, IWebRequestAuthenticationHandler, WebResponseJson, WebResponseRedirect

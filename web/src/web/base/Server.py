@@ -17,6 +17,17 @@ class IWebRequestHandler(IInterface):
 		""" Location of templates provided by plugin. """
 	def matchRequest(plugin, path):
 		"""Return true if we handle this request"""
+	def requireAuthentication(plugin, path):
+		"""Checks if a request require the user to log in first. Return False if the resource should be available to anyone."""
+
+class IWebRequestAuthenticationHandler(IInterface):
+	"""Interface definition for authenticating web requests"""
+	def isUrlAuthorized(request):
+		"""Check if url is authorized"""
+	def handleAuthenticationForUrl(request):
+		"""Handle authentication for a given request"""
+	def loginProvider():
+		"""Return info about this login provider"""
 
 class WebRequest(object):
 	def __init__(self, request):
@@ -100,10 +111,15 @@ class RequestHandler(object):
 				menu.extend(arr)
 		template = None
 		response = None
+		request = WebRequest(cherrypy.request)
 		for o in self.observers:
-			if o.matchRequest(plugin, path):
-				response = o.handleRequest(plugin, path, params, request=WebRequest(cherrypy.request))
-				break
+			if not o.matchRequest(plugin, path):
+				continue
+			requireAuth = o.requireAuthentication(plugin, path)
+			if requireAuth != False:
+				ret = WebRequestHandler(self.context).isUrlAuthorized(request)
+			response = o.handleRequest(plugin, path, params, request=request)
+			break
 		if response is None:
 			raise cherrypy.NotFound()
 		if isinstance(response, WebResponseRedirect):
@@ -127,3 +143,45 @@ class RequestHandler(object):
 		path = [x for x in args]
 		return self.handle(plugin, path, **kwargs)
 RequestHandler.exposed = True
+
+class WebRequestHandler(Plugin):
+	"""Default handler for the /web subpath"""
+
+	authObservers = ObserverCollection(IWebRequestAuthenticationHandler)
+	implements(IWebRequestHandler)
+
+	def getTemplatesDirs(self):
+		return [resource_filename('web', 'templates')]
+
+	def handleRequest(self, plugin, path, params, request):
+		if plugin != 'web':
+			return None
+		if path == 'authFailed':
+			return 'authFailed.html', {}
+		if path == 'login':
+			providers = []
+			for o in self.authObservers:
+				provider = o.loginProvider()
+				if provider is not None:
+					providers.append(provider)
+			return 'login.html', {'providers': providers}
+		return None
+
+	def isUrlAuthorized(self, request):
+		if len(self.authObservers) == 0:
+			raise cherrypy.HTTPRedirect('/web/authFailed?reason=noAuthHandlersConfigured')
+		for o in self.authObservers:
+			ret = o.isUrlAuthorized(request)
+			if ret is True:
+				return True
+		raise cherrypy.HTTPRedirect('/web/login')
+
+	def matchRequest(self, plugin, path):
+		if plugin != 'web':
+			return False
+		if path in ['authFailed', 'login']:
+			return True
+		return False
+
+	def requireAuthentication(self, plugin, path):
+		return plugin != 'web'
