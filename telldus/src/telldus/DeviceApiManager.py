@@ -28,3 +28,15 @@ class DeviceApiManager(Plugin):
 				'type':'device',
 			})
 		return {'device': retval}
+
+	@apicall('device', 'command')
+	def deviceCommand(self, id, method, value=None, **kwargs):
+		"""
+		Sends a command to a device.
+		"""
+		deviceManager = DeviceManager(self.context)
+		device = deviceManager.device(int(id))
+		if device is None:
+			raise Exception('Device "%s" could not be found' % id)
+		device.command(method, value, origin='Local API')
+		return True
