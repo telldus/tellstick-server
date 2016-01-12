@@ -32,7 +32,7 @@ class ApiManager(Plugin):
 			if fn is None:
 				continue
 			try:
-				retval = fn(o)
+				retval = fn(o, **params)
 			except Exception as e:
 				logging.warning("Could not call %s", path)
 				logging.exception(e)
