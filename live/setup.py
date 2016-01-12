@@ -12,7 +12,8 @@ setup(
 	packages=['tellduslive', 'tellduslive.base'],
 	package_dir = {'':'src'},
 	entry_points={ \
-		'telldus.startup': ['c = tellduslive.base:TelldusLive [cREQ]']
+		'telldus.startup': ['c = tellduslive.base:TelldusLive [cREQ]'],
+		'telldus.plugins': ['c = tellduslive.web:WebRequestHandler']
 	},
 	extras_require = dict(cREQ = "Base>=0.1")
 )
