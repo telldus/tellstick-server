@@ -34,9 +34,8 @@ class ApiManager(Plugin):
 			try:
 				retval = fn(o, **params)
 			except Exception as e:
-				logging.warning("Could not call %s", path)
 				logging.exception(e)
-				return None
+				return WebResponseJson({'error': str(e)})
 			return WebResponseJson(retval)
 		return None
 
