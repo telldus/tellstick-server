@@ -26,7 +26,7 @@
 						<td width="50%">
 							<form id="codeForm">
 								<textarea id="code" name="code">${script.code}</textarea>
-								<input type="hidden" name="script" value="${script.name}" />
+								<input type="hidden" name="script" id="scriptName" value="${script.name}" />
 							</form>
 						</td>
 						<td width="50%" valign="top" style="height: 300px">
@@ -34,7 +34,10 @@
 						</td>
 					</tr>
 					<tr>
-						<td><input type="button" id="save" value="Save and run" /></td>
+						<td>
+							<input type="button" id="save" value="Save and run" />
+							<input type="button" id="delete" value="Delete script" />
+						</td>
 						<td><input type="button" id="clearLog" value="Clear" /></td>
 					</tr>
 				</table>

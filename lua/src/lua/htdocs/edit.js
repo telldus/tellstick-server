@@ -18,6 +18,17 @@ $(document).ready(function() {
 			}, 300);
 		}
 	});
+	$('#delete').on('click', function() {
+		if (!confirm('Are you sure you want to delete this script?')) {
+			return;
+		}
+		$.post(
+			'/lua/delete',
+			{'name': $('#scriptName').val()}
+		).done(function() {
+			window.location.href = '/lua';
+		});
+	})
 	$('#save').on('click', function() {
 		editor.save();
 		$.post(

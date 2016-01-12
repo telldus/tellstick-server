@@ -7,7 +7,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from pkg_resources import resource_filename
 from LuaScript import LuaScript
-import glob
+import glob, os
 import logging, cherrypy
 
 class FileChangedHandler(FileSystemEventHandler):
@@ -60,7 +60,7 @@ class Lua(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':
 			return False
-		if path in ['', 'new', 'save']:
+		if path in ['', 'delete', 'new', 'save']:
 			return True
 		return False
 
@@ -80,6 +80,14 @@ class Lua(Plugin):
 				return 'empty.html', {}
 			with open('%s/%s.lua' % (Board.luaScriptPath(), name), 'w') as f:
 				f.write('-- Empty file')
+			return 'empty.html', {}
+		elif path == 'delete':
+			if 'name' not in params:
+				return 'empty.html', {}
+			for s in self.scripts:
+				if s.name == params['name']:
+					os.remove(s.filename)
+					break
 			return 'empty.html', {}
 		elif 'edit' in params:
 			for s in self.scripts:
