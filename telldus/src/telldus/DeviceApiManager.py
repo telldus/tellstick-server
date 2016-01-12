@@ -40,3 +40,10 @@ class DeviceApiManager(Plugin):
 			raise Exception('Device "%s" could not be found' % id)
 		device.command(method, value, origin='Local API')
 		return True
+
+	@apicall('device', 'turnOff')
+	def deviceTurnOff(self, id, **kwargs):
+		"""
+		Turns a device off.
+		"""
+		return self.deviceCommand(id, Device.TURNOFF)
