@@ -28,6 +28,10 @@ class WebRequest(object):
 class WebSocketHandler(WebSocket):
 	pass
 
+class WebResponseJson(object):
+	def __init__(self, data):
+		self.data = json.dumps(data)
+
 class WebResponseRedirect(object):
 	def __init__(self, url):
 		self.url = url
@@ -106,6 +110,8 @@ class RequestHandler(object):
 			if response.url[:4] == 'http':
 				raise cherrypy.HTTPRedirect(response.url)
 			raise cherrypy.HTTPRedirect('%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
+		elif isinstance(response, WebResponseJson):
+			return response.data
 		template, data = response
 		if template is None:
 			raise cherrypy.NotFound()
