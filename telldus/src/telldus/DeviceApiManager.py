@@ -47,3 +47,10 @@ class DeviceApiManager(Plugin):
 		Turns a device off.
 		"""
 		return self.deviceCommand(id, Device.TURNOFF)
+
+	@apicall('device', 'turnOn')
+	def deviceTurnOn(self, id, **kwargs):
+		"""
+		Turns a device on.
+		"""
+		return self.deviceCommand(id, Device.TURNON)
