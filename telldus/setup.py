@@ -14,6 +14,7 @@ setup(
 	entry_points={ \
 		'telldus.plugins': [
 			'webui = telldus.WebUI',
+			'api = telldus.DeviceApiManager',
 		]
 	},
 	extras_require = {
