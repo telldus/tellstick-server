@@ -89,6 +89,15 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.LEARN)
 
+	@apicall('device', 'setName')
+	def deviceSetName(self, id, name, **kwargs):
+		"""
+		Renames a device
+		"""
+		device = self.__retrieveDevice(id)
+		device.setName(str(name))
+		return True
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
