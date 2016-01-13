@@ -59,6 +59,28 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.DOWN)
 
+	@apicall('device', 'info')
+	def deviceInfo(self, id, supportedMethods=0, extras=None, **kwargs):
+		"""
+		Returns information about a specific device.
+		"""
+		extras = extras.split(',') if extras is not None else []
+		device = self.__retrieveDevice(id)
+		state, stateValue = device.state()
+		retval = {
+			'id': device.id(),
+			'name': device.name(),
+			'state': Device.maskUnsupportedMethods(state, int(supportedMethods)),
+			'statevalue': stateValue,
+			'methods': Device.maskUnsupportedMethods(device.methods(), int(supportedMethods)),
+			'type': 'device',  # TODO(micke): Implement
+			'protocol': device.protocol(),
+			'model': device.model(),
+		}
+		if 'transport' in extras:
+			retval['transport'] = device.typeString()
+		return retval
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
