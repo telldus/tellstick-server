@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+	<xi:include href="design.html" />
+	<head>
+		<title>Authentication failed</title>
+	</head>
+	<body>
+		<div id="content">
+			<h1>Login</h1>
+			<ol>
+				<li py:for="provider in providers"><a href="${provider.url}">${provider.name}</a></li>
+			</ol>
+		</div>
+	</body>
+</html>
