@@ -126,6 +126,49 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.UP)
 
+	@apicall('sensors', 'list')
+	def sensorsList(self, includeValues=None, includeScale=None, **kwargs):
+		"""Returns a list of all sensors associated with the current user"""
+		includeValues = True if includeValues == '1' else False
+		includeScale = True if includeScale == '1' else False
+		deviceManager = DeviceManager(self.context)
+		retval = []
+		for d in deviceManager.retrieveDevices():
+			if not d.isSensor():
+				continue
+			sensor = {
+				'id': d.id(),
+				'name': d.name(),
+				#'lastUpdated': 1442561174,  # TODO(micke): Implement when we have this
+				'protocol': d.protocol(),
+				'model': d.model(),
+				'sensorId': d.id()
+			}
+			if d.battery():
+				sensor['battery'] = d.battery().level
+			if includeValues:
+				data = []
+				for sensorType, values in d.sensorValues().items():
+					for value in values:
+						if includeScale:
+							data.append({
+								'name': Device.sensorTypeIntToStr(sensorType),
+								'value': value['value'],
+								'scale': value['scale'],
+								#'lastUpdated': 1442561174.4156,  # TODO(micke): Implement this when we have timestamp per value
+								#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
+								#'maxTime': 1442561174.4155,
+							})
+						else:
+							sensor[Device.sensorTypeIntToStr(sensorType)] = value['value']
+							break
+				if includeScale:
+					sensor['data'] = data
+			else:
+				sensor['novalues'] = True
+			retval.append(sensor)
+		return {'sensor': retval}
+
 	def __retrieveDevice(self, deviceId):
 		deviceManager = DeviceManager(self.context)
 		device = deviceManager.device(int(deviceId))
