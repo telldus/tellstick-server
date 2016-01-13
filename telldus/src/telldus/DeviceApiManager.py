@@ -29,6 +29,13 @@ class DeviceApiManager(Plugin):
 			})
 		return {'device': retval}
 
+	@apicall('device', 'bell')
+	def deviceBell(self, id, **kwargs):
+		"""
+		Sends bell command to devices supporting this.
+		"""
+		return self.deviceCommand(id, Device.BELL)
+
 	@apicall('device', 'command')
 	def deviceCommand(self, id, method, value=None, **kwargs):
 		"""
