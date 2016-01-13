@@ -41,10 +41,7 @@ class DeviceApiManager(Plugin):
 		"""
 		Sends a command to a device.
 		"""
-		deviceManager = DeviceManager(self.context)
-		device = deviceManager.device(int(id))
-		if device is None:
-			raise Exception('Device "%s" could not be found' % id)
+		device = self.__retrieveDevice(id)
 		device.command(method, value, origin='Local API')
 		return True
 
@@ -61,3 +58,10 @@ class DeviceApiManager(Plugin):
 		Turns a device on.
 		"""
 		return self.deviceCommand(id, Device.TURNON)
+
+	def __retrieveDevice(self, deviceId):
+		deviceManager = DeviceManager(self.context)
+		device = deviceManager.device(int(deviceId))
+		if device is None:
+			raise Exception('Device "%s" could not be found' % deviceId)
+		return device
