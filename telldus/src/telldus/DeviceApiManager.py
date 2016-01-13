@@ -52,6 +52,13 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.DIM, level)
 
+	@apicall('device', 'down')
+	def deviceDown(self, id, **kwargs):
+		"""
+		Sends a "down" command to devices supporting this.
+		"""
+		return self.deviceCommand(id, Device.DOWN)
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
