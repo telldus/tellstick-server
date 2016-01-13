@@ -81,6 +81,14 @@ class DeviceApiManager(Plugin):
 			retval['transport'] = device.typeString()
 		return retval
 
+	@apicall('device', 'learn')
+	def deviceLearn(self, id, **kwargs):
+		"""
+		Sends a special learn command to some devices that need a special
+		learn-command to be used from TellStick
+		"""
+		return self.deviceCommand(id, Device.LEARN)
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
