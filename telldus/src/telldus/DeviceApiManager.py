@@ -45,6 +45,13 @@ class DeviceApiManager(Plugin):
 		device.command(method, value, origin='Local API')
 		return True
 
+	@apicall('device', 'dim')
+	def deviceDim(self, id, level, **kwargs):
+		"""
+		Sends a dim command to devices supporting this.
+		"""
+		return self.deviceCommand(id, Device.DIM, level)
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
