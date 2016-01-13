@@ -39,8 +39,8 @@ class Board(object):
 
 	@staticmethod
 	def rf433Port():
-		return '/dev/ttyUSB1'
+		return 'hwgrep://10c4:ea60'
 
 	@staticmethod
 	def zwavePort():
-		return '/dev/ttyUSB0'
+		return 'hwgrep://067b:2303'
