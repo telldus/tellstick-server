@@ -25,7 +25,7 @@ class DeviceApiManager(Plugin):
 				'state': Device.maskUnsupportedMethods(state, int(supportedMethods)),
 				'statevalue': stateValue,
 				'methods': Device.maskUnsupportedMethods(d.methods(), int(supportedMethods)),
-				'type':'device',
+				'type':'device',  # TODO(micke): Implement
 			})
 		return {'device': retval}
 
