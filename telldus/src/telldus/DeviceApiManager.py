@@ -169,6 +169,33 @@ class DeviceApiManager(Plugin):
 			retval.append(sensor)
 		return {'sensor': retval}
 
+	@apicall('sensor', 'info')
+	def sensorInfo(self, id, **kwargs):
+		"""
+		Returns information about a specific sensor.
+		"""
+		device = self.__retrieveDevice(id)
+		sensorData = []
+		for sensorType, values in device.sensorValues().items():
+			for value in values:
+				sensorData.append({
+					'name': Device.sensorTypeIntToStr(sensorType),
+					'value': value['value'],
+					'scale': value['scale'],
+					#'lastUpdated': 1442561174.4156,  # TODO(micke): Implement this when we have timestamp per value
+					#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
+					#'maxTime': 1442561174.4155,
+				})
+		return {
+			'id': device.id(),
+			'name': device.name(),
+			#'lastUpdated':1452632383,  # TODO(micke): See sensors/list
+			'data': sensorData,
+			'protocol': device.protocol(),
+			'model': device.model(),
+			'sensorId': device.id()
+		}
+
 	def __retrieveDevice(self, deviceId):
 		deviceManager = DeviceManager(self.context)
 		device = deviceManager.device(int(deviceId))
