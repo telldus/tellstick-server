@@ -53,6 +53,9 @@ class ApiManager(Plugin):
 			return WebResponseJson(retval)
 		return None
 
+	def requireAuthentication(self, plugin, path):
+		return plugin != 'api'
+
 	@staticmethod
 	def apicall(module, action):
 		def call(fn):
