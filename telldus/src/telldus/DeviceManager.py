@@ -254,8 +254,10 @@ class DeviceManager(Plugin):
 					dev.setName(str(args['name']))
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
-				self.__sendDeviceReport()
-				self.__sendSensorReport()
+				if dev.isDevice():
+					self.__sendDeviceReport()
+				if dev.isSensor:
+					self.__sendSensorReport()
 				return
 
 	def liveRegistered(self, msg):
