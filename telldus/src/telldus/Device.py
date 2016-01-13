@@ -329,6 +329,25 @@ class Device(object):
 		# Cut of the rest of the unsupported methods we don't have a fallback for
 		return methods & supportedMethods
 
+	@staticmethod
+	def sensorTypeIntToStr(sensorType):
+		types = {
+			Device.TEMPERATURE: 'temp',
+			Device.HUMIDITY: 'humidity',
+			Device.RAINRATE: 'rrate',
+			Device.RAINTOTAL: 'rtot',
+			Device.WINDDIRECTION: 'wdir',
+			Device.WINDAVERAGE: 'wavg',
+			Device.WINDGUST: 'wgust',
+			Device.UV: 'uv',
+			Device.WATT: 'watt',
+			Device.LUMINANCE: 'lum',
+			Device.DEW_POINT: 'dewp',
+			Device.BAROMETRIC_PRESSURE: 'barpress',
+			#Device.GENRIC_METER: 'genmeter'
+		}
+		return types.get(sensorType, 'unknown')
+
 class Sensor(Device):
 	"""A convenience class for sensors."""
 	def isDevice(self):
