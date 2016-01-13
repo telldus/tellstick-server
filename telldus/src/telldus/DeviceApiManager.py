@@ -98,6 +98,13 @@ class DeviceApiManager(Plugin):
 		device.setName(str(name))
 		return True
 
+	@apicall('device', 'stop')
+	def deviceStop(self, id, **kwargs):
+		"""
+		Send a "stop" command to device.
+		"""
+		return self.deviceCommand(id, Device.STOP)
+
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
