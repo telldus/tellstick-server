@@ -119,6 +119,13 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.TURNON)
 
+	@apicall('device', 'up')
+	def deviceUp(self, id, **kwargs):
+		"""
+		Send an "up" command to device.
+		"""
+		return self.deviceCommand(id, Device.UP)
+
 	def __retrieveDevice(self, deviceId):
 		deviceManager = DeviceManager(self.context)
 		device = deviceManager.device(int(deviceId))
