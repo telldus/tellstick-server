@@ -44,6 +44,9 @@ class Netatmo(Plugin):
 		#'Noise':,
 		#'Pressure': (Sensor.BAROMETRIC_PRESSURE, Sensor.SCALE_UNKNOWN),
 		'Rain': (Sensor.RAINTOTAL, Sensor.SCALE_RAINTOTAL_MM),
+		'WindAngle': (Sensor.WINDDIRECTION, Sensor.SCALE_WIND_DIRECTION),
+		'WindStrength': (Sensor.WINDAVERAGE, Sensor.SCALE_WIND_VELOCITY_MS),
+		'GustStrength': (Sensor.WINDGUST, Sensor.SCALE_WIND_VELOCITY_MS),
 	}
 	products = {
 #		'NAMain': {}  # Base station
@@ -107,11 +110,13 @@ class Netatmo(Plugin):
 			self.sensors[data['_id']] = sensor
 		else:
 			sensor = self.sensors[data['_id']]
-		for dataType in data['data_type']:
-			if dataType not in Netatmo.supportedTypes:
+		for dataType in Netatmo.supportedTypes:
+			if dataType not in data['dashboard_data']:
 				continue
 			valueType, scale = Netatmo.supportedTypes[dataType]
 			value = data['dashboard_data'][dataType]
+			if dataType == 'WindStrength' or dataType == 'GustStrength':
+				value = round(value / 3.6, 2)  # Data is reported in km/h, we want m/s
 			sensor.setSensorValue(valueType, value, scale)
 		if 'battery_vp' in data and data['type'] in Netatmo.products:
 			product = Netatmo.products[data['type']]
