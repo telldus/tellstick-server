@@ -48,6 +48,8 @@ class ApiManager(Plugin):
 			except Exception as e:
 				logging.exception(e)
 				return WebResponseJson({'error': str(e)})
+			if retval == True:
+				retval = {'status': 'success'}
 			return WebResponseJson(retval)
 		return None
 
