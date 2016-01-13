@@ -13,14 +13,26 @@ class ApiManager(Plugin):
 
 	observers = ObserverCollection(IApiCallHandler)
 
+	def getTemplatesDirs(self):
+		return [resource_filename('api', 'templates')]
+
 	def matchRequest(self, plugin, path):
 		if plugin != 'api':
 			return False
 		if path.startswith('json/'):
 			return True
+		if path == '':
+			return True
 		return False
 
 	def handleRequest(self, plugin, path, params, **kwargs):
+		if path == '':
+			methods = {}
+			for o in self.observers:
+				for module, actions in getattr(o, '_apicalls', {}).iteritems():
+					for action, fn in actions.iteritems():
+						methods.setdefault(module, {})[action] = {'doc': fn.__doc__}
+			return 'index.html', {'methods': methods}
 		paths = path.split('/')
 		if len(paths) < 3:
 			return None

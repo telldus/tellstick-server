@@ -19,4 +19,7 @@ setup(
 	extras_require = {
 		'api': ['Telldus>=0.1\nWeb>=0.1'],
 	},
+	package_data={'api' : [
+		'templates/*.html',
+	]}
 )
