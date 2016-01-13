@@ -40,8 +40,11 @@ class WebSocketHandler(WebSocket):
 	pass
 
 class WebResponseJson(object):
-	def __init__(self, data):
-		self.data = json.dumps(data)
+	def __init__(self, data, pretty=True):
+		if pretty:
+			self.data = json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
+		else:
+			self.data = json.dumps(data)
 
 class WebResponseRedirect(object):
 	def __init__(self, url):
