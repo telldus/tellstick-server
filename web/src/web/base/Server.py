@@ -39,6 +39,9 @@ class WebRequest(object):
 	def header(self, param):
 		return self.__request.headers.get(param, None)
 
+	def method(self):
+		return self.__request.method
+
 class WebSocketHandler(WebSocket):
 	pass
 
