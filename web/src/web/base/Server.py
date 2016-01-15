@@ -108,15 +108,12 @@ class RequestHandler(object):
 		self.templates = None
 		self.context = context
 
-	def loadTemplate(self, filename):
-		if not self.templates:
-			dirs = [resource_filename('web', 'templates')]
-			for o in self.observers:
-				d = o.getTemplatesDirs()
-				if type(d) == list:
-					dirs.extend(d)
-			self.templates = TemplateLoader(dirs)
-		return self.templates.load(filename)
+	def loadTemplate(self, filename, dirs):
+		if type(dirs) is not list:
+			dirs = []
+		dirs.append(resource_filename('web', 'templates'))
+		templates = TemplateLoader(dirs)
+		return templates.load(filename)
 
 	def handle(self, plugin, p, **params):
 		path = '/'.join(p)
@@ -134,6 +131,7 @@ class RequestHandler(object):
 			if type(arr) == list:
 				menu.extend(arr)
 		template = None
+		templateDirs = []
 		response = None
 		request = WebRequest(cherrypy.request)
 		for o in self.observers:
@@ -143,6 +141,7 @@ class RequestHandler(object):
 			if requireAuth != False:
 				ret = WebRequestHandler(self.context).isUrlAuthorized(request)
 			response = o.handleRequest(plugin, path, params, request=request)
+			templateDirs = o.getTemplatesDirs()
 			break
 		if response is None:
 			raise cherrypy.NotFound()
@@ -157,7 +156,7 @@ class RequestHandler(object):
 		template, data = response
 		if template is None:
 			raise cherrypy.NotFound()
-		tmpl = self.loadTemplate(template)
+		tmpl = self.loadTemplate(template, templateDirs)
 		data['menu'] = menu
 		stream = tmpl.generate(title='TellStick ZNet', **data)
 		return stream.render('html', doctype='html')
