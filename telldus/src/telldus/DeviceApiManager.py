@@ -34,15 +34,15 @@ class DeviceApiManager(Plugin):
 		"""
 		Sends bell command to devices supporting this.
 		"""
-		return self.deviceCommand(id, Device.BELL)
+		return self.deviceCommand(id, Device.BELL, **kwargs)
 
 	@apicall('device', 'command')
-	def deviceCommand(self, id, method, value=None, **kwargs):
+	def deviceCommand(self, id, method, value=None, app=None, **kwargs):
 		"""
 		Sends a command to a device.
 		"""
 		device = self.__retrieveDevice(id)
-		device.command(method, value, origin='Local API')
+		device.command(method, value, origin=app)
 		return True
 
 	@apicall('device', 'dim')
@@ -50,14 +50,14 @@ class DeviceApiManager(Plugin):
 		"""
 		Sends a dim command to devices supporting this.
 		"""
-		return self.deviceCommand(id, Device.DIM, level)
+		return self.deviceCommand(id, Device.DIM, level, **kwargs)
 
 	@apicall('device', 'down')
 	def deviceDown(self, id, **kwargs):
 		"""
 		Sends a "down" command to devices supporting this.
 		"""
-		return self.deviceCommand(id, Device.DOWN)
+		return self.deviceCommand(id, Device.DOWN, **kwargs)
 
 	@apicall('device', 'info')
 	def deviceInfo(self, id, supportedMethods=0, extras=None, **kwargs):
@@ -87,7 +87,7 @@ class DeviceApiManager(Plugin):
 		Sends a special learn command to some devices that need a special
 		learn-command to be used from TellStick
 		"""
-		return self.deviceCommand(id, Device.LEARN)
+		return self.deviceCommand(id, Device.LEARN, **kwargs)
 
 	@apicall('device', 'setName')
 	def deviceSetName(self, id, name, **kwargs):
@@ -103,28 +103,28 @@ class DeviceApiManager(Plugin):
 		"""
 		Send a "stop" command to device.
 		"""
-		return self.deviceCommand(id, Device.STOP)
+		return self.deviceCommand(id, Device.STOP, **kwargs)
 
 	@apicall('device', 'turnOff')
 	def deviceTurnOff(self, id, **kwargs):
 		"""
 		Turns a device off.
 		"""
-		return self.deviceCommand(id, Device.TURNOFF)
+		return self.deviceCommand(id, Device.TURNOFF, **kwargs)
 
 	@apicall('device', 'turnOn')
 	def deviceTurnOn(self, id, **kwargs):
 		"""
 		Turns a device on.
 		"""
-		return self.deviceCommand(id, Device.TURNON)
+		return self.deviceCommand(id, Device.TURNON, **kwargs)
 
 	@apicall('device', 'up')
 	def deviceUp(self, id, **kwargs):
 		"""
 		Send an "up" command to device.
 		"""
-		return self.deviceCommand(id, Device.UP)
+		return self.deviceCommand(id, Device.UP, **kwargs)
 
 	@apicall('sensors', 'list')
 	def sensorsList(self, includeValues=None, includeScale=None, **kwargs):
