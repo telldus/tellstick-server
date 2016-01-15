@@ -32,3 +32,7 @@ class WebUI(Plugin):
 		if path == '':
 			return 'index.html', {}
 		return None
+
+	def requireAuthentication(self, plugin, path):
+		if plugin == '' and path == '':
+			return False
