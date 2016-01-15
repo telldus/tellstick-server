@@ -16,4 +16,5 @@ interpret signals and messages from devices.
 
    intro
    lua
+   api
    reference
