@@ -64,6 +64,9 @@ class WebResponseJson(WebResponse):
 		else:
 			self.data = json.dumps(data)
 
+	def output(self, response):
+		response.headers['Content-Type'] = 'Content-Type: application/json; charset=utf-8'
+
 class WebResponseRedirect(object):
 	def __init__(self, url):
 		self.url = url
