@@ -42,6 +42,9 @@ class WebRequest(object):
 	def method(self):
 		return self.__request.method
 
+	def post(self, param, default=None):
+		return self.__request.body.params.get(param, default)
+
 class WebSocketHandler(WebSocket):
 	pass
 
