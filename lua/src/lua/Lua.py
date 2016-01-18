@@ -102,6 +102,9 @@ class Lua(Plugin):
 		for s in self.scripts:
 			s.load()
 
+	def requireAuthentication(self, plugin, path):
+		return plugin != 'lua'
+
 	def saveScript(self, scriptName, code):
 		for script in self.scripts:
 			if script.name != scriptName:
