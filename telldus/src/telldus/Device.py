@@ -320,11 +320,11 @@ class Device(object):
 	def maskUnsupportedMethods(methods, supportedMethods):
 		# Up -> Off
 		if (methods & Device.UP) and not (supportedMethods & Device.UP):
-			methods = methods | Device.OFF
+			methods = methods | Device.TURNOFF
 
 		# Down -> On
 		if (methods & Device.DOWN) and not (supportedMethods & Device.DOWN):
-			methods = methods | Device.ON
+			methods = methods | Device.TURNON
 
 		# Cut of the rest of the unsupported methods we don't have a fallback for
 		return methods & supportedMethods
