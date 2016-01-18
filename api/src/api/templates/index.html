@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+	<xi:include href="design.html" />
+	<head>
+		<title>API methods</title>
+	</head>
+	<body>
+		<div id="content">
+			<h1>Available methods:</h1>
+			<py:for each="module, actions in sorted(methods.iteritems())">
+				<h2>${module}:</h2>
+				<ul>
+					<li py:for="action, fn in sorted(actions.iteritems())"><a href="/api/json/${module}/${action}">${module}/${action}</a>: ${fn.doc}</li>
+				</ul>
+			</py:for>
+		</div>
+	</body>
+</html>
