@@ -62,3 +62,31 @@ must start the autorization again from step 1.
 
 If allowRenew is not set to true it is not possible for the app to renew the
 token and it will always expire after the time set in the parameter "expires".
+
+Step 4 - Making a request
+#########################
+
+To make a requst to a TellStick ZNet API endpoint the token in step 3 must be
+supplied as a bearer token in the header. This is an example requesting a list
+of devices:
+
+.. code::
+
+   $ curl -i -X GET GET http://0.0.0.0/api/json/devices/list?supportedMethods=3 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImF1ZCI6IkV4YW1wbGUgYXBwIiwiZXhwIjoxNDUyOTUxNTYyfQ.eyJyZW5ldyI6dHJ1ZSwidHRsIjo4NjQwMH0.HeqoFM6-K5IuQa08Zr9HM9V2TKGRI9VxXlgdsutP7sg"
+   HTTP/1.1 200 OK
+   Date: Tue, 19 Jan 2016 10:21:29 GMT
+   Content-Type: Content-Type: application/json; charset=utf-8
+   Server: CherryPy/3.7.0
+
+   {
+     "device": [
+       {
+         "id": 1,
+         "methods": 3,
+         "name": "Example device",
+         "state": 2,
+         "statevalue": "",
+         "type": "device"
+       }
+     ]
+   }
