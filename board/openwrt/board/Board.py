@@ -49,14 +49,22 @@ class Board(object):
 
 	@staticmethod
 	def secret():
-		with open('/dev/mtd0', 'rb') as f:
-			f.seek(0x1FC20)
+		cfgs = {
+			'tellstick-znet-lite': {'part': '/dev/mtd0', 'offset': 0x1FC20},
+			'tellstick-znet-fika': {'part': '/dev/mtd2', 'offset': 0x80},
+		}
+		if Board.hw() not in cfgs:
+			return ''
+		cfg = cfgs[Board.hw()]
+		with open(cfg['part'], 'rb') as f:
+			f.seek(cfg['offset'])
 			return f.read(10)
 		return ''
 
 	@staticmethod
 	def product():
-		return 'tellstick-znet-lite'
+		# This might change in the future if we have multiple hardwares for one product.
+		return Board.hw()
 
 	@staticmethod
 	def hw():
