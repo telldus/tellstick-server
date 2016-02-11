@@ -90,3 +90,26 @@ of devices:
        }
      ]
    }
+
+Refreshing a token
+##################
+
+If the user allowed the application to renew the token in steg 2 it can be
+renewed by the calling application. The token must be refreshed before it
+expires. If the token has expired the authentication must be restarted from
+step 1 again.
+
+.. code::
+
+   $ curl -i -X GET http://0.0.0.0/api/refreshToken -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImF1ZCI6IkV4YW1wbGUgYXBwIiwiZXhwIjoxNDUyOTUxNTYyfQ.eyJyZW5ldyI6dHJ1ZSwidHRsIjo4NjQwMH0.HeqoFM6-K5IuQa08Zr9HM9V2TKGRI9VxXlgdsutP7sg"
+   HTTP/1.1 200 OK
+   Date: Tue, 19 Jan 2016 10:21:29 GMT
+   Content-Type: Content-Type: application/json; charset=utf-8
+   Server: CherryPy/3.7.0
+
+   {
+     "expires": 1455295348,
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImF1ZCI6IkV4YW1wbGUgYXBwIiwiZXhwIjoxNDU1Mjk1MzQ4fQ.eyJyZW5ldyI6dHJ1ZSwidHRsIjo4NjQwMH0.M4il4_2SqJwlCjmuXlU5DS6h-gX7493Tnk9oBJXbgPw"
+   }
+
+The new token returned must be used from now on and the old be discarded.

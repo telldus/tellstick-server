@@ -93,7 +93,7 @@ class ApiManager(Plugin):
 			return WebResponseJson({'error': 'The autorization token must be supplied as a bearer token'}, statusCode=401)
 		token = token[7:]
 		try:
-			jwt.decode(token, self.__tokenKey(), algorithms='HS256')
+			body = jwt.decode(token, self.__tokenKey(), algorithms='HS256')
 		except JWSError as e:
 			return WebResponseJson({'error': str(e)}, statusCode=401)
 		claims = jwt.get_unverified_headers(token)
@@ -103,6 +103,24 @@ class ApiManager(Plugin):
 			return WebResponseJson({'error': 'No app was configured in the token'}, statusCode=401)
 		aud = claims['aud']
 
+		if path == 'refreshToken':
+			if 'renew' not in body or body['renew'] != True:
+				return WebResponseJson({'error': 'The token is not authorized for refresh'}, statusCode=403)
+			if 'ttl' not in body:
+				return WebResponseJson({'error': 'No TTL was specified in the token'}, statusCode=401)
+			ttl = body['ttl']
+			exp = int(time.time()+ttl)
+			accessToken = jwt.encode({
+				'renew': True,
+				'ttl': ttl
+			}, self.__tokenKey(), algorithm='HS256', headers={
+				'aud': aud,
+				'exp': exp,
+			})
+			return WebResponseJson({
+				'token': accessToken,
+				'expires': exp,
+			})
 		paths = path.split('/')
 		if len(paths) < 2:
 			return None
