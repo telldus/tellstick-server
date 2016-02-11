@@ -28,11 +28,7 @@ class ApiManager(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'api':
 			return False
-		if path.startswith('json/'):
-			return True
-		if path in ['', 'authorize', 'token']:
-			return True
-		return False
+		return True
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
 		if path == '':
@@ -88,12 +84,8 @@ class ApiManager(Plugin):
 				self.tokens[token]['allowRenew'] = bool(request.post('extend', False))
 				self.tokens[token]['ttl'] = int(request.post('ttl', 0))*60
 			return 'authorize.html', {'token': self.tokens[token]}
-		paths = path.split('/')
-		if len(paths) < 3:
-			return None
-		returnFormat = paths[0]
-		module = paths[1]
-		action = paths[2]
+
+		# Check authorization
 		token = request.header('Authorization')
 		if token is None:
 			return WebResponseJson({'error': 'No token was found in the request'}, statusCode=401)
@@ -110,6 +102,12 @@ class ApiManager(Plugin):
 		if 'aud' not in claims or claims['aud'] is None:
 			return WebResponseJson({'error': 'No app was configured in the token'}, statusCode=401)
 		aud = claims['aud']
+
+		paths = path.split('/')
+		if len(paths) < 2:
+			return None
+		module = paths[0]
+		action = paths[1]
 		for o in self.observers:
 			fn = getattr(o, '_apicalls', {}).get(module, {}).get(action, None)
 			if fn is None:

@@ -72,7 +72,7 @@ of devices:
 
 .. code::
 
-   $ curl -i -X GET http://0.0.0.0/api/json/devices/list?supportedMethods=3 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImF1ZCI6IkV4YW1wbGUgYXBwIiwiZXhwIjoxNDUyOTUxNTYyfQ.eyJyZW5ldyI6dHJ1ZSwidHRsIjo4NjQwMH0.HeqoFM6-K5IuQa08Zr9HM9V2TKGRI9VxXlgdsutP7sg"
+   $ curl -i -X GET http://0.0.0.0/api/devices/list?supportedMethods=3 -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImF1ZCI6IkV4YW1wbGUgYXBwIiwiZXhwIjoxNDUyOTUxNTYyfQ.eyJyZW5ldyI6dHJ1ZSwidHRsIjo4NjQwMH0.HeqoFM6-K5IuQa08Zr9HM9V2TKGRI9VxXlgdsutP7sg"
    HTTP/1.1 200 OK
    Date: Tue, 19 Jan 2016 10:21:29 GMT
    Content-Type: Content-Type: application/json; charset=utf-8

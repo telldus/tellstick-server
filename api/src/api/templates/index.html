@@ -10,7 +10,7 @@
 			<py:for each="module, actions in sorted(methods.iteritems())">
 				<h2>${module}:</h2>
 				<ul>
-					<li py:for="action, fn in sorted(actions.iteritems())"><a href="/api/json/${module}/${action}">${module}/${action}</a>: ${fn.doc}</li>
+					<li py:for="action, fn in sorted(actions.iteritems())"><a href="/api/${module}/${action}">${module}/${action}</a>: ${fn.doc}</li>
 				</ul>
 			</py:for>
 		</div>
