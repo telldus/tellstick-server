@@ -2,6 +2,7 @@
 
 import socket, ssl, errno, select, logging
 from LiveMessage import LiveMessage
+from base import Settings
 
 class ServerConnection(object):
 	CLOSED, CONNECTING, CONNECTED, READY, MSG_RECEIVED, DISCONNECTED = range(6)
@@ -12,7 +13,8 @@ class ServerConnection(object):
 		self.state = ServerConnection.CLOSED
 		self.msgs = []
 		self.server = None
-		self.useSSL = True
+		s = Settings('tellduslive.config')
+		self.useSSL = s.get('useSSL', True)
 
 	def close(self):
 			self.state = ServerConnection.CLOSED
