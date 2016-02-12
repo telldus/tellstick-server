@@ -64,7 +64,7 @@ class WebRequestHandler(Plugin):
 				if data['email'] != tellduslive.email:
 					return 'loginFailed.html', {'reason': 1, 'loginEmail': data['email'], 'registeredEmail': tellduslive.email}
 				request.setSession('loggedIn', True)
-				return 'loginSuccess.html', data
+				return request.loggedIn()
 			else:
 				return None  # TODO(micke): Error
 		return None

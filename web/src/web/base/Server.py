@@ -36,6 +36,9 @@ class WebRequest(object):
 	def base(self):
 		return self.__request.base
 
+	def loggedIn(self):
+		raise cherrypy.HTTPRedirect(self.session('returnTo', '/'))
+
 	def header(self, param):
 		return self.__request.headers.get(param, None)
 
@@ -206,6 +209,7 @@ class WebRequestHandler(Plugin):
 			ret = o.isUrlAuthorized(request)
 			if ret is True:
 				return True
+		request.setSession('returnTo', '%s?%s' % (cherrypy.request.path_info, cherrypy.request.query_string))
 		raise cherrypy.HTTPRedirect('/web/login')
 
 	def matchRequest(self, plugin, path):
