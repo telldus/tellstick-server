@@ -142,7 +142,11 @@ class ApiManager(Plugin):
 		return WebResponseJson({'error': 'The method %s/%s does not exist' % (module, action)}, statusCode=404)
 
 	def requireAuthentication(self, plugin, path):
-		return plugin != 'api'
+		if plugin != 'api':
+			return
+		if path in ['', 'authorize']:
+			return True
+		return False
 
 	def __tokenKey(self):
 		if self.tokenKey is not None:
