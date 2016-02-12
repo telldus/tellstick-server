@@ -45,6 +45,12 @@ class WebRequest(object):
 	def post(self, param, default=None):
 		return self.__request.body.params.get(param, default)
 
+	def session(self, key, default = None):
+		return cherrypy.session.get(key, default)
+
+	def setSession(self, key, value):
+		cherrypy.session[key] = value
+
 class WebSocketHandler(WebSocket):
 	pass
 
@@ -77,7 +83,8 @@ class Server(Plugin):
 		mimetypes.init()
 		cherrypy.config.update({
 			'server.socket_host': '::',
-			'server.socket_port': 80,
+			'tools.sessions.on': True,
+			'tools.sessions.timeout': 60
 		})
 		cherrypy.tree.mount(RequestHandler(self.context), '', config = {
 			'/ws': {

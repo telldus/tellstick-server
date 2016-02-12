@@ -23,14 +23,12 @@ class WebRequestHandler(Plugin):
 
 	def __init__(self):
 		self.store = memstore.MemoryStore()
-		self.session = {}
-		self.loggedIn = False
 
 	def getTemplatesDirs(self):
 		return [resource_filename('tellduslive', 'web/templates')]
 
 	def isUrlAuthorized(self, request):
-		return self.loggedIn
+		return request.session('loggedIn', False)
 
 	def handleAuthenticationForUrl(self, request):
 		return False
@@ -38,7 +36,7 @@ class WebRequestHandler(Plugin):
 	def handleRequest(self, plugin, path, params, request, **kwargs):
 		if plugin != 'tellduslive':
 			return None
-		oidconsumer = consumer.Consumer(self.session, self.store)
+		oidconsumer = consumer.Consumer({}, self.store)
 		if path == 'login':
 			try:
 				authrequest = oidconsumer.begin('http://login.telldus.com')
@@ -65,7 +63,7 @@ class WebRequestHandler(Plugin):
 				tellduslive = TelldusLive(self.context)
 				if data['email'] != tellduslive.email:
 					return 'loginFailed.html', {'reason': 1, 'loginEmail': data['email'], 'registeredEmail': tellduslive.email}
-				self.loggedIn = True
+				request.setSession('loggedIn', True)
 				return 'loginSuccess.html', data
 			else:
 				return None  # TODO(micke): Error
