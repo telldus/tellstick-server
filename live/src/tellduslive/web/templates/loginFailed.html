@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
+	<xi:include href="design.html" />
+	<head>
+		<title>Login failed</title>
+	</head>
+	<body>
+		<div id="content">
+			<p py:if="reason == 1">
+				You tried to log in as ${loginEmail} but this TellStick ZNet is activated to ${registeredEmail}
+			</p>
+		</div>
+	</body>
+</html>

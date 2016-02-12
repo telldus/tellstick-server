@@ -15,5 +15,8 @@ setup(
 		'telldus.startup': ['c = tellduslive.base:TelldusLive [cREQ]'],
 		'telldus.plugins': ['c = tellduslive.web:WebRequestHandler']
 	},
-	extras_require = dict(cREQ = "Base>=0.1")
+	extras_require = dict(cREQ = "Base>=0.1"),
+	package_data={'tellduslive' : [
+		'web/templates/*.html',
+	]}
 )

@@ -22,6 +22,7 @@ class TelldusLive(Plugin):
 
 	def __init__(self):
 		print("Telldus Live! loading")
+		self.email = ''
 		self.supportedMethods = 0
 		self.connected = False
 		self.registered = False
@@ -37,6 +38,7 @@ class TelldusLive(Plugin):
 	@mainthread
 	def handleMessage(self, message):
 		if (message.name() == "notregistered"):
+			self.email = ''
 			self.connected = True
 			self.registered = False
 			params = message.argument(0).dictVal
@@ -48,7 +50,10 @@ class TelldusLive(Plugin):
 		if (message.name() == "registered"):
 			self.connected = True
 			self.registered = True
-			self.observers.liveRegistered(message.argument(0).toNative())
+			data = message.argument(0).toNative()
+			if 'email' in data:
+				self.email = data['email']
+			self.observers.liveRegistered(data)
 			return
 
 		if (message.name() == "command"):
@@ -64,9 +69,7 @@ class TelldusLive(Plugin):
 
 		if (message.name() == "disconnect"):
 			self.conn.close()
-			self.connected = False
-			self.registered = False
-			self.observers.liveDisconnected()
+			self.__disconnected()
 			return
 
 		handled = False
@@ -117,19 +120,15 @@ class TelldusLive(Plugin):
 
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
-				self.connected = False
-				self.registered = False
 				print("Disconnected, reconnect in %i seconds" % wait)
-				self.observers.liveDisconnected()
+				self.__disconnected()
 
 			else:
 				if (time.time() - pongTimer >= 360):  # No pong received
 					self.conn.close()
 					wait = random.randint(10, 50)
-					self.connected = False
-					self.registered = False
 					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
-					self.observers.liveDisconnected()
+					self.__disconnected()
 				elif (time.time() - self.pingTimer >= 120):
 					# Time to ping
 					self.conn.send(LiveMessage("Ping"))
@@ -148,6 +147,12 @@ class TelldusLive(Plugin):
 		msg.append(action)
 		msg.append(data)
 		self.send(msg)
+
+	def __disconnected(self):
+		self.email = ''
+		self.connected = False
+		self.registered = False
+		self.observers.liveDisconnected()
 
 	@staticmethod
 	def handler(message):

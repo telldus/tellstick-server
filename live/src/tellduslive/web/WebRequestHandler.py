@@ -6,6 +6,7 @@ from openid.consumer import consumer
 from openid.extensions import sreg
 
 from base import implements, Plugin
+from tellduslive.base import TelldusLive
 try:
 	from web.base import IWebRequestHandler, IWebRequestAuthenticationHandler, WebResponseRedirect
 except ImportError:
@@ -24,6 +25,9 @@ class WebRequestHandler(Plugin):
 		self.store = memstore.MemoryStore()
 		self.session = {}
 		self.loggedIn = False
+
+	def getTemplatesDirs(self):
+		return [resource_filename('tellduslive', 'web/templates')]
 
 	def isUrlAuthorized(self, request):
 		return self.loggedIn
@@ -55,8 +59,14 @@ class WebRequestHandler(Plugin):
 				return None  # TODO(micke): Error
 			elif info.status == consumer.SUCCESS:
 				sregResp = sreg.SRegResponse.fromSuccessResponse(info)
+				data = dict(sregResp.items())
+				if 'email' not in data:
+					return None  # TODO(micke): Error
+				tellduslive = TelldusLive(self.context)
+				if data['email'] != tellduslive.email:
+					return 'loginFailed.html', {'reason': 1, 'loginEmail': data['email'], 'registeredEmail': tellduslive.email}
 				self.loggedIn = True
-				return 'loginSuccess.html', dict(sregResp.items())
+				return 'loginSuccess.html', data
 			else:
 				return None  # TODO(micke): Error
 		return None
