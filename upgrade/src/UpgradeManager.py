@@ -18,9 +18,9 @@ class UpgradeManager(object):
 		self._url = ''
 
 	def check(self):
-		conn = httplib.HTTPConnection("api.telldus.net:80")
+		conn = httplib.HTTPConnection('fw.telldus.com:80')
 		try:
-			conn.request('GET', "/client/versions")
+			conn.request('GET', '/versions.xml')
 			response = conn.getresponse()
 		except:
 			print "Could not get version info"
