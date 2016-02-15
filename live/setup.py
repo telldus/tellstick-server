@@ -9,7 +9,7 @@ except ImportError:
 setup(
 	name='TelldusLive',
 	version='0.1',
-	packages=['tellduslive', 'tellduslive.base'],
+	packages=['tellduslive', 'tellduslive.base', 'tellduslive.web'],
 	package_dir = {'':'src'},
 	entry_points={ \
 		'telldus.startup': ['c = tellduslive.base:TelldusLive [cREQ]'],
