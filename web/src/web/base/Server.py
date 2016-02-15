@@ -86,6 +86,7 @@ class Server(Plugin):
 		mimetypes.init()
 		cherrypy.config.update({
 			'server.socket_host': '::',
+			'server.socket_port': 80,
 			'tools.sessions.on': True,
 			'tools.sessions.timeout': 60
 		})
