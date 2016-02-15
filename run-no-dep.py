@@ -3,6 +3,7 @@
 
 plugins = {
 	'telldus': ['DeviceManager', 'DeviceApiManager', 'WebUI'],
+	'tellduslive.web': ['WebRequestHandler'],
 	'zwave.workaround': ['WorkaroundPlugin'],
 	#PLUGINS#
 }
