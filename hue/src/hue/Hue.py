@@ -5,7 +5,7 @@ from web.base import IWebRequestHandler, WebResponseRedirect
 from pkg_resources import resource_filename
 from upnp import SSDP, ISSDPNotifier
 from telldus import DeviceManager, Device, DeviceAbortException
-import colorsys
+import colorsys, logging
 import httplib, urlparse, json
 
 class Bridge(object):
@@ -134,7 +134,13 @@ class Hue(Plugin):
 		conn = httplib.HTTPConnection(self.bridge)
 		conn.request(type, endpoint, body)
 		response = conn.getresponse()
-		data = json.loads(response.read())
+		try:
+			rawData = response.read()
+			data = json.loads(rawData)
+		except:
+			logging.warning("Could not parse JSON")
+			logging.warning("%s", rawData)
+			return {0: {'error': 'Could not parse JSON'}}
 		return data
 
 	def getTemplatesDirs(self):
