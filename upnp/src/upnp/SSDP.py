@@ -6,6 +6,7 @@ import StringIO
 from Device import Device
 from threading import Thread
 from base import ObserverCollection, IInterface, Plugin, mainthread
+import logging
 
 class ISSDPNotifier(IInterface):
 	def ssdpRootDeviceFound(rootDevice):
@@ -27,7 +28,11 @@ class SSDPResponse(object):
 		self.location = r.getheader("location")
 		self.usn = r.getheader("usn")
 		self.st = r.getheader("st")
-		self.cache = r.getheader("cache-control").split("=")[1]
+		try:
+			self.cache = r.getheader("cache-control").split("=")[1]
+		except:
+			logging.warning("Could not extract cache-control header.")
+			logging.warning("Headers are: %s", r.getheaders())
 		index = self.usn.find('::')
 		if index >= 0:
 			self.uuid = self.usn[5:index]
