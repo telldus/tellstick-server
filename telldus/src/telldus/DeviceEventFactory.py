@@ -62,6 +62,33 @@ class DeviceEventFactory(Plugin):
 			if trigger.deviceId == device.id() and trigger.method == int(method):
 				trigger.triggered()
 
+class DeviceActionExecutor(object):
+	def __init__(self, device, method, value, repeats):
+		self.device = device
+		self.method = method
+		self.value = value
+		self.repeats = repeats
+
+		if device.typeString() == '433' and self.repeats > 1:
+			self.retries = 0  # No retries for 433
+			i = 1
+			while i < self.repeats:
+				t = Timer(3*i, self.execute)
+				t.start()
+				i += 1
+		else:
+			self.retries = self.repeats
+		self.execute()
+
+	def execute(self):
+		self.device.command(self.method, self.value, origin='Event', failure=self.__failure)
+
+	def __failure(self, reason):
+		self.retries -= 1
+		if self.retries > 0:
+			t = Timer(60, self.execute)
+			t.start()
+
 class DeviceAction(Action):
 	def __init__(self, manager, **kwargs):
 		super(DeviceAction,self).__init__(**kwargs)
@@ -85,14 +112,9 @@ class DeviceAction(Action):
 		device = self.manager.device(self.deviceId)
 		if device is None:
 			return
-		if device.typeString() == '433' and self.repeats > 1:
-			i = 1
-			while i < self.repeats:
-				t = Timer(3*i, device.command, [self.method, self.value], {'origin':'Event'})
-				t.start()
-				i += 1
-
-		device.command(self.method, self.value, origin='Event')
+		# We do not store the deviceExecutor object so it can be garbage collected
+		# when it is done.
+		deviceExecutor = DeviceActionExecutor(device, self.method, self.value, self.repeats)
 
 class DeviceCondition(Condition):
 	def __init__(self, manager, **kwargs):
