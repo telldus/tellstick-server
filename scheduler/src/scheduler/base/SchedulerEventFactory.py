@@ -1,11 +1,12 @@
 ﻿# -*- coding: utf-8 -*-
 
-from base import Application, implements, Plugin, Settings
+from base import Application, implements, Plugin, Settings, slot, ISignalObserver
 from calendar import timegm
 from datetime import date, datetime, timedelta
 from events.base import IEventFactory, Action, Condition, Trigger
 from pytz import timezone
 from SunCalculator import SunCalculator
+from telldus import Device, DeviceManager
 import pytz
 import threading
 import time
@@ -191,6 +192,58 @@ class SuntimeTrigger(TimeTrigger):
 		self.hour = utc_datetime.hour
 		return True
 
+class BlockheaterTrigger(TimeTrigger):
+	def __init__(self, factory, manager, deviceManager, **kwargs):
+		super(BlockheaterTrigger,self).__init__(manager = manager, **kwargs)
+		self.factory = factory
+		self.departureHour = None
+		self.departureMinute = None
+		self.sensorId = None
+		self.temp = None
+		self.deviceManager = deviceManager
+
+	def close(self):
+		self.factory.deleteTrigger(self)
+		super(BlockheaterTrigger,self).close()
+
+	def parseParam(self, name, value):
+		if name == 'clientSensorId':
+			self.sensorId = int(value)
+		elif name == 'hour':
+			self.departureHour = int(value)
+		elif name == 'minute':
+			self.departureMinute = int(value)
+		if self.departureHour is not None and self.departureMinute is not None and self.sensorId is not None:
+			self.recalculate()
+			self.manager.addTrigger(self)
+
+	def recalculate(self):
+		if self.temp is None:
+			if self.sensorId is None:
+				return False
+			sensor = self.deviceManager.device(self.sensorId)
+			# TODO: Support Fahrenheit also
+			temp = sensor.sensorValue(Device.TEMPERATURE, Device.SCALE_TEMPERATURE_CELCIUS)
+			if temp is None:
+				return False
+			self.temp = temp
+		if self.temp > 10:
+			self.active = False
+			return True
+		self.active = True
+		offset = int(round(60+100*self.temp/(self.temp-35)))
+		offset = min(120, offset) #  Never longer than 120 minutes
+		minutes = (self.departureHour * 60) + self.departureMinute - offset
+		if minutes < 0:
+			minutes += 24*60
+		self.setHour = int(minutes / 60)
+		self.minute = int(minutes % 60)
+		return super(BlockheaterTrigger,self).recalculate()
+
+	def setTemp(self, temp):
+		self.temp = temp
+		self.recalculate()
+
 class SuntimeCondition(Condition):
 	def __init__(self, **kwargs):
 		super(SuntimeCondition,self).__init__(**kwargs)
@@ -292,9 +345,11 @@ class WeekdayCondition(Condition):
 
 class SchedulerEventFactory(Plugin):
 	implements(IEventFactory)
+	implements(ISignalObserver)
 
 	def __init__(self):
 		self.triggerManager = TimeTriggerManager()
+		self.blockheaterTriggers = []
 
 	def clearAll(self):
 		self.triggerManager.clearAll()
@@ -308,6 +363,10 @@ class SchedulerEventFactory(Plugin):
 			return WeekdayCondition(**kwargs)
 
 	def createTrigger(self, type, **kwargs):
+		if type == 'blockheater':
+			trigger = BlockheaterTrigger(factory=self, manager=self.triggerManager, deviceManager=DeviceManager(self.context), **kwargs)
+			self.blockheaterTriggers.append(trigger)
+			return trigger
 		if type == 'time':
 			trigger = TimeTrigger(manager=self.triggerManager, **kwargs)
 			return trigger
@@ -316,5 +375,18 @@ class SchedulerEventFactory(Plugin):
 			return trigger
 		return None
 
+	def deleteTrigger(self, trigger):
+		if trigger in self.blockheaterTriggers:
+			self.blockheaterTriggers.remove(trigger)
+
 	def recalcTrigger(self):
 		self.triggerManager.recalcAll()
+
+	@slot('sensorValueUpdated')
+	def sensorValueUpdated(self, device, valueType, value, scale):
+		if valueType != Device.TEMPERATURE:
+			return
+		for trigger in self.blockheaterTriggers:
+			if trigger.sensorId == device.id():
+				trigger.setTemp(value)
+				break
