@@ -5,6 +5,10 @@ import os
 
 class Board(object):
 	cfgs = {
+		'tellstick-net-v2': {
+			'secret': {'part': '/dev/mtd0', 'offset': 0x1FC20},
+			'433': '/dev/ttyACM0',
+		},
 		'tellstick-znet-lite': {
 			'secret': {'part': '/dev/mtd0', 'offset': 0x1FC20},
 			'433': '/dev/ttyUSB0',
