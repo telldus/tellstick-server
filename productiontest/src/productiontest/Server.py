@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
-from base import Application, implements, Plugin
+from base import Application, implements, Plugin, IInterface
 from board import Board
 from tellduslive.base import LiveMessage
 from rf433 import RF433, RF433Msg, Protocol
 from threading import Thread
-from zwave.telldus import IZWObserver, TelldusZWave
+try:
+	from zwave.telldus import IZWObserver, TelldusZWave
+except ImportError:
+	class IZWObserver(IInterface):
+		pass
+	TelldusZWave = None
 import SocketServer
 import socket, fcntl, struct
 import logging
@@ -59,7 +64,8 @@ class Server(Plugin):
 		self.listener = None
 		CommandHandler.rf433 = RF433(self.context)
 		CommandHandler.context = self.context
-		self.zwave = TelldusZWave(self.context)
+		if TelldusZWave is not None:
+			self.zwave = TelldusZWave(self.context)
 		Application().registerShutdown(self.__stop)
 		self.autoDiscovery = SocketServer.UDPServer(('0.0.0.0', 30303), AutoDiscoveryHandler)
 		self.commandSocket = SocketServer.UDPServer(('0.0.0.0', 42314), CommandHandler)
@@ -75,7 +81,7 @@ class Server(Plugin):
 		self.sendVersion()
 
 	def sendVersion(self):
-		if not self.zwave.controller.version():
+		if self.zwave is None or not self.zwave.controller.version():
 			return  # nothing or not finished yet
 		if not self.listener:
 			return  # No listener registered
