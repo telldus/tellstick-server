@@ -4,7 +4,6 @@
 plugins = {
 	'telldus': ['DeviceManager', 'DeviceApiManager', 'WebUI'],
 	'tellduslive.web': ['WebRequestHandler'],
-	'zwave.workaround': ['WorkaroundPlugin'],
 	#PLUGINS#
 }
 startup = {
@@ -15,7 +14,6 @@ startup = {
 	'rf433': ['RF433'],
 	'scheduler.base': ['Scheduler'],
 	'tellduslive.base': ['TelldusLive'],
-	'zwave.telldus': ['TelldusZWave'],
 	#STARTUP#
 }
 
