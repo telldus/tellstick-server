@@ -130,8 +130,13 @@ class DeviceNode(RF433Node):
 class RF433(Plugin):
 	implements(ITelldusLiveObserver)
 
+	fwVersions = {
+		'18F25K50': 1
+	}
+
 	def __init__(self):
 		self.version = 0
+		self.hwVersion = None
 		self.devices = []
 		self.sensors = []
 		self.dev = Adapter(self, Board.rf433Port())
@@ -286,10 +291,14 @@ class RF433(Plugin):
 
 	def __hwVersion(self, version):
 		logging.debug("Got HW version %s", version)
+		self.hwVersion = version
+		if version not in RF433.fwVersions:
+			return
+		fwVersion = RF433.fwVersions[self.hwVersion]
+		if fwVersion != self.version:
+			logging.info("Version %i is to old, update firmware", self.version)
+			self.dev.updateFirmware()
 
 	def __version(self, version):
 		self.version = version
 		logging.info("RF433 version: %i", self.version)
-		if version != 12:
-			logging.info("Version %i is to old, update firmware", self.version)
-			self.dev.updateFirmware()
