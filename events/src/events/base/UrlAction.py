@@ -19,6 +19,7 @@ class UrlAction(Action):
 		thread.start()
 
 	def __execute(self):
+		headers = {}
 		url = urlparse.urlparse(self.url)
 		sendHost = url.netloc  #clean url
 		port = 80  # default 80
@@ -30,7 +31,11 @@ class UrlAction(Action):
 			sendPath = '/'
 		if url.query != '':
 			sendPath = "%s?%s" % (sendPath, url.query)
+		atIndex = sendHost.find('@')
+		if atIndex >= 0:
+			headers['Authorization'] = 'Basic %s' % (base64.b64encode(sendHost[:atIndex]))
+			sendHost = sendHost[atIndex+1:]
 
 		conn = httplib.HTTPConnection('%s:%i' % (sendHost, port))
-		conn.request('GET', sendPath)
+		conn.request('GET', sendPath, None, headers)
 		response = conn.getresponse()
