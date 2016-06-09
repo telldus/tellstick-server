@@ -14,6 +14,11 @@ class Board(object):
 			'433': '/dev/ttyUSB0',
 			'z-wave': '/dev/ttyACM0',
 		},
+		'tellstick-znet-lite-v2': {
+			'secret': {'part': '/dev/mtd0', 'offset': 0x1FC20},
+			'433': 'hwgrep://1781:0c32',
+			'z-wave': 'hwgrep://0658:0200',
+		},
 		'tellstick-znet-fika': {
 			'secret': {'part': '/dev/mtd2', 'offset': 0x80},
 			'433': '/dev/ttyUSB0',
