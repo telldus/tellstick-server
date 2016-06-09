@@ -76,8 +76,14 @@ class Board(object):
 
 	@staticmethod
 	def product():
-		# This might change in the future if we have multiple hardwares for one product.
-		return Board.hw()
+		hw = Board.hw()
+		if hw != 'tellstick':
+			return hw
+		# "tellstick" as hw is a generic hw platform. We need to manually figure out the correct product
+		# to upgrade to the correct firmware
+		if Board.__readGPIO(26) == '0':
+			return 'tellstick-znet-lite-v2'
+		return 'tellstick-net-v2'
 
 	@staticmethod
 	def hw():
@@ -91,7 +97,11 @@ class Board(object):
 	@staticmethod
 	def doUpgradeImage(type, path):
 		if type == 'firmware':
-			os.system("/sbin/sysupgrade %s" % path)
+			if Board.hw() == 'tellstick':
+				# Force upgrade since the image id won't match when we switch board type
+				os.system("/sbin/sysupgrade -F %s" % path)
+			else:
+				os.system("/sbin/sysupgrade %s" % path)
 
 	@staticmethod
 	def __cfg(name, default = None):
@@ -102,3 +112,18 @@ class Board(object):
 		if name not in cfg:
 			return default
 		return cfg[name]
+
+	@staticmethod
+	def __readGPIO(pin):
+		if os.path.exists('/sys/class/gpio/gpio%s' % pin) == False:
+			if os.path.exists('/sys/class/gpio/export') == False:
+				return None
+			# Export the gpio
+			with open('/sys/class/gpio/export', 'w') as f:
+				f.write(str(pin))
+		if os.path.exists('/sys/class/gpio/gpio%s' % pin) == False:
+			return None
+		with open('/sys/class/gpio/gpio%s/direction' % pin, 'w') as f:
+			f.write('in')
+		with open('/sys/class/gpio/gpio%s/value' % pin, 'r') as f:
+			return f.read().strip()

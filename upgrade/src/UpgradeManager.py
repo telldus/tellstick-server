@@ -39,7 +39,7 @@ class UpgradeManager(object):
 	def checkForUpgrade(self, el, attrs):
 		if 'name' not in self._product or 'hw' not in self._product:
 			return
-		if self._product['name'] != Board.product() or self._product['hw'] != Board.hw():
+		if self._product['name'] != Board.product() or self._product['hw'] != self.hw():
 			return
 		if 'name' not in self._dist or 'version' not in attrs:
 			return
@@ -112,6 +112,9 @@ class UpgradeManager(object):
 			return (None, None)
 		os.remove('%s.asc' % downloadFilename)
 		return (self._firmwareType, downloadFilename)
+
+	def hw(self):
+		return Board.product() if Board.hw() == 'tellstick' else Board.hw()
 
 	def verifyFile(self, filename, size, checksum):
 		if os.stat(filename).st_size != size:
