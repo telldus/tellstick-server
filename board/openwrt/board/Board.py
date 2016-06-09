@@ -7,7 +7,7 @@ class Board(object):
 	cfgs = {
 		'tellstick-net-v2': {
 			'secret': {'part': '/dev/mtd0', 'offset': 0x1FC20},
-			'433': '/dev/ttyACM0',
+			'433': 'hwgrep://1781:0c32',
 		},
 		'tellstick-znet-lite': {
 			'secret': {'part': '/dev/mtd0', 'offset': 0x1FC20},
