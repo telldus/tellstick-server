@@ -110,10 +110,10 @@ class Board(object):
 
 	@staticmethod
 	def __cfg(name, default = None):
-		hw = Board.hw()
-		if hw not in Board.cfgs:
+		product = Board.product()
+		if product not in Board.cfgs:
 			return default
-		cfg = Board.cfgs[hw]
+		cfg = Board.cfgs[product]
 		if name not in cfg:
 			return default
 		return cfg[name]
