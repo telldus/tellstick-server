@@ -217,6 +217,7 @@ class RF433(Plugin):
 		if 'class' in msg and msg['class'] == 'sensor':
 			self.decodeSensor(msg)
 			return
+		Application.signal('rf433RawData', msg)
 		msg = Protocol.decodeData(msg)
 		for m in msg:
 			self.decodeCommandData(m)
