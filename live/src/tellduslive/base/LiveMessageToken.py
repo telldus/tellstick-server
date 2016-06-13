@@ -12,7 +12,7 @@ class LiveMessageToken(object):
 		self.intVal = 0
 		self.dictVal = {}
 		self.listVal = []
-		if (type(value) is int):
+		if (type(value) is int or type(value) is long):
 			self.valueType = self.TYPE_INT
 			self.intVal = value
 
