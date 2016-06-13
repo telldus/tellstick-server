@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from base import Application, implements, Plugin, IInterface
+from base import Application, implements, Plugin, IInterface, ISignalObserver, slot
 from board import Board
 from tellduslive.base import LiveMessage
 from rf433 import RF433, RF433Msg, Protocol
@@ -59,6 +59,7 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 
 class Server(Plugin):
 	implements(IZWObserver)
+	implements(ISignalObserver)
 
 	def __init__(self):
 		self.listener = None
@@ -76,7 +77,19 @@ class Server(Plugin):
 		self.listener = socket
 		self.clientAddress = clientAddress
 		self.sendVersion()
-	
+
+	@slot('rf433RawData')
+	def rf433RawData(self, data, *args, **kwargs):
+		if 'data' in data:
+			data['data'] = int(data['data'], 16)
+		msg = LiveMessage("RawData")
+		msg.append(data)
+		try:
+			self.listener.sendto(msg.toByteArray(), self.clientAddress)
+		except:
+			# for example if listener isn't set
+			pass
+
 	def zwaveReady(self):
 		self.sendVersion()
 
