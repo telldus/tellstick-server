@@ -14,5 +14,8 @@ setup(
 	entry_points={ \
 		'telldus.startup': ['c = pluginloader:Loader [cREQ]']
 	},
-	extras_require = dict(cREQ = 'Base>=0.1'),
+	extras_require = dict(cREQ = 'Base>=0.1\nTelldusWeb>=0.1'),
+	package_data={'pluginloader' : [
+		'templates/*.html',
+	]}
 )

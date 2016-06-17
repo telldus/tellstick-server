@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin
+from base import Plugin, implements
 from board import Board
+from web.base import IWebRequestHandler
 import glob
 #import gnupg
 import logging
@@ -62,3 +63,23 @@ class Loader(Plugin):
 					logging.error(str(e))
 					self.printBacktrace(traceback.extract_tb(exc_traceback))
 
+class WebFrontend(Plugin):
+	implements(IWebRequestHandler)
+
+	def getTemplatesDirs(self):
+		return [pkg_resources.resource_filename('pluginloader', 'templates')]
+
+	def matchRequest(self, plugin, path):
+		if plugin != 'pluginloader':
+			return False
+		if path in ['']:
+			return True
+		return False
+
+	def handleRequest(self, plugin, path, params, request, **kwargs):
+		if request.method() == 'POST' and 'pluginfile' in params:
+			# TODO: Verify the file upload and extract signature from egg
+			f = params['pluginfile']
+			with open('%s/%s' % (Board.pluginPath(), f.filename), 'w') as wf:
+				wf.write(f.file.read())
+		return 'pluginloader.html', {}
