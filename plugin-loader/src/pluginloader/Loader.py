@@ -97,12 +97,14 @@ class Loader(Plugin):
 		filename = pkg_resources.resource_filename('pluginloader', 'files/telldus.gpg')
 		gpg = loadGPG()
 		installedKeys = [key['keyid'] for key in gpg.list_keys()]
-		defaultKeys = gpg.scan_keys(filename)
-		for key in [key['keyid'] for key in defaultKeys]:
+		defaultKeys = [key['keyid'] for key in gpg.scan_keys(filename)]
+		for key in defaultKeys:
 			if key in installedKeys:
 				continue
 			gpg.import_keys(open(filename, 'rb').read())
-			return
+			break
+		# List all keys except builtin ones
+		self.keys = [x for x in gpg.list_keys() if x['keyid'] not in defaultKeys]
 
 	def loadPlugin(self, manifest):
 		plugin = LoadedPlugin(manifest, self.context)
@@ -112,6 +114,13 @@ class Loader(Plugin):
 	def loadPlugins(self):
 		for f in glob.glob('%s/**/manifest.yml' % Board.pluginPath()):
 			self.loadPlugin(f)
+
+	def removeKey(self, key, fingerprint):
+		gpg = loadGPG()
+		gpg.delete_keys(fingerprint, True)
+		gpg.delete_keys(fingerprint)
+		# Reload keys and make sure the built in stays
+		self.initializeKeychain()
 
 	def removePlugin(self, name):
 		for i, plugin in enumerate(self.plugins):
@@ -145,6 +154,8 @@ class WebFrontend(Plugin):
 					return 'importkey.html', {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
 				result = gpg.import_keys(open(k).read())
 				os.unlink(k)
+				# Reload loaded keys
+				Loader(self.context).initializeKeychain()
 		except Exception as e:
 			os.unlink(filename)
 			return 'pluginloader.html', {'msg': str(e), 'loader': Loader(self.context)}
@@ -222,6 +233,8 @@ class WebFrontend(Plugin):
 		if path == 'remove':
 			if 'pluginname' in params:
 				Loader(self.context).removePlugin(params['pluginname'])
+			elif 'key' in params and 'fingerprint' in params:
+				Loader(self.context).removeKey(params['key'], params['fingerprint'])
 			return WebResponseRedirect('/')
 
 		if os.path.isfile('%s/staging.zip' % (Board.pluginPath())):
