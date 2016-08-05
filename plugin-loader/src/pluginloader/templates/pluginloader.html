@@ -11,5 +11,9 @@
 			<input type="file" name="pluginfile" />
 			<input type="submit" value="Upload" />
 		</form>
+		<h3>Loaded plugins:</h3>
+		<ul>
+			<li py:for="plugin in loader.plugins">Plugin ${plugin.name} <a href="remove?pluginname=${plugin.name}">[DEL]</a> Loaded: ${plugin.loaded}</li>
+		</ul>
 	</body>
 </html>
