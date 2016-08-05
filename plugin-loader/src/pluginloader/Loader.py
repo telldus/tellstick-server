@@ -138,7 +138,8 @@ class WebFrontend(Plugin):
 					raise Exception('Key must only contain exactly one public key')
 				key = keys[0]
 				name = key['uids']
-				fingerprint = key['fingerprint']
+				# Group fingerprint every 4th character
+				fingerprint = ' '.join(map(''.join, zip(*[iter(key['fingerprint'])]*4)))
 				keyid = key['keyid']
 				if keyid != acceptKeyId:
 					return 'importkey.html', {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
