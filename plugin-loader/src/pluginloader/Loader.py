@@ -18,8 +18,20 @@ def loadGPG():
 
 class Loader(Plugin):
 	def __init__(self):
+		self.initializeKeychain()
 		self.loadPlugins()
 
+	def initializeKeychain(self):
+		filename = pkg_resources.resource_filename('pluginloader', 'files/telldus.gpg')
+		gpg = loadGPG()
+		installedKeys = [key['keyid'] for key in gpg.list_keys()]
+		defaultKeys = gpg.scan_keys(filename)
+		for key in [key['keyid'] for key in defaultKeys]:
+			if key in installedKeys:
+				continue
+			gpg.import_keys(open(filename, 'rb').read())
+			return
+ 
 	def loadPlugins(self):
 		for f in glob.glob('%s/**/manifest.yml' % Board.pluginPath()):
 			try:
