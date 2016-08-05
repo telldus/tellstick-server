@@ -159,7 +159,7 @@ class RequestHandler(object):
 		if isinstance(response, WebResponseRedirect):
 			if response.url[:4] == 'http':
 				raise cherrypy.HTTPRedirect(response.url)
-			raise cherrypy.HTTPRedirect('%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
+			raise cherrypy.HTTPRedirect('/%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
 		elif isinstance(response, WebResponse):
 			cherrypy.response.status = response.statusCode
 			response.output(cherrypy.response)
