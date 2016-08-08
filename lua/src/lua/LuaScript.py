@@ -211,6 +211,8 @@ class LuaScript(object):
 				if func.startswith('on'):
 					self.__allowedSignals.append(func)
 			self.__setState(LuaScript.IDLE)
+			# Allow script to initialize itself
+			self.call('onInit')
 			self.p("Script %s loaded", self.name)
 		except Exception as e:
 			self.__setState(LuaScript.ERROR)
