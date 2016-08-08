@@ -4,7 +4,7 @@ from base import Application
 from telldus import DeviceManager
 from web.base import Server
 from lupa import LuaRuntime, lua_type
-from threading import Thread, Condition, Lock
+from threading import Thread, Condition, Lock, Timer
 import os, types
 
 # Whitelist functions known to be safe.
@@ -54,6 +54,37 @@ class List(object):
 		This can be used for slicing python lists (e.g. l[0:10:2])."""
 		return collection[slice(start,end,step)]
 
+def sleep(ms):
+	"""
+	Delay for a specified amount of time.
+
+	  :ms: The number of milliseconds to sleep.
+
+	"""
+	pass
+	# The real function is not implemented here. This is just for documentation.
+
+class LuaThread(object):
+	def __init__(self):
+		pass
+
+	def abort(self):
+		pass
+
+class SleepingLuaThread(LuaThread):
+	def __init__(self, ms):
+		super(SleepingLuaThread,self).__init__()
+		self.ms = ms
+		self.timer = None
+
+	def abort(self):
+		if self.timer:
+			self.timer.cancel()
+
+	def start(self, cb):
+		self.timer = Timer(self.ms/1000.0, cb)
+		self.timer.start()
+
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
@@ -61,6 +92,8 @@ class LuaScript(object):
 		self.filename = filename
 		self.name = os.path.basename(filename)
 		self.context = context
+		self.runningLuaThread = None
+		self.runningLuaThreads = []
 		self.__allowedSignals = []
 		self.__queue = []
 		self.__thread = Thread(target=self.__run, name=self.name)
@@ -123,7 +156,10 @@ class LuaScript(object):
 				if len(self.__queue):
 					task = self.__queue.pop(0)
 				elif state in [LuaScript.LOADING, LuaScript.CLOSING]:
-					pass
+					# Abort any threads that might be running
+					for t in self.runningLuaThreads:
+						t.abort()
+					self.runningLuaThreads = []
 				else:
 					self.__threadLock.wait(300)
 			finally:
@@ -135,12 +171,21 @@ class LuaScript(object):
 				self.__load()
 			elif task is not None:
 				name, args = task
-				fn = getattr(self.lua.globals(), name)
+				if type(name) == str:
+					fn = getattr(self.lua.globals(), name)
+					self.runningLuaThread = fn.coroutine(*args)
+				elif lua_type(name) == 'thread':
+					self.runningLuaThread = name
+				else:
+					continue
 				try:
 					self.__setState(LuaScript.RUNNING)
-					fn(*args)
+					self.runningLuaThread.send(None)
+				except StopIteration:
+					pass
 				except Exception as e:
 					self.p("Could not execute function %s: %s", name, e)
+				self.runningLuaThread = None
 				self.__setState(LuaScript.IDLE)
 
 	def __load(self):
@@ -152,6 +197,9 @@ class LuaScript(object):
 		setattr(self.lua.globals(), 'print', self.p)
 		# Remove potentially dangerous functions
 		self.__sandboxInterpreter()
+		# Install a sleep function as lua script since it need to be able to yield
+		self.lua.execute('function sleep(ms)\nsuspend(ms)\ncoroutine.yield()\nend')
+		setattr(self.lua.globals(), 'suspend', self.__luaSleep)
 		self.lua.globals().deviceManager = DeviceManager(self.context)
 		try:
 			self.__setState(LuaScript.RUNNING)
@@ -167,6 +215,24 @@ class LuaScript(object):
 		except Exception as e:
 			self.__setState(LuaScript.ERROR)
 			self.p("Could not execute lua script %s", e)
+
+	def __luaSleep(self, ms):
+		co = self.runningLuaThread
+		t = SleepingLuaThread(ms)
+		def resume():
+			if t in self.runningLuaThreads:
+				self.runningLuaThreads.remove(t)
+			if not bool(co):
+				# Cannot call coroutine anymore
+				return
+			self.__threadLock.acquire()
+			try:
+				self.__queue.append((co, []))
+				self.__threadLock.notifyAll()
+			finally:
+				self.__threadLock.release()
+		t.start(resume)
+		self.runningLuaThreads.append(t)
 
 	def __sandboxInterpreter(self):
 		for obj in self.lua.globals():
