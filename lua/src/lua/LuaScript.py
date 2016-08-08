@@ -215,7 +215,7 @@ class LuaScript(object):
 			self.p("Script %s loaded", self.name)
 		except Exception as e:
 			self.__setState(LuaScript.ERROR)
-			self.p("Could not execute lua script %s", e)
+			self.p("Could not load lua script %s: %s", self.name, e)
 
 	def __luaSleep(self, ms):
 		if self.state() != LuaScript.RUNNING:
