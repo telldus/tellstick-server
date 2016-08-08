@@ -198,11 +198,10 @@ class LuaScript(object):
 		# Remove potentially dangerous functions
 		self.__sandboxInterpreter()
 		# Install a sleep function as lua script since it need to be able to yield
-		self.lua.execute('function sleep(ms)\nsuspend(ms)\ncoroutine.yield()\nend')
+		self.lua.execute('function sleep(ms)\nif suspend(ms) then\ncoroutine.yield()\nend\nend')
 		setattr(self.lua.globals(), 'suspend', self.__luaSleep)
 		self.lua.globals().deviceManager = DeviceManager(self.context)
 		try:
-			self.__setState(LuaScript.RUNNING)
 			self.lua.execute(self.code)
 			# Register which signals the script accepts so we don't need to access
 			# the interpreter from any other thread. That leads to locks.
@@ -219,6 +218,9 @@ class LuaScript(object):
 			self.p("Could not execute lua script %s", e)
 
 	def __luaSleep(self, ms):
+		if self.state() != LuaScript.RUNNING:
+			self.p("sleep() cannot be called while the script is loading")
+			return False
 		co = self.runningLuaThread
 		t = SleepingLuaThread(ms)
 		def resume():
@@ -235,6 +237,7 @@ class LuaScript(object):
 				self.__threadLock.release()
 		t.start(resume)
 		self.runningLuaThreads.append(t)
+		return True
 
 	def __sandboxInterpreter(self):
 		for obj in self.lua.globals():
