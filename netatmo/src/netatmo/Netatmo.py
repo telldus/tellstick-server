@@ -68,7 +68,7 @@ class Netatmo(Plugin):
 		self.accessToken = self.s.get('accessToken', '')
 		self.refreshToken = self.s.get('refreshToken', '')
 		self.tokenTTL = self.s.get('tokenTTL', 0)
-		Application().registerScheduledTask(minutes=10, runAtOnce=True, fn=self.__requestNewValues)
+		Application().registerScheduledTask(self.__requestNewValues, minutes=10, runAtOnce=True)
 
 	def getTemplatesDirs(self):
 		return [resource_filename('netatmo', 'templates')]
