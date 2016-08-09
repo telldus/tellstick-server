@@ -197,7 +197,7 @@ class WebFrontend(Plugin):
 				shutil.rmtree(path)
 			os.mkdir(path)
 			for p, s in packages:
-				os.rename(p, '%s/%s' % (path, os.path.basename(p)))
+				shutil.move(p, '%s/%s' % (path, os.path.basename(p)))
 				z.extract(s, path)
 			manifest = z.extract(info, path)
 		os.unlink(filename)
