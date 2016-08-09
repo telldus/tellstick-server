@@ -9,6 +9,7 @@ import logging
 import os
 import pkg_resources
 import shutil
+import sys
 import traceback
 import yaml
 import zipfile
