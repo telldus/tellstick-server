@@ -50,6 +50,8 @@ class LoadedPlugin(object):
 			return
 		for p in self.packages:
 			self.__loadEgg(p)
+		# TODO: Do not just set the loaded flag here. Make sure the eggs where loaded and store any
+		# backtrace if the loading failed.
 		self.loaded = True
 
 	def __loadEgg(self, egg):
