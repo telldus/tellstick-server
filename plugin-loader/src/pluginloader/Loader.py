@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin, implements
+from base import Plugin, implements, mainthread
 from board import Board
 from web.base import IWebRequestHandler, WebResponseRedirect
 import glob
@@ -40,6 +40,7 @@ class LoadedPlugin(object):
 				return False
 		return True
 
+	@mainthread
 	def verifyAndLoad(self):
 		try:
 			if not self.verify():
