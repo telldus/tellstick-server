@@ -95,6 +95,11 @@ class Device(object):
 				value = 0  # this is an error, but at least won't crash now
 			else:
 				value = int(value)
+		elif method == Device.RGBW:
+			if type(value) == str:
+				value = int(value, 16)
+			elif type(value) is not int:
+				value = 0
 		elif method == Device.THERMOSTAT:
 			pass
 		else:
