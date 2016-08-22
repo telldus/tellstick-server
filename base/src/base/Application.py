@@ -138,7 +138,7 @@ class Application(object):
 					exc_type, exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(moduleClass))
 					logging.error(str(e))
-					self.printBacktrace(traceback.extract_tb(exc_traceback))
+					Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		while 1:
 			with self.lock:
 				if not self.running:
@@ -151,7 +151,7 @@ class Application(object):
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				logging.error(e)
-				self.printBacktrace(traceback.extract_tb(exc_traceback))
+				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
 			fn()
 
@@ -181,9 +181,16 @@ class Application(object):
 		finally:
 			self.__taskLock.release()
 
-	def printBacktrace(self, bt):
+	@staticmethod
+	def printBacktrace(bt):
 		for f in bt:
 			logging.error(str(f))
+
+	@staticmethod
+	def printException(exception):
+		exc_type, exc_value, exc_traceback = sys.exc_info()
+		logging.error(str(exception))
+		Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	@staticmethod
 	def signal(msg, *args, **kwargs):
@@ -204,7 +211,7 @@ class Application(object):
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
 				logging.error(str(e))
-				self.printBacktrace(traceback.extract_tb(exc_traceback))
+				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
 				moduleClass = entry.load()
@@ -216,7 +223,7 @@ class Application(object):
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
 				logging.error(str(e))
-				self.printBacktrace(traceback.extract_tb(exc_traceback))
+				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	def __nextTask(self):
 		self.__taskLock.acquire()
