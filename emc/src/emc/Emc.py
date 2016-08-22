@@ -2,6 +2,11 @@
 
 from base import Application, Plugin
 from rf433 import RF433, RF433Msg
+try:
+	from zwave.telldus import TelldusZWave
+	from zwave.base import CommandClass, ZWSendDataMsg
+except ImportError:
+	TelldusZWave = None
 
 from threading import Timer
 
@@ -18,9 +23,16 @@ class Emc(Plugin):
 	def resend(self, *args, **kwargs):
 		if not self.running:
 			return
-		Application().queue(self.send433)
+		#Application().queue(self.send433)
+		Application().queue(self.sendZWave)
 
 	def send433(self):
 		msg = '$k$k$k$k$k$k$k$k$k$k$k$k$k$k$k$k$k$k$kk$$kk$$kk$$}'
 		rf433 = RF433(self.context)
 		rf433.dev.queue(RF433Msg('S', msg, {}, success=self.resend, failure=self.resend))
+
+	def sendZWave(self):
+		if TelldusZWave is None:
+			return
+		zwave = TelldusZWave(self.context)
+		zwave.controller.query(ZWSendDataMsg(2, CommandClass.NO_OPERATION, 0x0, [], success=self.resend, failure=self.resend))
