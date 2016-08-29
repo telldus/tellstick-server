@@ -35,4 +35,4 @@ class Emc(Plugin):
 		if TelldusZWave is None:
 			return
 		zwave = TelldusZWave(self.context)
-		zwave.controller.query(ZWSendDataMsg(2, CommandClass.NO_OPERATION, 0x0, [], success=self.resend, failure=self.resend))
+		zwave.controller.sendMsg(255, CommandClass.NO_OPERATION, 0x0, [], success=self.resend, failure=self.resend)
