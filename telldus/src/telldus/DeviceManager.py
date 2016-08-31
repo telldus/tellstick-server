@@ -177,6 +177,7 @@ class DeviceManager(Plugin):
 		(state, stateValue) = device.state()
 		self.observers.stateChanged(device, state, stateValue)
 		Application.signal('deviceStateChanged', device, state, stateValue)
+		self.save()
 		if not self.live.registered:
 			return
 		msg = LiveMessage("DeviceEvent")
