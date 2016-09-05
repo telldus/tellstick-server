@@ -92,6 +92,12 @@ class DeviceManager(Plugin):
 				return d
 		return None
 
+	def findByName(self, name):
+		for d in self.devices:
+			if d.name() == name:
+				return d
+		return None
+
 	def finishedLoading(self, type):
 		""" Finished loading all devices of this type. If there are any unconfirmed, these should be deleted """
 		for device in self.devices:
