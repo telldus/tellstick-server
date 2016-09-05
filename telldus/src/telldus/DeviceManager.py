@@ -3,7 +3,7 @@
 from Device import CachedDevice, DeviceAbortException
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
-from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements
+from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread
 import time
 
 class IDeviceChange(IInterface):
@@ -34,6 +34,7 @@ class DeviceManager(Plugin):
 		self.registered = False
 		self.__load()
 
+	@mainthread
 	def addDevice(self, device):
 		"""Call this function to register a new device to the device manager.
 
