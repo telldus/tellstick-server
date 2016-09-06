@@ -6,6 +6,11 @@ class PluginContext(object):
 	def __init__(self):
 		self.components = {}
 
+	def request(self, name):
+		if name not in PluginMeta._plugins:
+			return None
+		return PluginMeta._plugins[name](self)
+
 class Observers(object):
 	def __init__(self, interface, observers):
 		self.interface = interface
@@ -51,9 +56,11 @@ class IInterface(object):
 
 class PluginMeta(type):
 	_registry = {}
+	_plugins = {}
 
 	def __new__(mcs, name, bases, d):
 		newClass = type.__new__(mcs, name, bases, d)
+		PluginMeta._plugins['%s.%s' % (newClass.__module__, newClass.__name__)] = newClass
 		for cls in newClass.__mro__:
 			for interface in cls.__dict__.get('_implements', []):
 				classes = PluginMeta._registry.setdefault(interface, [])
