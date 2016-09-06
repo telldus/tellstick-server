@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from base import Application
-from telldus import DeviceManager
 from web.base import Server
 from lupa import LuaRuntime, lua_type
 from threading import Thread, Condition, Lock, Timer
@@ -200,7 +199,6 @@ class LuaScript(object):
 		# Install a sleep function as lua script since it need to be able to yield
 		self.lua.execute('function sleep(ms)\nif suspend(ms) then\ncoroutine.yield()\nend\nend')
 		setattr(self.lua.globals(), 'suspend', self.__luaSleep)
-		self.lua.globals().deviceManager = DeviceManager(self.context)
 		try:
 			self.lua.execute(self.code)
 			# Register which signals the script accepts so we don't need to access
@@ -239,6 +237,9 @@ class LuaScript(object):
 		self.runningLuaThreads.append(t)
 		return True
 
+	def __require(self, plugin):
+		return self.context.request(plugin)
+
 	def __sandboxInterpreter(self):
 		for obj in self.lua.globals():
 			if obj == '_G':
@@ -254,6 +255,7 @@ class LuaScript(object):
 				if func not in funcs:
 					del self.lua.globals()[obj][func]
 		self.lua.globals().list = List
+		self.lua.globals().require = self.__require
 
 	def __setState(self, newState):
 		with self.__stateLock:
