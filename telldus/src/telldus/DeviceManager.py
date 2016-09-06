@@ -6,6 +6,8 @@ from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldu
 from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread
 import time
 
+__name__ = 'telldus'
+
 class IDeviceChange(IInterface):
 	"""Implement this IInterface to recieve notifications on device changes"""
 
