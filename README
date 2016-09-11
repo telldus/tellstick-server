@@ -52,6 +52,11 @@ Start the server by issuing:
 As default the server will restart itself any time it detects a file has been
 modified.
 
+To install a plugin run:
+./start.sh install [path-to-plugin]
+
+Replace [path-to-plugin] with the path to the plugin root folder.
+
 == Documentation ==
 
 Build the documentation:
