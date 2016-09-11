@@ -5,7 +5,7 @@ from ws4py.messaging import TextMessage
 from base import Application, implements, IInterface, ObserverCollection, Plugin
 from genshi.template import TemplateLoader, loader
 from pkg_resources import resource_filename, resource_exists, resource_stream, resource_isdir
-import logging
+import logging, os
 
 class IWebRequestHandler(IInterface):
 	"""Interface definition for handling web requests"""
@@ -64,6 +64,22 @@ class WebResponse(object):
 
 	def output(self, response):
 		pass
+
+class WebResponseHtml(WebResponse):
+	def __init__(self, filename, statusCode = 200):
+		super(WebResponseHtml,self).__init__(statusCode)
+		self.filename = filename
+
+	def setDirs(self, plugin, dirs):
+		if type(dirs) is not list:
+			dirs = []
+		dirs.append(resource_filename('web', 'templates'))
+		for d in dirs:
+			p = os.path.join(d, self.filename)
+			if os.path.exists(p):
+				with open(p) as f:
+					self.data = f.read()
+				return
 
 class WebResponseJson(WebResponse):
 	def __init__(self, data, pretty=True, statusCode = 200):
@@ -162,6 +178,8 @@ class RequestHandler(object):
 				raise cherrypy.HTTPRedirect(response.url)
 			raise cherrypy.HTTPRedirect('/%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
 		elif isinstance(response, WebResponse):
+			if isinstance(response, WebResponseHtml):
+				response.setDirs(plugin, templateDirs)
 			cherrypy.response.status = response.statusCode
 			response.output(cherrypy.response)
 			return response.data
