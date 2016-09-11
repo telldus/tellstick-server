@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import time, random
+import netifaces, time, random
 import threading
 
 from base import Application, Settings, IInterface, ObserverCollection, Plugin, mainthread
@@ -168,7 +168,7 @@ class TelldusLive(Plugin):
 		msg = LiveMessage('Register')
 		msg.append({
 			'key': self.conn.publicKey,
-			'mac': TelldusLive.getMacAddr('eth0'),
+			'mac': TelldusLive.getMacAddr(Board.networkInterface()),
 			'secret': Board.secret(),
 			'hash': 'sha1'
 		})
@@ -182,6 +182,9 @@ class TelldusLive(Plugin):
 
 	@staticmethod
 	def getMacAddr(ifname):
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-		return ''.join(['%02X' % ord(char) for char in info[18:24]])
+		addrs = netifaces.ifaddresses(ifname)[netifaces.AF_LINK]
+		try:
+			mac = addrs[netifaces.AF_LINK][0]['addr']
+		except IndexError, KeyError:
+			return ''
+		return mac.upper().replace(':', '')

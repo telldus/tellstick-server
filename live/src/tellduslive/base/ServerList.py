@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import httplib, logging, time
-import fcntl, socket, struct
+import netifaces
 import xml.parsers.expat
 from board import Board
 
@@ -28,7 +28,7 @@ class ServerList():
 
 	def retrieveServerList(self):
 		conn = httplib.HTTPConnection('%s:80' % Board.liveServer())
-		conn.request('GET', "/server/assign?protocolVersion=2&mac=%s" % ServerList.getMacAddr('eth0'))
+		conn.request('GET', "/server/assign?protocolVersion=2&mac=%s" % ServerList.getMacAddr(Board.networkInterface()))
 		response = conn.getresponse()
 
 		p = xml.parsers.expat.ParserCreate()
@@ -43,6 +43,9 @@ class ServerList():
 
 	@staticmethod
 	def getMacAddr(ifname):
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
-		return ''.join(['%02X' % ord(char) for char in info[18:24]])
+		addrs = netifaces.ifaddresses(ifname)[netifaces.AF_LINK]
+		try:
+			mac = addrs[netifaces.AF_LINK][0]['addr']
+		except IndexError, KeyError:
+			return ''
+		return mac.upper().replace(':', '')
