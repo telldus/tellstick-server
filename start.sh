@@ -95,6 +95,11 @@ case $1 in
 		echo "Setting up environment"
 		setup
 	;;
+	shell)
+		echo "Starting sandboxed shell"
+		PS1='(TellStick) \[\033[01;32m\]\u@\h\[\033[01;34m\] \$\[\033[00m\] '
+		bash
+	;;
 	*)
 		echo "Unknown command $1"
 esac
