@@ -1,4 +1,4 @@
-import cherrypy, json, mimetypes, threading
+import cherrypy, json, mimetypes, os, threading
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
 from ws4py.messaging import TextMessage
@@ -84,9 +84,10 @@ class Server(Plugin):
 	def __init__(self):
 		super(Server,self).__init__()
 		mimetypes.init()
+		port = 80 if os.getuid() == 0 else 8080
 		cherrypy.config.update({
 			'server.socket_host': '::',
-			'server.socket_port': 80,
+			'server.socket_port': port,
 			'tools.sessions.on': True,
 			'tools.sessions.timeout': 60
 		})
