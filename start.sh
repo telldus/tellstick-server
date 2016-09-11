@@ -46,6 +46,24 @@ installPlugin() {
 	fi
 }
 
+printHelp() {
+	echo -e "Usage: $0 command [arguments]"
+	echo
+	echo -e "Command chould be one of:"
+	echo -e "  build-docs:\tBuilds the documentation to build/html"
+	echo -e "  help:\t\tShows this help"
+	echo -e "  install:\tInstall a plugin. Usage:"
+	echo -e "  \t\t  $0 install [path-to-plugin]"
+	echo -e "  \t\t  where [path-to-plugin] should be the path to the plungins root folder"
+	echo -e "  run:\t\tStarts the server"
+	echo -e "  \t\t  The server will be restarted automatically when a file changes"
+	echo -e "  setup:\tSets up the virtualenv and installs a minium set of required plugins"
+	echo -e "  shell:\tStarts a new shell with the virtualenv activated"
+	echo -e "  uninstall:\tUninstall a plugin. Usage:"
+	echo -e "  \t\t  $0 uninstall [plugin-name]"
+	echo -e "  \t\t  where [plugin-name] is the name of the plugin."
+}
+
 run() {
 	local EXIT_CODE=0
 	while [ $EXIT_CODE -eq 0 ]; do
@@ -82,6 +100,9 @@ case $1 in
 		echo "Building docs"
 		buildDocs
 	;;
+	help)
+		printHelp
+	;;
 	install)
 		echo "Installing plugin from $2"
 		PLUGINPATH=$(getAbsolutePath "$2")
@@ -105,4 +126,5 @@ case $1 in
 	;;
 	*)
 		echo "Unknown command $1"
+		printHelp
 esac
