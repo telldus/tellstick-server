@@ -40,11 +40,11 @@ class Board(object):
 
 	@staticmethod
 	def luaScriptPath():
-		return '/usr/lib/telldus/scripts/lua'
+		return '%s/build/scripts/lua' % os.getcwd()
 
 	@staticmethod
 	def pluginPath():
-		return '/usr/lib/telldus/plugins'
+		return '%s/build/plugins' % os.getcwd()
 
 	@staticmethod
 	def product():
