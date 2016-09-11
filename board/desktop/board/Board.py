@@ -2,7 +2,7 @@
 
 # Board config for desktop
 
-import os, subprocess
+import os, subprocess, netifaces
 
 class Board(object):
 	@staticmethod
@@ -15,7 +15,16 @@ class Board(object):
 
 	@staticmethod
 	def networkInterface():
-		return 'eth0'
+		for ifname in netifaces.interfaces():
+			addresses = netifaces.ifaddresses(ifname)
+			if netifaces.AF_INET not in addresses:
+				continue
+			if netifaces.AF_LINK not in addresses:
+				continue
+			for addr in addresses[netifaces.AF_INET]:
+				if 'addr' in addr:
+					return ifname
+		return 'eth0'  # Fallback
 
 	@staticmethod
 	def gpioConfig():
