@@ -100,6 +100,9 @@ case $1 in
 		PS1='(TellStick) \[\033[01;32m\]\u@\h\[\033[01;34m\] \$\[\033[00m\] '
 		bash
 	;;
+	uninstall)
+		pip uninstall $2
+	;;
 	*)
 		echo "Unknown command $1"
 esac
