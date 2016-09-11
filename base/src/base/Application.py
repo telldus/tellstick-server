@@ -55,6 +55,7 @@ class Application(object):
 		super(Application,self).__init__()
 		self.lock = threading.RLock()
 		self.running = True
+		self.exitCode = 0
 		self.shutdown = []
 		self.scheduledTasks = []
 		self.waitingMaintenanceJobs = []
@@ -154,6 +155,7 @@ class Application(object):
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
 			fn()
+		return sys.exit(self.exitCode)
 
 	def queue(self, fn, *args, **kwargs):
 		"""Queue a function to be executed later. All tasks in this queue will be
@@ -170,9 +172,10 @@ class Application(object):
 			self.__taskLock.release()
 		return False
 
-	def quit(self):
+	def quit(self, exitCode = 0):
 		with self.lock:
 			self.running = False
+			self.exitCode = exitCode
 			self.__isJoining = True
 
 		self.__taskLock.acquire()
@@ -199,7 +202,7 @@ class Application(object):
 
 	def __signal(self, signum, frame):
 		logging.info("Signal %d caught" % signum)
-		self.quit()
+		self.quit(1)
 
 	def __loadPkgResourses(self):
 		if pkg_resources is None:
