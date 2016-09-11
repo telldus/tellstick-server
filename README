@@ -60,4 +60,4 @@ Replace [path-to-plugin] with the path to the plugin root folder.
 == Documentation ==
 
 Build the documentation:
-sphinx-build -b html -d build/doctrees   docs build/html
+./start.sh build-docs

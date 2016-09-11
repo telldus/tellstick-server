@@ -10,6 +10,15 @@ getAbsolutePath() {
 BASEDIR=$(dirname $(getAbsolutePath "$0"))
 export HWBOARD=desktop
 
+buildDocs() {
+	SPHINX=`which sphinx-build`
+	if [ "$SPHINX" == "" ]; then
+		echo "Install Sphinx"
+		pip install -U -r docs/requirements.txt
+	fi
+	sphinx-build -b html -d build/doctrees   docs build/html
+}
+
 checkPrerequisites() {
 	VIRTUALENV=`which virtualenv`
 	if [ "$VIRTUALENV" == "" ]; then
@@ -69,6 +78,10 @@ checkPrerequisites
 setupVirtualEnv
 
 case $1 in
+	build-docs)
+		echo "Building docs"
+		buildDocs
+	;;
 	install)
 		echo "Installing plugin from $2"
 		PLUGINPATH=$(getAbsolutePath "$2")
