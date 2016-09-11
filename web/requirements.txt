@@ -1,0 +1,3 @@
+cherrypy
+genshi
+ws4py
