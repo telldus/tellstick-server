@@ -9,7 +9,8 @@ setup(
 	packages=find_packages('src'),
 	package_dir = {'':'src'},
 	entry_points={ \
-		'telldus.startup': ['c = web.base:Server [cREQ]']
+		'telldus.startup': ['c = web.base:Server [cREQ]'],
+		'telldus.plugins': ['d = web.react:React']
 	},
 	extras_require = dict(cREQ = "Base>=0.1"),
 	package_data={'web' : [
