@@ -47,6 +47,10 @@ installPlugin() {
 	if [ -f $1/package.json ]; then
 		echo "Install npm packages"
 		npm install
+		if [ -f $1/webpack.config.js ]; then
+			echo "Run webpack"
+			node node_modules/webpack/bin/webpack.js
+		fi
 	fi
 }
 
