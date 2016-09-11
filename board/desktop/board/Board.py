@@ -51,5 +51,9 @@ class Board(object):
 		return 'hwgrep://10c4:ea60'
 
 	@staticmethod
+	def secret():
+		return ''
+
+	@staticmethod
 	def zwavePort():
 		return 'hwgrep://067b:2303'
