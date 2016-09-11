@@ -44,6 +44,10 @@ installPlugin() {
 		echo "Install requirements"
 		pip install -U -r $1/requirements.txt
 	fi
+	if [ -f $1/package.json ]; then
+		echo "Install npm packages"
+		npm install
+	fi
 }
 
 printHelp() {

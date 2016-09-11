@@ -11,6 +11,7 @@ project folder there is some libraries that must exists on the system.
 The following applications must be available:
 python (2.7)
 virtualenv
+Node.js
 
 === Linux ===
 
