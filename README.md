@@ -46,7 +46,7 @@ the required libraries for running the software.
 The installation is completely sandboxed and nothing is installed in the system.
 You can wipe the build-folder at any time to remove any installed packages.
 
-## Running ==
+## Running
 
 Start the server by issuing:
 
@@ -60,7 +60,7 @@ To install a plugin run:
 
 Replace [path-to-plugin] with the path to the plugin root folder.
 
-## Documentation ==
+## Documentation
 
 Build the documentation:
 ./start.sh build-docs
