@@ -1,7 +1,9 @@
+# TellStick Server
+
 This is the software running on the late generation TellStick ZNet Lite and
 TellStick Net
 
-== Prerequisites ==
+## Prerequisites
 
 This software is only supported under Linux and macOS.
 
@@ -13,7 +15,7 @@ python (2.7)
 virtualenv
 Node.js
 
-=== Linux ===
+### Linux
 
 In many linux distributions there exists packages for python and virtualenv.
 On a Debian/Ubuntu based system this can be installed using this command:
@@ -27,13 +29,13 @@ sudo pip install virtualenv
 or
 sudo easy_install virtualenv
 
-=== macOS ===
+### macOS
 
 Pyhon is already shipped on macOS. You only need to install virtualenv using:
 
 sudo easy_install virtualenv
 
-== Setup ==
+## Setup
 
 To setup the source and prepare the base plugins run the following script:
 
@@ -44,7 +46,7 @@ the required libraries for running the software.
 The installation is completely sandboxed and nothing is installed in the system.
 You can wipe the build-folder at any time to remove any installed packages.
 
-== Running ==
+## Running ==
 
 Start the server by issuing:
 
@@ -58,7 +60,7 @@ To install a plugin run:
 
 Replace [path-to-plugin] with the path to the plugin root folder.
 
-== Documentation ==
+## Documentation ==
 
 Build the documentation:
 ./start.sh build-docs
