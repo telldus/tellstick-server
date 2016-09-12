@@ -20,6 +20,19 @@ window.define = requirejs.define;
 // Define some resources to requirejs modules
 requirejs.define('react', [], React);
 requirejs.define('react-mdl', [], ReactMDL);
+requirejs.define('css', function () {
+	return {
+		load: function (name, parentRequire, onload, config) {
+			var link = document.createElement("link");
+			link.type = "text/css";
+			link.rel = "stylesheet";
+			link.href = name;
+			document.getElementsByTagName("head")[0].appendChild(link);
+			onload(null);
+		}
+	}
+});
+
 
 class Placeholder extends React.Component {
 	render() {
