@@ -33,7 +33,9 @@ class TelldusLive(Plugin):
 		self.conn = ServerConnection()
 		self.pingTimer = 0
 		self.thread = threading.Thread(target=self.run)
-		self.thread.start()
+		if self.conn.publicKey != '':
+			# Only connect if the keys has been set.
+			self.thread.start()
 
 	@mainthread
 	def handleMessage(self, message):
