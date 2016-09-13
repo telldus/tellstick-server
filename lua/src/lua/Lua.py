@@ -3,6 +3,7 @@
 from base import Application, Plugin, ISignalObserver, implements, slot
 from board import Board
 from web.base import IWebRequestHandler
+from web.react import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from pkg_resources import resource_filename
@@ -26,6 +27,7 @@ class FileChangedHandler(FileSystemEventHandler):
 
 class Lua(Plugin):
 	implements(IWebRequestHandler)
+	implements(IWebReactHandler)
 	implements(ISignalObserver)
 
 	def __init__(self):
@@ -53,6 +55,13 @@ class Lua(Plugin):
 				script.shutdown()
 				del self.scripts[i]
 				break
+
+	def getReactRoutes(self):
+		return [{
+			'name': 'lua',
+			'title': 'Lua scripts',
+			'script': 'lua/lua.jsx'
+		}]
 
 	def getTemplatesDirs(self):
 		return [resource_filename('lua', 'templates')]
