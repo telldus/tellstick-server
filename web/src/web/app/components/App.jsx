@@ -28,7 +28,7 @@ export default class App extends React.Component {
 				<Header transparent title="TellStick Local Access" style={{background: '#1b365d'}}>
 				</Header>
 				<Drawer title="Main Menu">
-					<Menu />
+					<Menu store={this.props.route.store} />
 				</Drawer>
 				<Content>
 					{this.props.children}

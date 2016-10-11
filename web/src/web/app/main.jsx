@@ -16,22 +16,25 @@ const loggerMiddleware = createLogger()
 var store = createStore(
 	appReducers,
 	applyMiddleware(
-		thunkMiddleware,
-		loggerMiddleware
+		thunkMiddleware
+		//loggerMiddleware
 	)
 );
 
+class ComponentWrapper extends React.Component {
+	render() {
+		return (<PluginLoader store={store} {...this.props.params} />);
+	}
+}
+
 store.dispatch(fetchPlugins()).then(() => {
 	ReactDOM.render(
-		<Provider store={store}>
-			<Router history={hashHistory}>
-				<Route path="/" component={App}>
-					<IndexRoute component={Index} />
-					<Route path="/plugin/:name" component={PluginLoader}/>
-					<Route path="/about" component={About}/>
-				</Route>
-			</Router>
-		</Provider>,
+		<Router history={hashHistory}>
+			<Route path="/" component={App} store={store}>
+				<IndexRoute component={Index} />
+				<Route path="/plugin/:name" component={ComponentWrapper} />
+			</Route>
+		</Router>,
 		document.body.appendChild(document.createElement('div'))
 	);
 });

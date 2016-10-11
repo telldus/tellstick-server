@@ -1,6 +1,9 @@
 import React from 'react';
 import * as ReactMDL from 'react-mdl';
-import { connect } from 'react-redux'
+import * as ReactRedux from 'react-redux';
+import * as Redux from 'redux';
+import thunkMiddleware from 'redux-thunk';
+import createLogger from 'redux-logger';
 import dialogpolyfill from 'dialog-polyfill'
 
 var requirejs = require('exports?requirejs=requirejs&define!requirejs/require.js');
@@ -21,6 +24,7 @@ window.define = requirejs.define;
 // Define some resources to requirejs modules
 requirejs.define('react', [], React);
 requirejs.define('react-mdl', [], ReactMDL);
+requirejs.define('react-redux', [], ReactRedux);
 requirejs.define('css', function () {
 	return {
 		load: function (name, parentRequire, onload, config) {
@@ -32,6 +36,21 @@ requirejs.define('css', function () {
 			onload(null);
 		}
 	}
+});
+requirejs.define('telldus', function () {
+	return {
+		createStore: function(reducers) {
+			return Redux.createStore(
+				reducers,
+				Redux.compose(
+					Redux.applyMiddleware(
+						thunkMiddleware
+					),
+					window.devToolsExtension ? window.devToolsExtension() : f => f
+				)
+			);
+		}
+	};
 });
 requirejs.define('dialog-polyfill', dialogpolyfill);
 
@@ -51,13 +70,13 @@ class PluginLoader extends React.Component {
 	}
 
 	componentDidMount() {
-		this.loadPluginComponent(this.props.params.name)
+		this.loadPluginComponent(this.props.name)
 	}
 
 	componentWillReceiveProps(nextProps) {
-		if (this.props.params.name != nextProps.params.name) {
+		if (this.props.params.name != nextProps.name) {
 			// Changing page, load the new page
-			this.loadPluginComponent(nextProps.params.name);
+			this.loadPluginComponent(nextProps.name);
 		}
 	}
 
@@ -83,7 +102,6 @@ class PluginLoader extends React.Component {
 		var PluginComponent = this.state.component;
 		return (
 			<div>
-				<span>Dynamic component {this.props.params.name}</span>
 				<PluginComponent />
 			</div>
 		);
@@ -95,4 +113,4 @@ const mapStateToProps = (state, ownProps) => {
 		plugins: state.plugins
 	}
 }
-export default connect(mapStateToProps)(PluginLoader)
+export default ReactRedux.connect(mapStateToProps)(PluginLoader)
