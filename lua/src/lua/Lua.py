@@ -2,7 +2,7 @@
 
 from base import Application, Plugin, ISignalObserver, implements, slot
 from board import Board
-from web.base import IWebRequestHandler
+from web.base import IWebRequestHandler, WebResponseJson
 from web.react import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -59,7 +59,7 @@ class Lua(Plugin):
 	def getReactRoutes(self):
 		return [{
 			'name': 'lua',
-			'title': 'Lua scripts',
+			'title': 'Lua scripts (beta)',
 			'script': 'lua/lua.jsx'
 		}]
 
@@ -69,7 +69,7 @@ class Lua(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':
 			return False
-		if path in ['', 'delete', 'new', 'save']:
+		if path in ['', 'delete', 'new', 'save', 'script', 'scripts']:
 			return True
 		return False
 
@@ -77,27 +77,42 @@ class Lua(Plugin):
 		script = None
 		if path == 'save':
 			if 'script' not in cherrypy.request.body.params or 'code' not in cherrypy.request.body.params:
-				return 'empty.html', {}
+				return WebResponseJson({'error': 'Malformed request, parameter script or code missing'})
 			self.saveScript(cherrypy.request.body.params['script'], cherrypy.request.body.params['code'])
-			return 'empty.html', {}
+			return WebResponseJson({'success': True})
 		elif path == 'new':
 			okChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-'
 			if 'name' not in params:
-				return 'empty.html', {}
+				return WebResponseJson({'error': 'Invalid script name'})
 			name = ''.join([c for c in params['name'] if c in okChars])
 			if len(name) == 0:
-				return 'empty.html', {}
-			with open('%s/%s.lua' % (Board.luaScriptPath(), name), 'w') as f:
-				f.write('-- Empty file')
-			return 'empty.html', {}
+				return WebResponseJson({'error': 'Invalid script name'})
+			filename = '%s/%s.lua' % (Board.luaScriptPath(), name)
+			with open(filename, 'w') as f:
+				f.write('-- File: %s.lua\n\nfunction onInit()\n\tprint("Hello world")\nend' % name)
+			self.fileCreated(filename)
+			return WebResponseJson({'success': True, 'name': '%s.lua' % name})
 		elif path == 'delete':
 			if 'name' not in params:
-				return 'empty.html', {}
+				return WebResponseJson({'error': 'Invalid script name'})
 			for s in self.scripts:
 				if s.name == params['name']:
 					os.remove(s.filename)
+					self.fileRemoved(s.filename)
 					break
-			return 'empty.html', {}
+			return WebResponseJson({'success': True})
+		elif path == 'script':
+			for s in self.scripts:
+				if s.name == params['name']:
+					return WebResponseJson({
+						'name': params['name'],
+						'code': s.code,
+					})
+			return WebResponseJson({})
+		elif path == 'scripts':
+			return WebResponseJson([{
+				'name': script.name
+			} for script in sorted(self.scripts, key=lambda s: s.name.lower())])
 		elif 'edit' in params:
 			for s in self.scripts:
 				if s.name == params['edit']:
