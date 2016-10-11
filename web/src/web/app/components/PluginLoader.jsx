@@ -1,6 +1,7 @@
 import React from 'react';
 import * as ReactMDL from 'react-mdl';
 import { connect } from 'react-redux'
+import dialogpolyfill from 'dialog-polyfill'
 
 var requirejs = require('exports?requirejs=requirejs&define!requirejs/require.js');
 requirejs.requirejs.config({
@@ -32,6 +33,7 @@ requirejs.define('css', function () {
 		}
 	}
 });
+requirejs.define('dialog-polyfill', dialogpolyfill);
 
 
 class Placeholder extends React.Component {

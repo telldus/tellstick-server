@@ -5,6 +5,7 @@ import { connect } from 'react-redux'
 
 import 'react-mdl/extra/material.css';
 import 'react-mdl/extra/material.js';
+import 'dialog-polyfill/dialog-polyfill.css';
 
 import Menu from './Menu'
 
@@ -23,7 +24,7 @@ export class About extends React.Component {
 export default class App extends React.Component {
 	render() {
 		return (
-			<Layout fixedDrawer fixedHeader>
+			<Layout fixedDrawer fixedHeader style={{zIndex: 100001}}>
 				<Header transparent title="TellStick Local Access" style={{background: '#1b365d'}}>
 				</Header>
 				<Drawer title="Main Menu">
