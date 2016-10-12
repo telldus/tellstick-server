@@ -146,12 +146,14 @@ class RequestHandler(object):
 	def handle(self, plugin, p, **params):
 		path = '/'.join(p)
 		# First check for the file in htdocs
-		if plugin != '' and resource_exists(plugin, 'htdocs/' + path) and resource_isdir(plugin, 'htdocs/' + path) is False:
-			mimetype, encoding = mimetypes.guess_type(path, strict=False)
-			if mimetype is not None:
-				cherrypy.response.headers['Content-Type'] = mimetype
-			return resource_stream(plugin, 'htdocs/' + path)
-
+		try:
+			if plugin != '' and resource_exists(plugin, 'htdocs/' + path) and resource_isdir(plugin, 'htdocs/' + path) is False:
+				mimetype, encoding = mimetypes.guess_type(path, strict=False)
+				if mimetype is not None:
+					cherrypy.response.headers['Content-Type'] = mimetype
+				return resource_stream(plugin, 'htdocs/' + path)
+		except:
+			pass
 		menu = []
 		templates = []
 		for o in self.observers:
