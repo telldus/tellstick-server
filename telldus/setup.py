@@ -13,7 +13,6 @@ setup(
 	package_dir = {'':'src'},
 	entry_points={ \
 		'telldus.plugins': [
-			'webui = telldus.WebUI',
 			'api = telldus.DeviceApiManager',
 			'react = telldus.React'
 		]

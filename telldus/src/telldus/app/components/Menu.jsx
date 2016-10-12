@@ -11,7 +11,7 @@ class Menu extends React.Component {
 	render() {
 		var nodes = this.props.plugins.map(function(plugin) {
 			return (
-				<Link to={`/plugin/${plugin.name}`} activeClassName="is-active" key={plugin.name}>{plugin.title}</Link>
+				<Link to={`${plugin.path}`} activeClassName="is-active" key={plugin.name}>{plugin.title}</Link>
 			);
 		});
 		return (

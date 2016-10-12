@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { IndexRoute, Router, Route, hashHistory } from 'react-router'
+import { IndexRoute, Router, Route, browserHistory } from 'react-router'
 import { createStore, applyMiddleware } from 'redux'
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk'
@@ -23,16 +23,21 @@ var store = createStore(
 
 class ComponentWrapper extends React.Component {
 	render() {
-		return (<PluginLoader store={store} {...this.props.params} />);
+		return (<PluginLoader store={store} {...this.props.route.plugin} />);
 	}
 }
 
 store.dispatch(fetchPlugins()).then(() => {
+	var routes = store.getState().plugins.map(function(plugin) {
+		return (
+			<Route path={`${plugin.path}`} key={plugin.name} plugin={plugin} component={ComponentWrapper} />
+		);
+	});
 	ReactDOM.render(
-		<Router history={hashHistory}>
+		<Router history={browserHistory}>
 			<Route path="/" component={App} store={store}>
 				<IndexRoute component={Index} />
-				<Route path="/plugin/:name" component={ComponentWrapper} />
+				{routes}
 			</Route>
 		</Router>,
 		document.body.appendChild(document.createElement('div'))
