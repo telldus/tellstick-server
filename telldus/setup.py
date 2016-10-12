@@ -3,14 +3,25 @@
 
 try:
 	from setuptools import setup
+	from setuptools.command.install import install
 except ImportError:
 	from distutils.core import setup
+	from distutils.command.install import install
+import os
+
+class webpack(install):
+	def run(self):
+		print("generate webpack application")
+		os.system('npm install')
+		os.system('node node_modules/webpack/bin/webpack.js -p --config webpack.production.config.js')
+		install.run(self)
 
 setup(
 	name='Telldus',
 	version='0.1',
 	packages=['telldus'],
 	package_dir = {'':'src'},
+	cmdclass={'install': webpack},
 	entry_points={ \
 		'telldus.plugins': [
 			'api = telldus.DeviceApiManager',
