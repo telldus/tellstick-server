@@ -24,7 +24,6 @@ define(
 				case Actions.SHOW_NEW_DIALOG:
 					return Object.assign({}, state, {showNewDialog: action.show});
 			}
-			console.log("Returning default state", action);
 			return state;
 		}
 
