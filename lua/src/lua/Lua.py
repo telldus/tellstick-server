@@ -6,7 +6,6 @@ from web.base import IWebRequestHandler, WebResponseJson
 from telldus import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from pkg_resources import resource_filename
 from LuaScript import LuaScript
 import glob, os
 import logging, cherrypy
@@ -63,13 +62,10 @@ class Lua(Plugin):
 			'script': 'lua/lua.jsx'
 		}]
 
-	def getTemplatesDirs(self):
-		return [resource_filename('lua', 'templates')]
-
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':
 			return False
-		if path in ['', 'delete', 'new', 'save', 'script', 'scripts']:
+		if path in ['delete', 'new', 'save', 'script', 'scripts']:
 			return True
 		return False
 
@@ -118,14 +114,13 @@ class Lua(Plugin):
 				if s.name == params['edit']:
 					script = s
 					break
-		return 'lua.html', {'scripts': self.scripts, 'script': script}
+		return None
 
 	def load(self):
 		for f in glob.glob('%s/*.lua' % Board.luaScriptPath()):
 			self.scripts.append(LuaScript(f, self.context))
 		for s in self.scripts:
 			s.load()
-
 
 	def saveScript(self, scriptName, code):
 		for script in self.scripts:
