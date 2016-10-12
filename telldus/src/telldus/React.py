@@ -15,10 +15,10 @@ class React(Plugin):
 		pass
 
 	def getTemplatesDirs(self):
-		return [resource_filename('web', 'templates')]
+		return [resource_filename('telldus', 'templates')]
 
 	def handleRequest(self, plugin, path, params, request):
-		if plugin != 'web':
+		if plugin != 'telldus':
 			return None
 		if path == 'react':
 			return WebResponseHtml('react.html')
@@ -34,7 +34,7 @@ class React(Plugin):
 
 
 	def matchRequest(self, plugin, path):
-		if plugin != 'web':
+		if plugin != 'telldus':
 			return False
 		if path in ['react', 'reactPlugins']:
 			return True

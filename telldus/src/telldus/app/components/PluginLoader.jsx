@@ -13,9 +13,9 @@ requirejs.requirejs.config({
 	},
 	baseUrl: '/',
 	paths: {
-		'jsx': '/web/js/jsx',
-		'JSXTransformer': '/web/js/JSXTransformer',
-		'text': '/web/js/text'
+		'jsx': '/telldus/js/jsx',
+		'JSXTransformer': '/telldus/js/JSXTransformer',
+		'text': '/telldus/js/text'
 	}
 });
 // Sorry, the scripts seems to needs this in the global context... :(

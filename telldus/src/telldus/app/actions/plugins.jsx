@@ -17,7 +17,7 @@ function receivePlugins(json) {
 export function fetchPlugins() {
 	return dispatch => {
 		dispatch(requestPlugins())
-		return fetch('/web/reactPlugins', {
+		return fetch('/telldus/reactPlugins', {
 			credentials: 'include'
 		})
 			.then(response => response.json())

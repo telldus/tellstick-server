@@ -15,6 +15,7 @@ setup(
 		'telldus.plugins': [
 			'webui = telldus.WebUI',
 			'api = telldus.DeviceApiManager',
+			'react = telldus.React'
 		]
 	},
 	extras_require = {

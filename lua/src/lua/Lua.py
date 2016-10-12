@@ -3,7 +3,7 @@
 from base import Application, Plugin, ISignalObserver, implements, slot
 from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
-from web.react import IWebReactHandler
+from telldus import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from pkg_resources import resource_filename
