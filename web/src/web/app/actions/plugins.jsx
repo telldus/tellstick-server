@@ -1,5 +1,3 @@
-//import fetch from 'isomorphic-fetch'
-
 export const REQUEST_PLUGINS = 'REQUEST_PLUGINS'
 export const RECEIVE_PLUGINS = 'RECEIVE_PLUGINS'
 
@@ -19,7 +17,9 @@ function receivePlugins(json) {
 export function fetchPlugins() {
 	return dispatch => {
 		dispatch(requestPlugins())
-		return fetch('/web/reactPlugins')
+		return fetch('/web/reactPlugins', {
+			credentials: 'include'
+		})
 			.then(response => response.json())
 			.then(json => dispatch(receivePlugins(json)))
 	}

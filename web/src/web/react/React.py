@@ -39,6 +39,3 @@ class React(Plugin):
 		if path in ['react', 'reactPlugins']:
 			return True
 		return False
-
-	def requireAuthentication(self, plugin, path):
-		return False
