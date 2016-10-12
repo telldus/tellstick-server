@@ -1,4 +1,5 @@
 define([], function() {
+	const CLEAR_SCRIPT = 'CLEAR_SCRIPT';
 	const DELETE_SCRIPT = 'DELETE_SCRIPT';
 	const REQUEST_SCRIPTS = 'REQUEST_SCRIPTS';
 	const RECEIVE_SCRIPTS = 'RECEIVE_SCRIPTS';
@@ -26,6 +27,9 @@ define([], function() {
 	function requestScript(script) { return { type: REQUEST_SCRIPT } }
 	function receiveScript(json) { return { type: RECEIVE_SCRIPT, script: json } }
 	function fetchScript(name) {
+		if (!name) {
+			return dispatch => dispatch({ type: CLEAR_SCRIPT });
+		}
 		return dispatch => {
 			dispatch(requestScript(name))
 			return fetch('/lua/script?name=' + name, {
@@ -98,6 +102,7 @@ define([], function() {
 		newScript,
 		saveScript,
 		showNewDialog,
+		CLEAR_SCRIPT,
 		DELETE_SCRIPT,
 		REQUEST_SCRIPTS,
 		RECEIVE_SCRIPTS,

@@ -1,8 +1,9 @@
 define(
-	['react', 'react-mdl', 'telldus', 'websocket', 'jsx!lua/actions', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill'],
-	function(React, ReactMDL, Telldus, WebSocket, Actions, ReactRedux, CodeMirror, DialogPolyfill ) {
+	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill'],
+	function(React, ReactMDL, ReactRouter, Telldus, WebSocket, Actions, ReactRedux, CodeMirror, DialogPolyfill ) {
 		var {Button, Card, CardActions, CardMenu, CardTitle, CardText, Cell, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, List, ListItem, Textfield} = ReactMDL;
 		var {Provider, connect} = ReactRedux;
+		var {browserHistory, Link} = ReactRouter;
 
 		var defaultState = {
 			scripts: [],
@@ -15,7 +16,7 @@ define(
 
 		function reducer(state = defaultState, action) {
 			switch (action.type) {
-				case Actions.DELETE_SCRIPT:
+				case Actions.CLEAR_SCRIPT:
 					return Object.assign({}, state, {script: {code: '', name: ''}})
 				case Actions.RECEIVE_SCRIPTS:
 					return Object.assign({}, state, {scripts: action.scripts});
@@ -48,6 +49,7 @@ define(
 			}
 			deleteScript() {
 				this.props.store.dispatch(Actions.deleteScript(this.props.name))
+					.then(() => browserHistory.push('/lua'))
 					.then(() => this.setState({showDeleteConfirm: false}));
 			}
 			saveAndRun() {
@@ -93,12 +95,11 @@ define(
 			constructor(props) {
 				super(props);
 			}
-			loadScript(name) {
-				this.props.dispatch(Actions.fetchScript(name));
-			}
 			render() {
 				var scripts = this.props.scripts.map(script =>
-					<ListItem key={script.name}><a onClick={() => this.loadScript(script.name)}>{script.name}</a></ListItem>
+					<ListItem key={script.name}>
+						<Link to={{ pathname: '/lua', query: { script: script.name } }}>{script.name}</Link>
+					</ListItem>
 				)
 				return (
 					<List>
@@ -179,7 +180,7 @@ define(
 			}
 			handleCreateNewScript() {
 				this.props.dispatch(Actions.newScript(this.state.scriptName))
-					.then(c => this.props.dispatch(Actions.fetchScript(c.name)))
+					.then(c => browserHistory.push('/lua?script=' + c.name))
 					.then(() => this.props.dispatch(Actions.showNewDialog(false)));
 			}
 			valueChanged(e) {
@@ -210,6 +211,14 @@ define(
 		class LuaApp extends React.Component {
 			constructor(props) {
 				super(props);
+			}
+			componentDidMount() {
+				store.dispatch(Actions.fetchScript(this.props.location.query.script));
+			}
+			componentWillReceiveProps(nextProps) {
+				if (this.props.location.query.script !== nextProps.location.query.script) {
+					store.dispatch(Actions.fetchScript(nextProps.location.query.script));
+				}
 			}
 			newScript() {
 				store.dispatch(Actions.showNewDialog());
