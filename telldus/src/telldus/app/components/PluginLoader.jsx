@@ -1,6 +1,7 @@
 import React from 'react';
 import * as ReactMDL from 'react-mdl';
 import * as ReactRedux from 'react-redux';
+import * as ReactRouter from 'react-router'
 import * as Redux from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
@@ -25,6 +26,7 @@ window.define = requirejs.define;
 requirejs.define('react', [], React);
 requirejs.define('react-mdl', [], ReactMDL);
 requirejs.define('react-redux', [], ReactRedux);
+requirejs.define('react-router', [], ReactRouter);
 requirejs.define('css', function () {
 	return {
 		load: function (name, parentRequire, onload, config) {
@@ -174,7 +176,7 @@ class PluginLoader extends React.Component {
 		var PluginComponent = this.state.component;
 		return (
 			<div>
-				<PluginComponent />
+				<PluginComponent location={this.props.location} />
 			</div>
 		);
 	}

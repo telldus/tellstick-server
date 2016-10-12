@@ -23,7 +23,7 @@ var store = createStore(
 
 class ComponentWrapper extends React.Component {
 	render() {
-		return (<PluginLoader store={store} {...this.props.route.plugin} />);
+		return (<PluginLoader store={store} {...this.props.route.plugin} {...this.props} />);
 	}
 }
 
