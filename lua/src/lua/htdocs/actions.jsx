@@ -15,7 +15,9 @@ define([], function() {
 	function fetchScripts() {
 		return dispatch => {
 			dispatch(requestScripts())
-			return fetch('/lua/scripts')
+			return fetch('/lua/scripts',{
+				credentials: 'include'
+			})
 			.then(response => response.json())
 			.then(json => dispatch(receiveScripts(json)))
 		}
@@ -26,7 +28,9 @@ define([], function() {
 	function fetchScript(name) {
 		return dispatch => {
 			dispatch(requestScript(name))
-			return fetch('/lua/script?name=' + name)
+			return fetch('/lua/script?name=' + name, {
+				credentials: 'include'
+			})
 			.then(response => response.json())
 			.then(json => dispatch(receiveScript(json)))
 		}
@@ -42,6 +46,7 @@ define([], function() {
 			dispatch(requestSaveScript(script, code))
 			return fetch('/lua/save', {
 				method: 'POST',
+				credentials: 'include',
 				body: formData
 			})
 			.then(response => response.json())
@@ -59,6 +64,7 @@ define([], function() {
 			dispatch(requestNewScript(name))
 			return fetch('/lua/new', {
 				method: 'POST',
+				credentials: 'include',
 				body: formData
 			})
 			.then(response => response.json())
@@ -76,6 +82,7 @@ define([], function() {
 			dispatch(requestDeleteScript(name))
 			return fetch('/lua/delete', {
 				method: 'POST',
+				credentials: 'include',
 				body: formData
 			})
 			.then(response => response.json())
