@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 plugins = {
-	'telldus': ['DeviceManager', 'DeviceApiManager', 'WebUI'],
+	'telldus': ['DeviceManager', 'DeviceApiManager', 'React'],
 	'tellduslive.web': ['WebRequestHandler'],
 	#PLUGINS#
 }
