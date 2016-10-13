@@ -18,6 +18,7 @@ setup(
 	package_data={'lua' : [
 		'templates/*.html',
 		'htdocs/*.js',
+		'htdocs/*.jsx',
 		'htdocs/*.css',
 	]}
 )
