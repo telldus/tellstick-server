@@ -1,5 +1,5 @@
 define(
-	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill'],
+	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill', 'css!/lua/lua.css'],
 	function(React, ReactMDL, ReactRouter, Telldus, WebSocket, Actions, ReactRedux, CodeMirror, DialogPolyfill ) {
 		var {Button, Card, CardActions, CardMenu, CardTitle, CardText, Cell, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, List, ListItem, Textfield} = ReactMDL;
 		var {Provider, connect} = ReactRedux;
