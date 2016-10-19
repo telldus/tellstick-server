@@ -49,6 +49,9 @@ class SensorNode(RF433Node):
 	def isSensor(self):
 		return True
 
+	def model(self):
+		return self._model
+
 	def params(self):
 		return {
 			'protocol': self._protocol,
@@ -56,6 +59,9 @@ class SensorNode(RF433Node):
 			'sensorId': self._sensorId,
 			'type': 'sensor',
 		}
+
+	def protocol(self):
+		return self._protocol
 
 	def setParams(self, params):
 		self._protocol = params.setdefault('protocol', '')
