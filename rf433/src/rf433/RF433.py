@@ -52,6 +52,10 @@ class SensorNode(RF433Node):
 	def model(self):
 		return self._model
 
+	def name(self):
+		# empty name for new 433-sensors (becomes "No name" in Telldus Live!)
+		return self._name if self._name is not None else ''
+
 	def params(self):
 		return {
 			'protocol': self._protocol,
