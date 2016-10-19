@@ -7,7 +7,7 @@ from Adapter import Adapter
 from RF433Msg import RF433Msg
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
 from board import Board
-import logging
+import logging, time
 
 class RF433Node(Device):
 	def __init__(self):
@@ -145,6 +145,8 @@ class RF433(Plugin):
 		self.hwVersion = None
 		self.devices = []
 		self.sensors = []
+		self.rawEnabled = False
+		self.rawEnabledAt = 0
 		self.dev = Adapter(self, Board.rf433Port())
 		deviceNode = DeviceNode(self.dev)
 		self.deviceManager = DeviceManager(self.context)
@@ -216,6 +218,13 @@ class RF433(Plugin):
 					self.devices.remove(device)
 					return
 
+		elif action == 'rawEnabled':
+			if data['value']:
+				self.rawEnabled = True
+				self.rawEnabledAt = time.time()
+			else:
+				self.rawEnabled = False
+
 		else:
 			logging.warning("Unknown rf433 command %s", action)
 
@@ -227,6 +236,12 @@ class RF433(Plugin):
 		msg = Protocol.decodeData(msg)
 		for m in msg:
 			self.decodeCommandData(m)
+			if self.rawEnabled:
+				if self.rawEnabledAt < (time.time() - 600):
+					# timeout, only allow scan for 10 minutes at a time
+					self.rawEnabled = False
+					continue
+				self.live.pushToWeb('client', 'rawData', m)
 
 	def decodeCommandData(self, msg):
 		protocol = msg['protocol']
