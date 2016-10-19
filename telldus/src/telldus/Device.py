@@ -57,6 +57,7 @@ class Device(object):
 		super(Device,self).__init__()
 		self._id = 0
 		self._battery = None
+		self._ignored = None
 		self._loadCount = 0
 		self._name = None
 		self._manager = None
@@ -170,6 +171,7 @@ class Device(object):
 		self._state = state
 		self._stateValue = stateValue
 		self._battery = olddevice._battery
+		self._ignored = olddevice._ignored
 
 	def loadCount(self):
 		return self._loadCount
@@ -190,6 +192,9 @@ class Device(object):
 		this device type.
 		"""
 		return 0
+
+	def ignored(self):
+		return self._ignored
 
 	def isDevice(self):
 		"""
@@ -244,6 +249,11 @@ class Device(object):
 
 	def setId(self, id):
 		self._id = id
+
+	def setIgnored(self, ignored):
+		self._ignored = ignored
+		if self._manager:
+			self._manager.save()
 
 	def setManager(self, manager):
 		self._manager = manager
@@ -387,6 +397,8 @@ class CachedDevice(Device):
 			self._stateValue = settings['stateValue']
 		if 'battery' in settings:
 			self._battery = settings['battery']
+		if 'ignored' in settings:
+			self._ignored = settings['ignored']
 
 	def localId(self):
 		return self._localId

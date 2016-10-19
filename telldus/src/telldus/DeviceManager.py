@@ -148,7 +148,8 @@ class DeviceManager(Plugin):
 			return
 		Application.signal('sensorValueUpdated', device, valueType, value, scale)
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
-		if not self.live.registered:
+		if not self.live.registered or device.ignored():
+			# don't send if ignored
 			return
 		msg = LiveMessage("SensorEvent")
 		sensor = {
@@ -267,7 +268,29 @@ class DeviceManager(Plugin):
 				if dev.isDevice():
 					self.__sendDeviceReport()
 				if dev.isSensor:
-					self.__sendSensorReport()
+					self.__sendSensorReport(True)  # force name change even for ignored sensor
+				return
+
+	@TelldusLive.handler('reload')
+	def __handleSensorUpdate(self, msg):
+		reloadType = msg.argument(0).toNative()
+		if reloadType != 'sensor':
+			#not for us
+			return
+		data = msg.argument(1).dictVal
+		if not msg.argument(2) or 'sensorId' not in msg.argument(2).dictVal:
+			# nothing to do, might be an orphaned zwave sensor
+			return
+		sensorId = msg.argument(2).dictVal['sensorId'].intVal
+		updateType = data['type'].stringVal
+		for dev in self.devices:
+			if dev.id() == sensorId:
+				if updateType == 'updateignored':
+					value = data['ignored'].intVal
+					if dev.ignored() == value:
+						return
+					dev.setIgnored(value)
+				self.__sendSensorChange(sensorId, updateType, value)
 				return
 
 	def liveRegistered(self, msg):
@@ -299,7 +322,8 @@ class DeviceManager(Plugin):
 				"params": d.params(),
 				"methods": d.methods(),
 				"state": state,
-				"stateValue": stateValue
+				"stateValue": stateValue,
+				"ignored": d.ignored()
 			})
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId
@@ -320,7 +344,8 @@ class DeviceManager(Plugin):
 				'stateValue': stateValue,
 				'protocol': d.protocol(),
 				'model': d.model(),
-				'transport': d.typeString()
+				'transport': d.typeString(),
+				'ignored': d.ignored()
 			}
 			if d.battery():
 				device['battery'] = d.battery().level
@@ -329,12 +354,31 @@ class DeviceManager(Plugin):
 		msg.append(l)
 		self.live.send(msg)
 
-	def __sendSensorReport(self):
+	def __sendSensorChange(self, sensorid, valueType, value):
+		msg = LiveMessage("SensorChange")
+		device = None
+		for d in self.devices:
+			if d.id() == sensorid:
+				device = d
+				break
+		if not device:
+			return
+		sensor = {
+			'protocol': device.typeString(),
+			'model': device.model(),
+			'sensor_id': device.id(),
+		}
+		msg.append(sensor)
+		msg.append(valueType)
+		msg.append(value)
+		self.live.send(msg)
+
+	def __sendSensorReport(self, forceIgnored=False):
 		if not self.live.registered:
 			return
 		l = []
 		for d in self.devices:
-			if d.isSensor() == False:
+			if d.isSensor() == False or (d.ignored() and not forceIgnored):
 				continue
 			sensorFrame = []
 			sensor = {
