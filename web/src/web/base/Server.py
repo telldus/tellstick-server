@@ -221,6 +221,9 @@ class WebRequestHandler(Plugin):
 				provider = o.loginProvider()
 				if provider is not None:
 					providers.append(provider)
+			if len(providers) == 1:
+				# Only one provider. Use it
+				raise cherrypy.HTTPRedirect(providers[0]['url'])
 			return 'login.html', {'providers': providers}
 		return None
 
