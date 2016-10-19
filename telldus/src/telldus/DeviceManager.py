@@ -275,18 +275,18 @@ class DeviceManager(Plugin):
 	def __handleSensorUpdate(self, msg):
 		reloadType = msg.argument(0).toNative()
 		if reloadType != 'sensor':
-			#not for us
+			# not for us
 			return
-		data = msg.argument(1).dictVal
-		if not msg.argument(2) or 'sensorId' not in msg.argument(2).dictVal:
+		data = msg.argument(1).toNative()
+		if not msg.argument(2) or 'sensorId' not in msg.argument(2).toNative():
 			# nothing to do, might be an orphaned zwave sensor
 			return
-		sensorId = msg.argument(2).dictVal['sensorId'].intVal
-		updateType = data['type'].stringVal
+		sensorId = msg.argument(2).toNative()['sensorId']
+		updateType = data['type']
 		for dev in self.devices:
 			if dev.id() == sensorId:
 				if updateType == 'updateignored':
-					value = data['ignored'].intVal
+					value = data['ignored']
 					if dev.ignored() == value:
 						return
 					dev.setIgnored(value)
