@@ -249,6 +249,9 @@ class Device(object):
 		return None
 
 	def sensorValues(self):
+		"""
+		Returns a list of all sensor values this device has received.
+		"""
 		return self._sensorValues
 
 	def setId(self, id):
