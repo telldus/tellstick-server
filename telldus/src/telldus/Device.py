@@ -299,6 +299,12 @@ class Device(object):
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
 
 	def state(self):
+		"""
+		Returns a tuple of the device state and state value
+
+		Example:
+		state, stateValue = device.state()
+		"""
 		return (self._state, self._stateValue)
 
 	def typeString(self):
