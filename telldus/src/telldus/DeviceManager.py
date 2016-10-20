@@ -3,7 +3,7 @@
 from Device import CachedDevice, DeviceAbortException
 import json
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
-from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread
+from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread, signal
 import time
 
 __name__ = 'telldus'
@@ -62,8 +62,7 @@ class DeviceManager(Plugin):
 		self.save()
 		
 		if not cachedDevice:
-			self.observers.deviceAdded(device)
-			Application.signal('deviceAdded', device)
+			self.__deviceAdded(device)
 			if self.live.registered and device.isDevice():
 				(state, stateValue) = device.state()
 				deviceDict = {
@@ -116,8 +115,7 @@ class DeviceManager(Plugin):
 		isDevice = True
 		for i, device in enumerate(self.devices):
 			if device.id() == deviceId:
-				Application.signal('deviceRemoved', deviceId)
-				self.observers.deviceRemoved(deviceId)
+				self.__deviceRemoved(deviceId)
 				isDevice = self.devices[i].isDevice()
 				del self.devices[i]
 				break
@@ -143,10 +141,13 @@ class DeviceManager(Plugin):
 			l.append(d)
 		return l
 
+	@signal
 	def sensorValueUpdated(self, device, valueType, value, scale):
+		"""
+		Called every time a sensors value is updated.
+		"""
 		if device.isSensor() == False:
 			return
-		Application.signal('sensorValueUpdated', device, valueType, value, scale)
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
 		if not self.live.registered or device.ignored():
 			# don't send if ignored
@@ -185,8 +186,7 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
-		self.observers.stateChanged(device, state, stateValue)
-		Application.signal('deviceStateChanged', device, state, stateValue)
+		self.__deviceStateChanged(device, state, stateValue)
 		self.save()
 		if not self.live.registered:
 			return
@@ -210,8 +210,7 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Unknown'
 		(state, stateValue) = device.state()
-		self.observers.stateChanged(device, state, stateValue)
-		Application.signal('deviceStateChanged', device, state, stateValue)
+		self.__deviceStateChanged(device, state, stateValue)
 		msg = LiveMessage('DeviceFailEvent')
 		msg.append(device.id())
 		msg.append(state)
@@ -308,6 +307,28 @@ class DeviceManager(Plugin):
 			# considered dead
 			if d.loadCount() < 5:
 				self.devices.append(d)
+
+	@signal('deviceAdded')
+	def __deviceAdded(self, device):
+		"""
+		Called every time a device is added/created
+		"""
+		self.observers.deviceAdded(device)
+
+	@signal('deviceRemoved')
+	def __deviceRemoved(self, deviceId):
+		"""
+		Called every time a device is removed. The parameter deviceId is the old
+		device id. The ref to the device is no longer available
+		"""
+		self.observers.deviceRemoved(deviceId)
+
+	@signal('deviceStateChanged')
+	def __deviceStateChanged(self, device, state, stateValue):
+		"""
+		Called every time the state of a device is changed.
+		"""
+		self.observers.stateChanged(device, state, stateValue)
 
 	def save(self):
 		data = []
