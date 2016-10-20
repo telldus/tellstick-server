@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, implements, Plugin
+from base import Application, implements, Plugin, signal
 from telldus import DeviceManager, Device, DeviceAbortException
 from Protocol import Protocol
 from Adapter import Adapter
@@ -232,11 +232,16 @@ class RF433(Plugin):
 		else:
 			logging.warning("Unknown rf433 command %s", action)
 
+	@signal('rf433RawData')
 	def decode(self, msg):
+		"""
+		Signal send on any raw data received from 433 receiver. Please note that
+		the TellStick must contain a receiver for this signal to be sent. Not all
+		models contains a receiver.
+		"""
 		if 'class' in msg and msg['class'] == 'sensor':
 			self.decodeSensor(msg)
 			return
-		Application.signal('rf433RawData', msg)
 		msg = Protocol.decodeData(msg)
 		for m in msg:
 			self.decodeCommandData(m)
