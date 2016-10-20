@@ -237,6 +237,10 @@ class Device(object):
 		return self.typeString()
 
 	def sensorValue(self, valueType, scale):
+		"""
+		Returns a sensor value of a the specified valueType and scale. Returns None
+		is no such value exists
+		"""
 		if valueType not in self._sensorValues:
 			return None
 		for sensorType in self._sensorValues[valueType]:
