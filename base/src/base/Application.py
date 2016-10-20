@@ -198,7 +198,7 @@ class Application(object):
 	@staticmethod
 	def signal(msg, *args, **kwargs):
 		signalManager = SignalManager(Application._instance.pluginContext)
-		signalManager.signal(msg, *args, **kwargs)
+		signalManager.sendSignal(msg, *args, **kwargs)
 
 	def __signal(self, signum, frame):
 		logging.info("Signal %d caught" % signum)
