@@ -132,7 +132,7 @@ requirejs.define('websocket', function() {
 class Placeholder extends React.Component {
 	render() {
 		return (
-			<div>Placeholder</div>
+			<div>Loading <ReactMDL.Spinner /></div>
 		);
 	}
 };
