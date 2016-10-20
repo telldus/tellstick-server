@@ -315,7 +315,6 @@ class RF433(Plugin):
 
 	def __noVersion(self):
 		logging.warning("Could not get firmware version for RF433, force upgrade")
-		self.dev.updateFirmware()
 
 	def __noHWVersion(self):
 		logging.warning("Could not get hw version for RF433")
@@ -328,7 +327,7 @@ class RF433(Plugin):
 		fwVersion = RF433.fwVersions[self.hwVersion]
 		if fwVersion != self.version:
 			logging.info("Version %i is to old, update firmware", self.version)
-			self.dev.updateFirmware()
+			# TODO: implement
 
 	def __version(self, version):
 		self.version = version
