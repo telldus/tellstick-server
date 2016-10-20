@@ -11,6 +11,13 @@ class Signal(object):
 	def __init__(self, fn):
 		self.fn = fn
 
+	def doc(self):
+		doc = self.fn.__doc__ if self.fn.__doc__ is not None else ''
+		return doc.strip()
+
+	def args(self):
+		return list(self.fn.func_code.co_varnames)[1:self.fn.func_code.co_argcount]
+
 class SignalManager(Plugin):
 	observers = ObserverCollection(ISignalObserver)
 	signals = {}
