@@ -5,11 +5,23 @@ define([], function() {
 	const RECEIVE_SCRIPTS = 'RECEIVE_SCRIPTS';
 	const REQUEST_SCRIPT = 'REQUEST_SCRIPT';
 	const RECEIVE_SCRIPT = 'RECEIVE_SCRIPT';
+	const REQUEST_SIGNALS = 'REQUEST_SIGNALS';
+	const RECEIVE_SIGNALS = 'RECEIVE_SIGNALS';
 	const NEW_SCRIPT = 'NEW_SCRIPT';
 	const NEW_SCRIPT_CREATED = 'NEW_SCRIPT_CREATED';
 	const SAVE_SCRIPT = 'SAVE_SCRIPT';
 	const SAVED_SCRIPT = 'SAVED_SCRIPT';
 	const SHOW_NEW_DIALOG = 'SHOW_NEW_DIALOG';
+
+	function sortHelper(a, b) {
+		if (a < b) {
+			return -1;
+		}
+		if (a > b) {
+			return 1;
+		}
+		return 0;
+	}
 
 	function requestScripts() { return { type: REQUEST_SCRIPTS } }
 	function receiveScripts(json) { return { type: RECEIVE_SCRIPTS, scripts: json } }
@@ -37,6 +49,19 @@ define([], function() {
 			})
 			.then(response => response.json())
 			.then(json => dispatch(receiveScript(json)))
+		}
+	}
+
+	function requestSignals() { return { type: REQUEST_SIGNALS } }
+	function receiveSignals(json) { return { type: RECEIVE_SIGNALS, signals: json.sort((a, b) => sortHelper(a.name.toUpperCase(), b.name.toUpperCase())) } }
+	function fetchSignals() {
+		return dispatch => {
+			dispatch(requestSignals())
+			return fetch('/lua/signals',{
+				credentials: 'include'
+			})
+			.then(response => response.json())
+			.then(json => dispatch(receiveSignals(json)))
 		}
 	}
 
@@ -99,6 +124,7 @@ define([], function() {
 		deleteScript,
 		fetchScripts,
 		fetchScript,
+		fetchSignals,
 		newScript,
 		saveScript,
 		showNewDialog,
@@ -108,6 +134,7 @@ define([], function() {
 		RECEIVE_SCRIPTS,
 		REQUEST_SCRIPT,
 		RECEIVE_SCRIPT,
+		RECEIVE_SIGNALS,
 		SAVE_SCRIPT,
 		SAVED_SCRIPT,
 		SHOW_NEW_DIALOG

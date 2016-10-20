@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill', 'css!/lua/lua.css'],
-	function(React, ReactMDL, ReactRouter, Telldus, WebSocket, Actions, ReactRedux, CodeMirror, DialogPolyfill ) {
+	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'jsx!lua/help', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill', 'css!/lua/lua.css'],
+	function(React, ReactMDL, ReactRouter, Telldus, WebSocket, Actions, HelpView, ReactRedux, CodeMirror, DialogPolyfill ) {
 		var {Button, Card, CardActions, CardMenu, CardTitle, CardText, Cell, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, List, ListItem, Textfield} = ReactMDL;
 		var {Provider, connect} = ReactRedux;
 		var {browserHistory, Link} = ReactRouter;
@@ -11,7 +11,8 @@ define(
 				code: '',
 				name: ''
 			},
-			showNewDialog: false
+			showNewDialog: false,
+			signals: []
 		}
 
 		function reducer(state = defaultState, action) {
@@ -22,6 +23,8 @@ define(
 					return Object.assign({}, state, {scripts: action.scripts});
 				case Actions.RECEIVE_SCRIPT:
 					return Object.assign({}, state, {script: action.script})
+				case Actions.RECEIVE_SIGNALS:
+					return Object.assign({}, state, {signals: action.signals})
 				case Actions.SHOW_NEW_DIALOG:
 					return Object.assign({}, state, {showNewDialog: action.show});
 			}
@@ -34,7 +37,10 @@ define(
 		class CodeView extends React.Component {
 			constructor(props) {
 				super(props);
-				this.state = {showDeleteConfirm: false}
+				this.state = {
+					showDeleteConfirm: false,
+					showHelp: false
+				}
 				this.code = props.code;  // Initialize local changed code
 				this.codeChanged = this.codeChanged.bind(this);
 				this.saveAndRun = this.saveAndRun.bind(this);
@@ -58,6 +64,7 @@ define(
 			render() {
 				return (
 					<Card shadow={1} style={{width: '650px'}}>
+						<HelpView open={this.state.showHelp} onCancel={() => this.setState({showHelp: false})} store={store} />
 						<Dialog open={this.state.showDeleteConfirm} ref={(c) => this.dialog = c} onCancel={() => this.setState({showDeleteConfirm: false})}>
 							<DialogTitle>Delete script</DialogTitle>
 							<DialogContent>
@@ -75,6 +82,7 @@ define(
 						<CardActions border>
 							<Button onClick={this.saveAndRun} disabled={this.props.name == ''}>Save and run</Button>
 							<Button onClick={() => this.setState({showDeleteConfirm: true})} disabled={this.props.name == ''}>Delete script</Button>
+							<Button onClick={() => this.setState({showHelp: true})}>Help</Button>
 						</CardActions>
 					</Card>
 				);

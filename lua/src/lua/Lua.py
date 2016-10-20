@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, Plugin, ISignalObserver, implements, slot
+from base import Application, Plugin, SignalManager, ISignalObserver, implements, slot, signal
 from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
 from telldus import IWebReactHandler
@@ -65,7 +65,7 @@ class Lua(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':
 			return False
-		if path in ['delete', 'new', 'save', 'script', 'scripts']:
+		if path in ['delete', 'new', 'save', 'script', 'scripts', 'signals']:
 			return True
 		return False
 
@@ -109,6 +109,8 @@ class Lua(Plugin):
 			return WebResponseJson([{
 				'name': script.name
 			} for script in sorted(self.scripts, key=lambda s: s.name.lower())])
+		elif path == 'signals':
+			return WebResponseJson(self.signals())
 		elif 'edit' in params:
 			for s in self.scripts:
 				if s.name == params['edit']:
@@ -131,6 +133,19 @@ class Lua(Plugin):
 			# overlayfs does not support inofify for filechanges so we need to signal manually
 			script.reload()
 			break
+
+	def signals(self):
+		signals = [{
+			'name': 'on%s%s' % (x[0].upper(), x[1:]),
+			'doc': SignalManager.signals[x].doc(),
+			'args': SignalManager.signals[x].args(),
+		} for x in SignalManager.signals]
+		signals.append({
+			'name': 'onInit',
+			'doc': 'Called when the script is loaded',
+			'args': [],
+		})
+		return signals
 
 	@slot()
 	def slot(self, message, *args, **kwargs):
