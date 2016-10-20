@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, Plugin
+from base import Application, Plugin, implements
+from web.base import IWebRequestAuthenticationHandler
 from threading import Thread
 import os, re, sys, time, traceback
 import code, signal
@@ -9,6 +10,8 @@ import code, signal
 _module__file__base = os.getcwd()
 
 class Developer(Plugin):
+	implements(IWebRequestAuthenticationHandler)
+
 	def __init__(self):
 		self.running = True
 		self.mtimes = {}
@@ -43,6 +46,9 @@ class Developer(Plugin):
 		message  = "Signal received : entering python shell.\nTraceback:\n"
 		message += ''.join(traceback.format_stack(frame))
 		i.interact(message)
+
+	def isUrlAuthorized(self, request):
+		return True
 
 	def run(self):
 		while self.running:
