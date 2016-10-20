@@ -63,7 +63,7 @@ define(
 			}
 			render() {
 				return (
-					<Card shadow={1} style={{width: '650px'}}>
+					<Cell col={8} component={Card} shadow={1} align="stretch">
 						<HelpView open={this.state.showHelp} onCancel={() => this.setState({showHelp: false})} store={store} />
 						<Dialog open={this.state.showDeleteConfirm} ref={(c) => this.dialog = c} onCancel={() => this.setState({showDeleteConfirm: false})}>
 							<DialogTitle>Delete script</DialogTitle>
@@ -84,7 +84,7 @@ define(
 							<Button onClick={() => this.setState({showDeleteConfirm: true})} disabled={this.props.name == ''}>Delete script</Button>
 							<Button onClick={() => this.setState({showHelp: true})}>Help</Button>
 						</CardActions>
-					</Card>
+					</Cell>
 				);
 			}
 		}
@@ -150,16 +150,14 @@ define(
 			render() {
 				var logs = this.state.logs.map((log, i) => <p key={i}>{log}</p>)
 				return (
-					<Cell col={8}>
-						<Card shadow={1} style={{width: '650px'}}>
-							<CardTitle expand>Console</CardTitle>
-							<CardText>
-								{logs}
-							</CardText>
-							<CardActions border>
-								<Button onClick={this.clear}>Clear</Button>
-							</CardActions>
-						</Card>
+					<Cell col={8} component={Card} shadow={1}>
+						<CardTitle expand>Console</CardTitle>
+						<CardText>
+							{logs}
+						</CardText>
+						<CardActions border>
+							<Button onClick={this.clear}>Clear</Button>
+						</CardActions>
 					</Cell>
 				)
 			}
@@ -236,9 +234,7 @@ define(
 					<div>
 						<WrappedNewScript store={store} />
 						<Grid>
-							<Cell col={8}>
-								<WrappedCodeView store={store} />
-							</Cell>
+							<WrappedCodeView store={store} />
 							<Cell col={4}>
 								<Card shadow={1}>
 									<CardTitle expand>Scripts</CardTitle>
