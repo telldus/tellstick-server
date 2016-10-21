@@ -10,10 +10,11 @@ import time
 import logging
 
 class Event(object):
-	def __init__(self, manager, eventId, minimumRepeatInterval):
+	def __init__(self, manager, eventId, minimumRepeatInterval, description):
 		self.manager = manager
 		self.eventId = eventId
 		self.minimumRepeatInterval = minimumRepeatInterval
+		self.description = description
 		self.lastRun = None
 		self.actions = {}
 		self.conditions = {}

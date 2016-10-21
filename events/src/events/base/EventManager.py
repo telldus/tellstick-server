@@ -34,7 +34,7 @@ class EventManager(Plugin):
 		self.loadLocalEvents()
 
 	def loadEvent(self, eventId, data):
-		event = Event(self, eventId, data['minRepeatInterval'])
+		event = Event(self, eventId, data['minRepeatInterval'], data['description'])
 		event.loadActions(data['actions'])
 		event.loadConditions(data['conditions'])
 		event.loadTriggers(data['triggers'])

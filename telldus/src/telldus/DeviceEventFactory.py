@@ -63,11 +63,12 @@ class DeviceEventFactory(Plugin):
 				trigger.triggered()
 
 class DeviceActionExecutor(object):
-	def __init__(self, device, method, value, repeats):
+	def __init__(self, device, method, value, repeats, description):
 		self.device = device
 		self.method = method
 		self.value = value
 		self.repeats = repeats
+		self.description = description
 
 		if device.typeString() == '433' and self.repeats > 1:
 			self.retries = 0  # No retries for 433
@@ -81,7 +82,7 @@ class DeviceActionExecutor(object):
 		self.execute()
 
 	def execute(self):
-		self.device.command(self.method, self.value, origin='Event', failure=self.__failure)
+		self.device.command(self.method, self.value, origin='Event - %s' % self.description, failure=self.__failure)
 
 	def __failure(self, reason):
 		self.retries -= 1
@@ -114,7 +115,7 @@ class DeviceAction(Action):
 			return
 		# We do not store the deviceExecutor object so it can be garbage collected
 		# when it is done.
-		deviceExecutor = DeviceActionExecutor(device, self.method, self.value, self.repeats)
+		deviceExecutor = DeviceActionExecutor(device, self.method, self.value, self.repeats, self.event.description)
 
 class DeviceCondition(Condition):
 	def __init__(self, manager, **kwargs):
