@@ -1,0 +1,6 @@
+src/telldus/htdocs/*.eot
+src/telldus/htdocs/*.ttf
+src/telldus/htdocs/*.woff
+src/telldus/htdocs/*.woff2
+src/telldus/htdocs/js/bundle.js
+

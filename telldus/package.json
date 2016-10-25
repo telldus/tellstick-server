@@ -29,9 +29,12 @@
     "babel-preset-stage-0": "^6.5.0",
     "css-loader": "^0.25.0",
     "exports-loader": "^0.6.3",
+    "file-loader": "^0.9.0",
+    "material-design-icons": "^3.0.1",
     "style-loader": "^0.13.1",
     "webpack": "latest",
-    "webpack-dev-server": "latest"
+    "webpack-dev-server": "latest",
+    "webpack-material-design-icons": "0.0.2"
   },
   "author": "Micke Prag"
 }
