@@ -6,7 +6,7 @@ gulp.task('default', ['scripts'], function() {
 });
 
 gulp.task('jsx', function () {
-	return gulp.src('src/lua/app/*.jsx')
+	return gulp.src('src/lua/app/**/*.jsx')
 		.pipe(babel({
 			presets: ['es2015', 'stage-0', 'react']
 		}))
@@ -14,7 +14,7 @@ gulp.task('jsx', function () {
 });
 
 gulp.task('js', function () {
-	return gulp.src('src/lua/app/*.js')
+	return gulp.src('src/lua/app/**/*.js')
 		.pipe(gulp.dest('src/lua/build'));
 });
 
@@ -30,7 +30,9 @@ gulp.task('scripts', ['jsx', 'js'], function () {
 				'dialog-polyfill': 'empty:',
 				'telldus': 'empty:',
 				'websocket': 'empty:'
-			}
+			},
+			baseUrl: 'src/lua/build',
+			name: 'lua/lua'
 		}))
 		.pipe(gulp.dest('src/lua/htdocs'));
 });
