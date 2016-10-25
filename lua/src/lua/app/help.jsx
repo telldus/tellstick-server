@@ -1,5 +1,5 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'jsx!lua/actions', 'dialog-polyfill'],
+	['react', 'react-mdl', 'react-redux', 'actions', 'dialog-polyfill'],
 	function(React, ReactMDL, ReactRedux, Actions, DialogPolyfill ) {
 		class SignalsView extends React.Component {
 			render() {

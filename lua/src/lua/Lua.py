@@ -59,7 +59,7 @@ class Lua(Plugin):
 		return [{
 			'name': 'lua',
 			'title': 'Lua scripts (beta)',
-			'script': 'lua/lua.jsx'
+			'script': 'lua/lua.js'
 		}]
 
 	def matchRequest(self, plugin, path):

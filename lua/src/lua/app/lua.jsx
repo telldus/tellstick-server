@@ -1,9 +1,11 @@
 define(
-	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'jsx!lua/actions', 'jsx!lua/help', 'react-redux', 'jsx!lua/react-codemirror', 'dialog-polyfill', 'css!/lua/lua.css'],
+	['react', 'react-mdl', 'react-router', 'telldus', 'websocket', 'actions', 'help', 'react-redux', 'react-codemirror', 'dialog-polyfill'],
 	function(React, ReactMDL, ReactRouter, Telldus, WebSocket, Actions, HelpView, ReactRedux, CodeMirror, DialogPolyfill ) {
 		var {Button, Card, CardActions, CardMenu, CardTitle, CardText, Cell, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, List, ListItem, Textfield} = ReactMDL;
 		var {Provider, connect} = ReactRedux;
 		var {browserHistory, Link} = ReactRouter;
+
+		Telldus.loadCSS('/lua/lua.css');
 
 		var defaultState = {
 			scripts: [],

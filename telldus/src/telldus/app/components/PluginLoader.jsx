@@ -51,6 +51,9 @@ requirejs.define('telldus', function () {
 					window.devToolsExtension ? window.devToolsExtension() : f => f
 				)
 			);
+		},
+		loadCSS: function(file) {
+			requirejs.requirejs(['css!' + file], function() {});
 		}
 	};
 });
@@ -165,9 +168,20 @@ class PluginLoader extends React.Component {
 			return;
 		}
 		var dynamicComponent = this;
-		var url = (script.substr(-4) === '.jsx' ? 'jsx!' + script.slice(0, - 4) : script)
-		requirejs.requirejs([url], function(component) {
-			//console.log("Comp", component);
+		if (script.substr(-4) === '.jsx') {
+			// JSX loading is deprecated. Plugins should build these to pure js in its build phase
+			var url = script.slice(0, -4);
+			var type = 'jsx!';
+		} else {
+			var url = script.slice(0, -3);
+			var type = '';
+		}
+
+		var config = {
+			paths: { },
+		};
+		config['paths'][name] = url
+		requirejs.requirejs.config(config)([type+name], function(component) {
 			dynamicComponent.setState({component: component});
 		});
 	}

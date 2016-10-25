@@ -1,14 +1,8 @@
-require.config({
-	packages: [{
-		name: 'codemirror',
-		location: 'lua',
-		main: 'codemirror-compressed'
-	}]
-});
-
 define(
-	['react', 'codemirror', 'lua/mode-lua-compressed', 'css!/lua/codemirror.css', 'css!/lua/neat.css'],
-	function(React, CM, mode ) {
+	['react', 'codemirror', 'mode-lua-compressed', 'telldus'],
+	function(React, CM, mode, Telldus ) {
+		Telldus.loadCSS('/lua/codemirror.css');
+		Telldus.loadCSS('/lua/neat.css');
 
 		class CodeMirror extends React.Component {
 			constructor(props) {
