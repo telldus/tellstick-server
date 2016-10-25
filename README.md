@@ -39,7 +39,7 @@ sudo easy_install virtualenv
 
 To setup the source and prepare the base plugins run the following script:
 
-./start.sh setup
+./tellstick.sh setup
 
 This vill create a virtualenv under the "build" folder and download and install
 the required libraries for running the software.
@@ -50,17 +50,17 @@ You can wipe the build-folder at any time to remove any installed packages.
 
 Start the server by issuing:
 
-./start.sh run
+./tellstick.sh run
 
 As default the server will restart itself any time it detects a file has been
 modified.
 
 To install a plugin run:
-./start.sh install [path-to-plugin]
+./tellstick.sh install [path-to-plugin]
 
 Replace [path-to-plugin] with the path to the plugin root folder.
 
 ## Documentation
 
 Build the documentation:
-./start.sh build-docs
+./tellstick.sh build-docs
