@@ -8,17 +8,7 @@ import createLogger from 'redux-logger';
 import dialogpolyfill from 'dialog-polyfill'
 
 var requirejs = require('exports?requirejs=requirejs&define!requirejs/require.js');
-requirejs.requirejs.config({
-	jsx: {
-		fileExtension: '.jsx'
-	},
-	baseUrl: '/',
-	paths: {
-		'jsx': '/telldus/js/jsx',
-		'JSXTransformer': '/telldus/js/JSXTransformer',
-		'text': '/telldus/js/text'
-	}
-});
+
 // Sorry, the scripts seems to needs this in the global context... :(
 window.define = requirejs.define;
 
@@ -53,7 +43,7 @@ requirejs.define('telldus', function () {
 			);
 		},
 		loadCSS: function(file) {
-			requirejs.requirejs(['css!' + file], function() {});
+			requirejs.requirejs(['css!' + file]);
 		}
 	};
 });
@@ -158,30 +148,20 @@ class PluginLoader extends React.Component {
 	}
 
 	loadPluginComponent(name) {
-		var script = null;
+		var packages = [];
 		for(var i in this.props.plugins) {
-			if (this.props.plugins[i].name == name) {
-				script = this.props.plugins[i].script;
-			}
-		}
-		if (!script) {
-			return;
+			var path = this.props.plugins[i].script.slice(0, -3);  // Remove .js
+			var index = path.lastIndexOf('/');
+			packages.push({
+				'name': this.props.plugins[i].name,
+				'main': path.substr(index+1),
+				'location': path.substr(0, index)
+			})
 		}
 		var dynamicComponent = this;
-		if (script.substr(-4) === '.jsx') {
-			// JSX loading is deprecated. Plugins should build these to pure js in its build phase
-			var url = script.slice(0, -4);
-			var type = 'jsx!';
-		} else {
-			var url = script.slice(0, -3);
-			var type = '';
-		}
 
-		var config = {
-			paths: { },
-		};
-		config['paths'][name] = url
-		requirejs.requirejs.config(config)([type+name], function(component) {
+		requirejs.requirejs.config({packages: packages});
+		requirejs.requirejs([name], function(component) {
 			dynamicComponent.setState({component: component});
 		});
 	}
