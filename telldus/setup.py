@@ -35,10 +35,10 @@ setup(
 		'templates/*.html',
 		'htdocs/img/*.png',
 		'htdocs/img/*.ico',
-		'htdocs/MaterialIcons-Regular.eot'
-		'htdocs/MaterialIcons-Regular.tff'
-		'htdocs/MaterialIcons-Regular.woff'
-		'htdocs/MaterialIcons-Regular.woff2'
+		'htdocs/MaterialIcons-Regular.eot',
+		'htdocs/MaterialIcons-Regular.tff',
+		'htdocs/MaterialIcons-Regular.woff',
+		'htdocs/MaterialIcons-Regular.woff2',
 		'htdocs/js/*.js',
 	]}
 )
