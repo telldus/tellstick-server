@@ -1,7 +1,6 @@
 import React from 'react';
 import * as ReactMDL from 'react-mdl';
 import * as ReactRedux from 'react-redux';
-import * as ReactRouter from 'react-router'
 import * as Redux from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
@@ -16,111 +15,11 @@ window.define = requirejs.define;
 requirejs.define('react', [], React);
 requirejs.define('react-mdl', [], ReactMDL);
 requirejs.define('react-redux', [], ReactRedux);
-requirejs.define('react-router', [], ReactRouter);
-requirejs.define('css', function () {
-	return {
-		load: function (name, parentRequire, onload, config) {
-			var link = document.createElement("link");
-			link.type = "text/css";
-			link.rel = "stylesheet";
-			link.href = name;
-			document.getElementsByTagName("head")[0].appendChild(link);
-			onload(null);
-		}
-	}
-});
-requirejs.define('telldus', function () {
-	return {
-		createStore: function(reducers) {
-			return Redux.createStore(
-				reducers,
-				Redux.compose(
-					Redux.applyMiddleware(
-						thunkMiddleware
-					),
-					window.devToolsExtension ? window.devToolsExtension() : f => f
-				)
-			);
-		},
-		loadCSS: function(file) {
-			requirejs.requirejs(['css!' + file]);
-		}
-	};
-});
+requirejs.define('react-router', [], require('react-router'));
+requirejs.define('css', require('./lib/css').default);
 requirejs.define('dialog-polyfill', dialogpolyfill);
-requirejs.define('websocket', function() {
-	var onMessage = [];
-
-	var WebSocketWrapper = function() {
-		console.log("Create new websocket main object");
-		this.setup();
-	}
-
-	WebSocketWrapper.prototype.setup = function() {
-		this.ws = new WebSocket('ws://' + location.host + '/ws');
-		this.ws.onopen = function() {
-			console.log("Websocket opened");
-		};
-
-		this.ws.onmessage = function (evt) {
-			var obj = JSON.parse( evt.data );
-			for(var i = 0; i < onMessage.length; ++i) {
-				onMessage[i].messageReceived(obj['module'], obj['action'], obj['data']);
-			}
-		};
-
-		this.ws.onclose = function() {
-			// websocket is closed.
-			console.log("Websocket closed");
-		};
-	}
-
-	WebSocketWrapper.prototype.register = function (evt) {
-		onMessage.push(evt);
-	};
-
-	WebSocketWrapper.prototype.unregister = function (evt) {
-		var index = onMessage.indexOf(evt)
-		if (index >= 0) {
-			onMessage.splice(index, 1);
-		}
-	};
-
-	var ws = new WebSocketWrapper();
-
-	var WebSocketInstance = function() {
-		this.filter = [];
-	}
-
-	WebSocketInstance.prototype.messageReceived = function(module, action, data) {
-		for(var i = 0; i < this.filter.length; ++i) {
-			if (this.filter[i].module === module && this.filter[i].action === action) {
-				this.filter[i].fn(module, action, data);
-			}
-		}
-	}
-
-	WebSocketInstance.prototype.onMessage = function (module, action, evt) {
-		if (evt == null) {
-			for(var i = 0; i < this.filter.length; ++i) {
-				if (this.filter[i].module === module && this.filter[i].action === action) {
-					this.filter.splice(i, 1);
-					break;
-				}
-			}
-			if (this.filter.length == 0) {
-				ws.unregister(this);
-			}
-		} else {
-			if (this.filter.length == 0) {
-				ws.register(this);
-			}
-			this.filter.push({module: module, action: action, fn: evt});
-		}
-	};
-
-	return WebSocketInstance;
-})
+requirejs.define('telldus', require('./lib/telldus').default);
+requirejs.define('websocket', require('./lib/websocket').default)
 
 class Placeholder extends React.Component {
 	render() {
