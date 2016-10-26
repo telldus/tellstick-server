@@ -2,7 +2,8 @@
 
 from base import Plugin, implements, mainthread
 from board import Board
-from web.base import IWebRequestHandler, WebResponseRedirect
+from web.base import IWebRequestHandler, WebResponseRedirect, WebResponseJson
+from telldus import IWebReactHandler
 import glob
 import gnupg
 import logging
@@ -136,11 +137,19 @@ class Loader(Plugin):
 
 class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
+	implements(IWebReactHandler)
+
+	def getReactRoutes(self):
+		return [{
+			'name': 'plugins',
+			'title': 'Plugins (beta)',
+			'script': 'pluginloader/plugins.js'
+		}]
 
 	def importKey(self, acceptKeyId):
 		filename = '%s/staging.zip' % Board.pluginPath()
 		if not os.path.exists(filename):
-			return WebResponseRedirect('/')
+			return {'success': False, 'msg': 'No plugin uploaded'}
 		try:
 			gpg = loadGPG()
 			with zipfile.ZipFile(filename, 'r') as z:
@@ -151,23 +160,24 @@ class WebFrontend(Plugin):
 					raise Exception('Key must only contain exactly one public key')
 				key = keys[0]
 				name = key['uids']
-				# Group fingerprint every 4th character
-				fingerprint = ' '.join(map(''.join, zip(*[iter(key['fingerprint'])]*4)))
+				fingerprint = key['fingerprint']
 				keyid = key['keyid']
 				if keyid != acceptKeyId:
-					return 'importkey.html', {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
+					return {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
 				result = gpg.import_keys(open(k).read())
 				os.unlink(k)
 				# Reload loaded keys
 				Loader(self.context).initializeKeychain()
 		except Exception as e:
 			os.unlink(filename)
-			return 'pluginloader.html', {'msg': str(e), 'loader': Loader(self.context)}
-		return WebResponseRedirect('/')
+			return {'success': False, 'msg': str(e)}
+		return {'success': True}
 
 	def importPlugin(self):
 		filename = '%s/staging.zip' % Board.pluginPath()
-		with zipfile.ZipFile(filename, 'r') as z:
+		z = None
+		try:
+			z = zipfile.ZipFile(filename, 'r')
 			try:
 				info = z.getinfo('manifest.yml')
 			except KeyError:
@@ -193,7 +203,7 @@ class WebFrontend(Plugin):
 					os.unlink(p)
 				if result.pubkey_fingerprint is None and result.username is None:
 					# No public key for this plugin
-					return WebResponseRedirect('/importkey')
+					return {'success': False, 'key': self.importKey(None)}
 				raise ImportError('Could not verify plugin')
 			path = '%s/%s' % (Board.pluginPath(), cfg['name'])
 			if os.path.exists(path):
@@ -204,10 +214,15 @@ class WebFrontend(Plugin):
 				shutil.move(p, '%s/%s' % (path, os.path.basename(p)))
 				z.extract(s, path)
 			manifest = z.extract(info, path)
+		except zipfile.BadZipfile:
+			raise ImportError('Uploaded file was not a Zip file')
+		finally:
+			if z is not None:
+				z.close()
 		os.unlink(filename)
 		loader = Loader(self.context)
 		loader.loadPlugin(manifest)
-		return 'pluginloader.html', {'msg': 'Plugin was imported', 'loader': loader}
+		return {'success': True, 'msg': 'Plugin was imported'}
 
 	def uploadPlugin(self, f):
 		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as wf:
@@ -219,32 +234,60 @@ class WebFrontend(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'pluginloader':
 			return False
-		if path in ['', 'importkey', 'remove']:
+		if path in ['import', 'importkey', 'keys', 'remove', 'plugins', 'upload']:
 			return True
 		return False
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
-		if request.method() == 'POST' and 'pluginfile' in params:
-			self.uploadPlugin(params['pluginfile'])
-			return WebResponseRedirect('/')
+		if path == 'import':
+			if os.path.isfile('%s/staging.zip' % (Board.pluginPath())):
+				try:
+					return WebResponseJson(self.importPlugin())
+				except ImportError as e:
+					os.unlink('%s/staging.zip' % (Board.pluginPath()))
+					return WebResponseJson({'success': False, 'msg':'Error importing plugin: %s' % e})
+			return WebResponseJson({'success': False, 'msg':'Error importing plugin: No plugin uploaded'})
 
 		if path == 'importkey':
 			if 'discard' in params:
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
-				return WebResponseRedirect('/')
-			return self.importKey(params['key'] if 'key' in params else None)
+				return WebResponseJson({'success': True})
+			return WebResponseJson(self.importKey(params['key'] if 'key' in params else None))
 
 		if path == 'remove':
 			if 'pluginname' in params:
 				Loader(self.context).removePlugin(params['pluginname'])
 			elif 'key' in params and 'fingerprint' in params:
 				Loader(self.context).removeKey(params['key'], params['fingerprint'])
-			return WebResponseRedirect('/')
+			else:
+				return WebResponseJson({'success': False, 'msg': 'No plugin or key specified'})
+			return WebResponseJson({'success': True})
 
-		if os.path.isfile('%s/staging.zip' % (Board.pluginPath())):
+		if path == 'plugins':
+			return WebResponseJson([
+				{
+					'name': plugin.name,
+					'loaded': plugin.loaded
+				}
+				for plugin in Loader(self.context).plugins
+			])
+
+		if path == 'keys':
+			return WebResponseJson([
+				{
+					'uids': key['uids'],
+					'keyid': key['keyid'],
+					'fingerprint': key['fingerprint']
+				}
+				for key in Loader(self.context).keys
+			])
+
+		if path == 'upload' and request.method() == 'POST':
+			self.uploadPlugin(params['pluginfile'])
 			try:
-				return self.importPlugin()
+				return WebResponseJson(self.importPlugin())
 			except ImportError as e:
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
-				return 'pluginloader.html', {'msg':'Error importing plugin: %s' % e, 'loader': Loader(self.context)}
+				return WebResponseJson({'success': False, 'msg': str(e)})
+
 		return 'pluginloader.html', {'msg':'', 'loader': Loader(self.context)}
