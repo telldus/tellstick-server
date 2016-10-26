@@ -19,7 +19,7 @@ gulp.task('js', function () {
 });
 
 gulp.task('scripts', ['jsx', 'js'], function () {
-	return gulp.src('src/lua/build/lua.js')
+	return gulp.src('src/lua/build/lua/lua.js')
 		.pipe(requirejsOptimize({
 			//optimize: 'none',
 			paths: {
