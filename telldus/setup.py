@@ -13,7 +13,7 @@ class webpack(install):
 	def run(self):
 		print("generate webpack application")
 		os.system('npm install')
-		os.system('node node_modules/webpack/bin/webpack.js -p --config webpack.production.config.js')
+		os.system('npm run deploy')
 		install.run(self)
 
 setup(
