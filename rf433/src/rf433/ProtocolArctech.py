@@ -105,7 +105,7 @@ class ProtocolArctech(Protocol):
 			code = code + ONE
 		elif method == Device.LEARN:
 			code = code + ONE
-			retval['R'] = 25
+			#retval['R'] = 25
 		else:
 			return None
 
