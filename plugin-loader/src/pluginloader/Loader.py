@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin, implements, mainthread
+from base import Plugin, implements, mainthread, ConfigurationManager
 from board import Board
 from web.base import IWebRequestHandler, WebResponseRedirect, WebResponseJson
 from telldus import IWebReactHandler
 import glob
 import gnupg
+import json
 import logging
 import os
 import pkg_resources
@@ -27,6 +28,22 @@ class LoadedPlugin(object):
 		self.name = cfg['name']
 		self.path = os.path.dirname(manifest)
 		self.packages = cfg['packages'] if 'packages' in cfg else []
+		self.classes = []
+
+	def infoObject(self):
+		configuration = ConfigurationManager(self.context)
+		configs = {}
+		for cls in self.classes:
+			cfg = configuration.configForClass(cls)
+			if cfg is None:
+				continue
+			configs['%s.%s' % (cls.__module__, cls.__name__)] = cfg
+
+		return {
+			'name': self.name,
+			'loaded': self.loaded,
+			'config': configs
+		}
 
 	def printBacktrace(self, bt):
 		for f in bt:
@@ -34,6 +51,15 @@ class LoadedPlugin(object):
 
 	def remove(self):
 		shutil.rmtree(self.path)
+
+	def saveConfiguration(self, configs):
+		configuration = ConfigurationManager(self.context)
+		for cls in self.classes:
+			name = '%s.%s' % (cls.__module__, cls.__name__)
+			if name not in configs:
+				continue
+			for key in configs[name]:
+				configuration.setValue(cls, key, configs[name][key])
 
 	def verify(self):
 		for p in self.packages:
@@ -62,7 +88,8 @@ class LoadedPlugin(object):
 			for entry in dist.get_entry_map(group='telldus.plugins'):
 				info = dist.get_entry_info('telldus.startup', entry)
 				try:
-					info.load()
+					moduleClass = info.load()
+					self.classes.append(moduleClass)
 				except Exception as e:
 					exc_type, exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(entry))
@@ -73,6 +100,7 @@ class LoadedPlugin(object):
 				info = dist.get_entry_info('telldus.startup', entry)
 				try:
 					moduleClass = info.load()
+					self.classes.append(moduleClass)
 					if issubclass(moduleClass, Plugin):
 						m = moduleClass(self.context)
 					else:
@@ -134,6 +162,14 @@ class Loader(Plugin):
 			plugin.remove()
 			del self.plugins[i]
 			return
+
+	def saveConfiguration(self, pluginName, configurations):
+		for plugin in self.plugins:
+			if plugin.name != pluginName:
+				continue
+			plugin.saveConfiguration(configurations)
+			return {'success': True}
+		raise Exception('Could not find plugin %s' % pluginName)
 
 class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
@@ -234,7 +270,7 @@ class WebFrontend(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'pluginloader':
 			return False
-		if path in ['import', 'importkey', 'keys', 'remove', 'plugins', 'upload']:
+		if path in ['import', 'importkey', 'keys', 'remove', 'plugins', 'saveConfiguration', 'upload']:
 			return True
 		return False
 
@@ -264,13 +300,7 @@ class WebFrontend(Plugin):
 			return WebResponseJson({'success': True})
 
 		if path == 'plugins':
-			return WebResponseJson([
-				{
-					'name': plugin.name,
-					'loaded': plugin.loaded
-				}
-				for plugin in Loader(self.context).plugins
-			])
+			return WebResponseJson([plugin.infoObject() for plugin in Loader(self.context).plugins])
 
 		if path == 'keys':
 			return WebResponseJson([
@@ -281,6 +311,15 @@ class WebFrontend(Plugin):
 				}
 				for key in Loader(self.context).keys
 			])
+
+		if path == 'saveConfiguration' and request.method() == 'POST':
+			plugin = params['pluginname']
+			configuration = json.loads(params['configuration'])
+			try:
+				Loader(self.context).saveConfiguration(plugin, configuration)
+			except Exception as e:
+				return WebResponseJson({'success': False, 'msg': str(e)})
+			return WebResponseJson({'success': True})
 
 		if path == 'upload' and request.method() == 'POST':
 			self.uploadPlugin(params['pluginfile'])

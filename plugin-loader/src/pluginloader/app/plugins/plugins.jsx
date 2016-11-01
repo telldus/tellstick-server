@@ -1,7 +1,8 @@
 define(
-	['react', 'react-mdl', 'telldus', 'plugins/actions', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
-function(React, ReactMDL, Telldus, Actions, KeysList, KeyImport, PluginsList, Upload ) {
+	['react', 'react-mdl', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
+function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, KeysList, KeyImport, PluginsList, Upload ) {
 	var defaultState = {
+		configure: null,
 		importingKey: {
 			keyid: null
 		},
@@ -14,6 +15,10 @@ function(React, ReactMDL, Telldus, Actions, KeysList, KeyImport, PluginsList, Up
 
 	function reducer(state = defaultState, action) {
 		switch (action.type) {
+			case 'CONFIGURATION_SAVED':
+				return {...state, configure: null};
+			case 'CONFIGURE_PLUGIN':
+				return {...state, configure: action.plugin}
 			case 'IMPORT_KEY':
 				return {...state, importingKey: action.key}
 			case 'KEY_ACCEPTED':
@@ -43,7 +48,7 @@ function(React, ReactMDL, Telldus, Actions, KeysList, KeyImport, PluginsList, Up
 			return (
 				<div>
 					<ReactMDL.Grid>
-						<ReactMDL.Cell component={ReactMDL.Card} col={3} shadow={1}>
+						<ReactMDL.Cell component={ReactMDL.Card} col={4} shadow={1}>
 							<ReactMDL.CardTitle expand>Plugins</ReactMDL.CardTitle>
 							<ReactMDL.CardText>
 								<PluginsList store={store} />
@@ -61,7 +66,7 @@ function(React, ReactMDL, Telldus, Actions, KeysList, KeyImport, PluginsList, Up
 						</ReactMDL.Cell>
 					</ReactMDL.Grid>
 					<ReactMDL.Grid>
-						<ReactMDL.Cell component={ReactMDL.Card} col={6} shadow={1}>
+						<ReactMDL.Cell component={ReactMDL.Card} col={7} shadow={1}>
 							<ReactMDL.CardTitle expand>Trusted developers</ReactMDL.CardTitle>
 							<ReactMDL.CardText>
 								<KeysList store={store} />
@@ -69,6 +74,7 @@ function(React, ReactMDL, Telldus, Actions, KeysList, KeyImport, PluginsList, Up
 						</ReactMDL.Cell>
 					</ReactMDL.Grid>
 					<KeyImport store={store} />
+					<ConfigurePlugin store={store} />
 				</div>
 			)
 		}

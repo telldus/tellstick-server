@@ -17,6 +17,8 @@ define([], function() {
 		}
 	)
 
+	const configurePlugin = (plugin) => ({ type: 'CONFIGURE_PLUGIN', plugin });
+
 	const deleteKey = (key, fingerprint) => (
 		dispatch => {
 			dispatch({type: 'DELETE_KEY'})
@@ -100,6 +102,26 @@ define([], function() {
 		}
 	)
 
+	const saveConfiguration = (plugin, configuration) => (
+		dispatch => {
+			dispatch({type: 'SAVE_CONFIGURATION', plugin, configuration})
+			var data = new FormData();
+			data.append('pluginname', plugin);
+			data.append('configuration', JSON.stringify(configuration));
+			return fetch('/pluginloader/saveConfiguration', {
+				method: 'POST',
+				credentials: 'include',
+				body: data,
+			})
+			.then(response => response.json())
+			.then(json => {
+				if (json['success'] == true) {
+					dispatch({type: 'CONFIGURATION_SAVED', plugin})
+				}
+			});
+		}
+	)
+
 	const uploadPlugin = (file) => (
 		dispatch => {
 			dispatch({type: 'UPLOAD_PLUGIN'})
@@ -130,11 +152,13 @@ define([], function() {
 
 	return {
 		acceptKey,
+		configurePlugin,
 		deleteKey,
 		deletePlugin,
 		discardKey,
 		fetchKeys,
 		fetchPlugins,
+		saveConfiguration,
 		uploadPlugin,
 	};
 });
