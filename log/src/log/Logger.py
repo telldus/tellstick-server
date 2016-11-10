@@ -1,35 +1,26 @@
 # -*- coding: utf-8 -*-
 
 from base import Plugin
-import logging, sys, time
+import logging, sys, time, os
+import logging.config, logging.handlers
 
 class PrintCollector(object):
-	def __init__(self, stdout):
-		self.stdout = stdout
+	def __init__(self, stream):
 		self.buffer = ''
+		self.stream = stream
 
 	def write(self, data, *args, **kwargs):
 		if data == "\n":
-			logging.debug(self.buffer)
+			if self.stream == 'stderr':
+				logging.error(self.buffer)
+			else:
+				logging.debug(self.buffer)
 			self.buffer = ''
 		else:
 			self.buffer = self.buffer + data
 
-class Logger(Plugin):
-	def __init__(self):
-		self.p = PrintCollector(sys.stdout)
-		self.l = Log(sys.stdout)
-		sys.stdout = self.p
-		logger = logging.getLogger()
-		logger.setLevel(logging.DEBUG)
-		logger.addHandler(self.l)
-
-class Log(logging.Handler):
-	def __init__(self, stdout):
-		super(Log,self).__init__()
-		self.stdout = stdout
-
-	def handle(self, record):
+class LogFormatter(logging.Formatter):
+	def format(self, record):
 		if (record.levelno == logging.DEBUG):
 			record.levelname = 'DBG'
 		elif (record.levelno == logging.INFO):
@@ -43,5 +34,48 @@ class Log(logging.Handler):
 		elif (record.levelno == logging.CRITICAL):
 			record.levelname = 'CRI'
 
-		logstring =  "[%s] %s %s" % (record.levelname, time.strftime("%H:%M:%S", time.localtime()), record.getMessage())
-		print >> self.stdout, logstring
+		logstring =  "[%s] %s (%s) %s" % (record.levelname, time.strftime("%H:%M:%S", time.localtime()), record.name, record.getMessage())
+		return logstring
+
+class Logger(Plugin):
+		if os.environ.get('DEFAULT_LOG_HANDLER') == 'syslog':
+			defaultLogHandler = {
+					'level':'DEBUG',
+					'class':'logging.handlers.SysLogHandler',
+					'formatter': 'standard',
+					'address': '/dev/log'
+				}
+		else:
+			defaultLogHandler = {
+					'level':'DEBUG',
+					'class':'logging.StreamHandler',
+					'formatter': 'standard',
+					'stream': 'ext://sys.__stdout__'
+				}
+
+		logging.config.dictConfig({
+			'version': 1,
+			'formatters': {
+				'standard': {
+					'()': LogFormatter,
+				},
+			},
+			'handlers': {
+				'default': defaultLogHandler,
+			},
+			'loggers': {
+				'': {
+					'handlers': ['default'],
+					'level': 'DEBUG'
+				},
+				'cherrypy.access': {
+					'propagate': True
+				},
+				'cherrypy.error': {
+					'propagate': True
+				},
+			}
+		})
+
+		sys.stdout = PrintCollector('stdout')
+		sys.stderr = PrintCollector('stderr')
