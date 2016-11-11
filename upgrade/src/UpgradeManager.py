@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import getopt, hashlib, httplib, os, sys, time
-import platform, urllib2, urlparse
+import platform, subprocess, urllib2, urlparse
 import xml.parsers.expat
-import gnupg
 from board import Board
 
 class UpgradeManager(object):
@@ -130,10 +129,14 @@ class UpgradeManager(object):
 			print "Checksum mismatch", sha1.hexdigest(), checksum
 			return False
 		# Check signature
-		gpg = gnupg.GPG(keyring='/etc/upgrade/telldus.gpg')
-		v = gpg.verify_file(open(filename), '%s.asc' % filename)
-		if v.valid is not True:
-			print "Could not verify signature:", v.status
+		retval = subprocess.call(['gpg',
+			'--verify',
+			'--no-default-keyring',
+			'--keyring', '/etc/upgrade/telldus.gpg',
+			'%s.asc' % filename
+			])
+		if retval != 0:
+			print "Could not verify signature"
 			return False
 		print "File verified successfully"
 		return True
