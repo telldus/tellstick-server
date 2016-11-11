@@ -3,6 +3,7 @@ var path = require('path');
 
 module.exports = {
 	entry: [
+		'whatwg-fetch',
 		path.resolve(__dirname, 'src/telldus/app/main.jsx'),
 		'webpack-material-design-icons'
 	],
