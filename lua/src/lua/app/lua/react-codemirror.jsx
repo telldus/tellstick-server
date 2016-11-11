@@ -13,6 +13,7 @@ define(
 			}
 			codeChanged(editor, newCode) {
 				this.props.onCodeChanged(editor.getValue());
+				editor.refresh();
 			}
 			componentWillReceiveProps(nextProps) {
 				if (this.props.code !== nextProps.code) {
