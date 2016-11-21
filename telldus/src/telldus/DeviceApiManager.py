@@ -144,8 +144,9 @@ class DeviceApiManager(Plugin):
 				'model': d.model(),
 				'sensorId': d.id()
 			}
-			if d.battery():
-				sensor['battery'] = d.battery().level
+			battery = d.battery()
+			if battery:
+				sensor['battery'] = battery
 			if includeValues:
 				data = []
 				for sensorType, values in d.sensorValues().items():

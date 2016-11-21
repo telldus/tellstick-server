@@ -56,7 +56,6 @@ class Device(object):
 	def __init__(self):
 		super(Device,self).__init__()
 		self._id = 0
-		self._battery = None
 		self._ignored = None
 		self._loadCount = 0
 		self._name = None
@@ -70,7 +69,10 @@ class Device(object):
 		return self._id
 
 	def battery(self):
-		return self._battery
+		"""
+		Returns the current battery value
+		"""
+		return None
 
 	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[], ignore=None):
 		"""This method executes a method with the device. This method must not be
@@ -170,7 +172,6 @@ class Device(object):
 		(state, stateValue) = olddevice.state()
 		self._state = state
 		self._stateValue = stateValue
-		self._battery = olddevice._battery
 		self._ignored = olddevice._ignored
 
 	def loadCount(self):
@@ -408,8 +409,6 @@ class CachedDevice(Device):
 			self._state = settings['state']
 		if 'stateValue' in settings:
 			self._stateValue = settings['stateValue']
-		if 'battery' in settings:
-			self._battery = settings['battery']
 		if 'ignored' in settings:
 			self._ignored = settings['ignored']
 

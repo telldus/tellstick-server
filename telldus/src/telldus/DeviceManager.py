@@ -159,8 +159,9 @@ class DeviceManager(Plugin):
 			'model': device.model(),
 			'sensor_id': device.id(),
 		}
-		if device.battery():
-			sensor['battery'] = device.battery().level
+		battery = device.battery()
+		if battery is not None:
+			sensor['battery'] = battery
 		msg.append(sensor)
 		values = device.sensorValues()
 		valueList = []
@@ -368,8 +369,9 @@ class DeviceManager(Plugin):
 				'transport': d.typeString(),
 				'ignored': d.ignored()
 			}
-			if d.battery():
-				device['battery'] = d.battery().level
+			battery = d.battery()
+			if battery is not None:
+				device['battery'] = battery
 			l.append(device)
 		msg = LiveMessage("DevicesReport")
 		msg.append(l)
@@ -408,8 +410,9 @@ class DeviceManager(Plugin):
 				'model': d.model(),
 				'sensor_id': d.id(),
 			}
-			if d.battery():
-				sensor['battery'] = d.battery().level
+			battery = d.battery()
+			if battery is not None:
+				sensor['battery'] = battery
 			sensorFrame.append(sensor)
 			valueList = []
 			# TODO(micke): Add current values
