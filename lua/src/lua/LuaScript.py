@@ -4,7 +4,7 @@ from base import Application
 from web.base import Server
 from lupa import LuaRuntime, lua_type
 from threading import Thread, Condition, Lock, Timer
-import os, types
+import os, types, weakref
 
 # Whitelist functions known to be safe.
 safeFunctions = {
@@ -84,6 +84,30 @@ class SleepingLuaThread(LuaThread):
 		self.timer = Timer(self.ms/1000.0, cb)
 		self.timer.start()
 
+class LuaFunctionWrapper(object):
+	def __init__(self, script, cb):
+		self.script = script
+		self.cb = cb
+		self.destructionHandlers = []
+
+	def __del__(self):
+		self.script.gcReferences()
+
+	def __call__(self, *args):
+		if self.cb is None:
+			return
+		self.script.callFunc(self.cb, *args)
+
+	def abort(self):
+		self.script = None
+		self.cb = None
+		for cb, args, kwargs in self.destructionHandlers:
+			Application().queue(cb, *args, **kwargs)
+		self.destructionHandlers[:] = []
+
+	def registerDestructionHandler(self, cb, *args, **kwargs):
+		self.destructionHandlers.append((cb, args, kwargs,))
+
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
@@ -93,6 +117,7 @@ class LuaScript(object):
 		self.context = context
 		self.runningLuaThread = None
 		self.runningLuaThreads = []
+		self.references = []
 		self.__allowedSignals = []
 		self.__queue = []
 		self.__thread = Thread(target=self.__run, name=self.name)
@@ -112,6 +137,19 @@ class LuaScript(object):
 			self.__threadLock.notifyAll()
 		finally:
 			self.__threadLock.release()
+
+	def callFunc(self, func, *args):
+		if self.state() not in [LuaScript.RUNNING, LuaScript.IDLE]:
+			return
+		self.__threadLock.acquire()
+		try:
+			self.__queue.append((func, args))
+			self.__threadLock.notifyAll()
+		finally:
+			self.__threadLock.release()
+
+	def gcReferences(self):
+		self.references[:] = [r for r in self.references if r() is not None]
 
 	def load(self):
 		self.reload()
@@ -159,6 +197,10 @@ class LuaScript(object):
 					for t in self.runningLuaThreads:
 						t.abort()
 					self.runningLuaThreads = []
+					for r in self.references:
+						if r() is not None:
+							r().abort()
+					self.references[:] = []
 				else:
 					self.__threadLock.wait(300)
 			finally:
@@ -175,6 +217,8 @@ class LuaScript(object):
 					self.runningLuaThread = fn.coroutine(*args)
 				elif lua_type(name) == 'thread':
 					self.runningLuaThread = name
+				elif lua_type(name) == 'function':
+					self.runningLuaThread = name.coroutine(*args)
 				else:
 					continue
 				try:
