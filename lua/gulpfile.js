@@ -38,5 +38,5 @@ gulp.task('scripts', ['jsx', 'js'], function () {
 });
 
 gulp.task('watch', ['default'], function() {
-	gulp.watch('src/lua/app/*.jsx', ['default']);
+	gulp.watch('src/lua/app/**/*.jsx', ['default']);
 });
