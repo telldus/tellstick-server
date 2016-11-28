@@ -2,6 +2,7 @@
 
 import os
 import json
+import logging
 import time
 from Application import Application
 from configobj import ConfigObj
@@ -23,7 +24,7 @@ class Settings(object):
 			if not os.path.exists(self.configPath):
 				os.makedirs(self.configPath)
 			self.configFilename = 'Telldus.conf'
-			Settings._config = ConfigObj(self.configPath + '/' + self.configFilename)
+			self.__loadFile()
 			Application().registerShutdown(self.__shutdown)
 		if section not in Settings._config:
 			Settings._config[section] = {}
@@ -37,6 +38,15 @@ class Settings(object):
 		if type(default) == int:
 			v = int(v)
 		return v
+
+	def __loadFile(self):
+		try:
+			Settings._config = ConfigObj(self.configPath + '/' + self.configFilename)
+		except:
+			logging.critical('Could not load settings file!')
+			# Start with empty one
+			Settings._config = ConfigObj()
+			Settings._config.filename = self.configPath + '/' + self.configFilename
 
 	def __shutdown(self):
 		if Settings._writeTimer is not None:
