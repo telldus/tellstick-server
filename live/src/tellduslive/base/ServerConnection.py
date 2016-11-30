@@ -113,23 +113,26 @@ class ServerConnection(object):
 			self.close()
 
 	def _readSSL(self):
-		try:
-			resp = self.socket.recv(1024)
-		except ssl.SSLError, e:
-			if e.args[0] == ssl.SSL_ERROR_WANT_READ:
-				pass
-			logging.error("SSLSocket error: %s", str(e))
-			return None
-		except socket.error as e:
-			# Timeout
-			logging.error("Socket error: %s", str(e))
-			return None
-		except Exception as e:
-			logging.error(str(e))
-		dataLeft = self.socket.pending()
-		while dataLeft:
-			resp += self.socket.recv(dataLeft)
-			dataLeft = self.socket.pending()
+		hasMoreData = True
+		resp = ''
+		buffSize = 1024
+		while (hasMoreData):
+			try:
+				data = self.socket.recv(buffSize)
+			except ssl.SSLError, e:
+				if e.args[0] != ssl.SSL_ERROR_WANT_READ:
+					logging.error("SSLSocket error: %s", str(e))
+				return None
+			except socket.error as e:
+				# Timeout
+				logging.error("Socket error: %s", str(e))
+				return None
+			except Exception as e:
+				logging.error(str(e))
+				return None
+			if (len(data) < buffSize):
+				hasMoreData = False
+			resp += data
 		return resp
 
 	def _read(self):
