@@ -16,7 +16,7 @@ class ProtocolKangtai(Protocol):
 		else:
 			return self.stringForMethodOnOff(method, data)
 
-	def getStringForMethodOnOff(self, method, data):
+	def stringForMethodOnOff(self, method, data):
 		ZERO = chr(37)+chr(112)
 		ONE = chr(112)+chr(37)
 
