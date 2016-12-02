@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from api import IApiCallHandler, apicall
 from base import Application, Plugin, SignalManager, ISignalObserver, implements, slot, signal
 from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
@@ -28,6 +29,7 @@ class Lua(Plugin):
 	implements(IWebRequestHandler)
 	implements(IWebReactHandler)
 	implements(ISignalObserver)
+	implements(IApiCallHandler)
 
 	def __init__(self):
 		self.scripts = []
@@ -36,6 +38,26 @@ class Lua(Plugin):
 		self.fileobserver.schedule(FileChangedHandler(self), Board.luaScriptPath())
 		self.fileobserver.start()
 		Application().registerShutdown(self.shutdown)
+
+	@apicall('lua', 'call')
+	def apiCallFunction(self, script, function, **kwargs):
+		"""
+		Calls a lua function in a script. Required methods:
+		  script: The name of the script. With or witout the .lua extension.
+		  function: The name of the function to call.
+		
+		Any extra parameters will be sent to the function as a lua table as the
+		first parameter.
+		"""
+		if not script.endswith('.lua'):
+			script = '%s.lua' % script
+		for s in self.scripts:
+			if s.name != script:
+				continue
+			if not s.call(function, kwargs):
+				raise Exception('Script %s does not define function "%s"' % (script, function))
+			return True
+		raise Exception('Script %s not found' % script)
 
 	def fileCreated(self, filename):
 		if not filename.endswith('.lua'):

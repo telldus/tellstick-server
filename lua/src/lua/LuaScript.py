@@ -128,15 +128,16 @@ class LuaScript(object):
 
 	def call(self, name, *args):
 		if self.state() not in [LuaScript.RUNNING, LuaScript.IDLE]:
-			return
+			return False
 		if name not in self.__allowedSignals:
-			return
+			return False
 		self.__threadLock.acquire()
 		try:
 			self.__queue.append((name, args))
 			self.__threadLock.notifyAll()
 		finally:
 			self.__threadLock.release()
+		return True
 
 	def callFunc(self, func, *args):
 		if self.state() not in [LuaScript.RUNNING, LuaScript.IDLE]:
@@ -212,7 +213,11 @@ class LuaScript(object):
 				self.__load()
 			elif task is not None:
 				name, args = task
-				if type(name) == str:
+				args = list(args)
+				for i, arg in enumerate(args):
+					if type(arg) == dict:
+						args[i] = self.lua.table_from(arg)
+				if type(name) == str or type(name) == unicode:
 					fn = getattr(self.lua.globals(), name)
 					self.runningLuaThread = fn.coroutine(*args)
 				elif lua_type(name) == 'thread':
@@ -249,8 +254,7 @@ class LuaScript(object):
 			# the interpreter from any other thread. That leads to locks.
 			self.__allowedSignals = []
 			for func in self.lua.globals():
-				if func.startswith('on'):
-					self.__allowedSignals.append(func)
+				self.__allowedSignals.append(func)
 			self.__setState(LuaScript.IDLE)
 			# Allow script to initialize itself
 			self.call('onInit')
