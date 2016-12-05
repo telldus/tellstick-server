@@ -119,20 +119,21 @@ class ServerConnection(object):
 		while (hasMoreData):
 			try:
 				data = self.socket.recv(buffSize)
+				if (len(data) < buffSize):
+					hasMoreData = False
+				resp += data
 			except ssl.SSLError, e:
-				if e.args[0] != ssl.SSL_ERROR_WANT_READ:
+				if e.args[0] == ssl.SSL_ERROR_WANT_READ:
+					pass
+				else:
 					logging.error("SSLSocket error: %s", str(e))
-				return None
+					return None
 			except socket.error as e:
-				# Timeout
 				logging.error("Socket error: %s", str(e))
 				return None
 			except Exception as e:
 				logging.error(str(e))
 				return None
-			if (len(data) < buffSize):
-				hasMoreData = False
-			resp += data
 		return resp
 
 	def _read(self):
