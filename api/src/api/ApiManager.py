@@ -2,12 +2,12 @@
 
 from base import IInterface, ObserverCollection, Plugin, Settings, implements
 from web.base import IWebRequestHandler, WebResponseJson
+from telldus import IWebReactHandler
 from board import Board
-from pkg_resources import resource_filename
 from jose import jwt, JWSError
 from pbkdf2 import PBKDF2, crypt
 from Crypto.Cipher import AES
-import base64, os, time, uuid
+import base64, json, os, time, uuid
 import logging
 
 class IApiCallHandler(IInterface):
@@ -15,6 +15,7 @@ class IApiCallHandler(IInterface):
 
 class ApiManager(Plugin):
 	implements(IWebRequestHandler)
+	implements(IWebReactHandler)
 
 	observers = ObserverCollection(IApiCallHandler)
 
@@ -22,22 +23,58 @@ class ApiManager(Plugin):
 		self.tokens = {}
 		self.tokenKey = None
 
-	def getTemplatesDirs(self):
-		return [resource_filename('api', 'templates')]
+	def doCall(self, module, action, app, params):
+		for o in self.observers:
+			fn = getattr(o, '_apicalls', {}).get(module, {}).get(action, None)
+			if fn is None:
+				continue
+			try:
+				params['app'] = app
+				retval = fn(o, **params)
+			except Exception as e:
+				logging.exception(e)
+				raise e
+			if retval == True:
+				retval = {'status': 'success'}
+			return retval
+		raise Exception('The method %s/%s does not exist' % (module, action))
+
+	def getReactRoutes(self):
+		return [{
+			'name': 'api',
+			'script': 'api/api.js'
+		}, {
+			'name': 'api/authorize',
+			'script': 'api/authorize.js'
+		}]
 
 	def matchRequest(self, plugin, path):
 		if plugin != 'api':
 			return False
+		if path == '':
+			return False  # Handled by react
 		return True
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
-		if path == '':
+		if path == 'explore':
+			if 'params' in params and type(params['params']) is unicode:
+				params['params'] = json.loads(params['params'])
+			try:
+				return WebResponseJson(self.doCall(params['module'], params['action'], 'Explorer', params['params']))
+			except Exception as e:
+				return WebResponseJson({'error': str(e)}, statusCode=500)
+
+		if path == 'methods':
 			methods = {}
 			for o in self.observers:
 				for module, actions in getattr(o, '_apicalls', {}).iteritems():
 					for action, fn in actions.iteritems():
-						methods.setdefault(module, {})[action] = {'doc': fn.__doc__}
-			return 'index.html', {'methods': methods}
+						methods.setdefault(module, {})[action] = {
+							'doc': fn.__doc__.strip(),
+							'args': list(fn.func_code.co_varnames)[1:fn.func_code.co_argcount],
+						}
+			return WebResponseJson(methods)
+
 		if path == 'token':
 			if request.method() == 'PUT':
 				token = uuid.uuid4().hex
@@ -73,17 +110,23 @@ class ApiManager(Plugin):
 				})
 				del self.tokens[token]
 				return resp
-		if path == 'authorize':
-			if 'token' not in params:
+
+		if path in ['tokenInfo', 'authorizeToken']:
+			token = None
+			if request.method() == 'POST':
+				token = request.post('token', None)
+			elif 'token' in params:
+				token = params['token']
+			if token is None:
 				return WebResponseJson({'error': 'No token specified'}, statusCode=400)
-			token = params['token']
 			if token not in self.tokens:
 				return WebResponseJson({'error': 'No such token'}, statusCode=404)
-			if request.method() == 'POST':
+			if path == 'authorizeToken' and request.method() == 'POST':
 				self.tokens[token]['authorized'] = True
-				self.tokens[token]['allowRenew'] = bool(request.post('extend', False))
+				self.tokens[token]['allowRenew'] = bool(int(request.post('extend', 0)))
 				self.tokens[token]['ttl'] = int(request.post('ttl', 0))*60
-			return 'authorize.html', {'token': self.tokens[token]}
+				self.tokens[token]['extned'] = request.post('extend')
+			return WebResponseJson(self.tokens[token])
 
 		# Check authorization
 		token = request.header('Authorization')
@@ -124,27 +167,15 @@ class ApiManager(Plugin):
 		paths = path.split('/')
 		if len(paths) < 2:
 			return None
-		module = paths[0]
-		action = paths[1]
-		for o in self.observers:
-			fn = getattr(o, '_apicalls', {}).get(module, {}).get(action, None)
-			if fn is None:
-				continue
-			try:
-				params['app'] = aud
-				retval = fn(o, **params)
-			except Exception as e:
-				logging.exception(e)
-				return WebResponseJson({'error': str(e)})
-			if retval == True:
-				retval = {'status': 'success'}
-			return WebResponseJson(retval)
-		return WebResponseJson({'error': 'The method %s/%s does not exist' % (module, action)}, statusCode=404)
+		try:
+			return WebResponseJson(self.doCall(paths[0], paths[1], aud, params))
+		except Exception as e:
+			return WebResponseJson({'error': str(e)}, statusCode=404)
 
 	def requireAuthentication(self, plugin, path):
 		if plugin != 'api':
 			return
-		if path in ['', 'authorize']:
+		if path in ['authorizeToken', 'explore', 'methods', 'tokenInfo']:
 			return True
 		return False
 
