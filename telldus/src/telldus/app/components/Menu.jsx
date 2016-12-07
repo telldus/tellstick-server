@@ -9,11 +9,11 @@ class Menu extends React.Component {
 	}
 
 	render() {
-		var nodes = this.props.plugins.map(function(plugin) {
-			return (
-				<Link to={`${plugin.path}`} activeClassName="is-active" key={plugin.name}>{plugin.title}</Link>
-			);
-		});
+		let nodes = this.props.plugins.reduce( (a, b) => (
+			b.title ? a.concat(b) : a
+		), []).map(plugin => (
+			<Link to={`${plugin.path}`} activeClassName="is-active" key={plugin.name}>{plugin.title}</Link>
+		));
 		return (
 			<Provider store={this.props.store}>
 				<Navigation>
