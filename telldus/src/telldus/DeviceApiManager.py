@@ -198,11 +198,11 @@ class DeviceApiManager(Plugin):
 		}
 
 	@apicall('sensor', 'setName')
-	def sensorSetName(self, **kwargs):
+	def sensorSetName(self, id, name, **kwargs):
 		"""
 		Renames a sensor
 		"""
-		return self.deviceSetName(**kwargs)
+		return self.deviceSetName(id, name, **kwargs)
 
 	def __retrieveDevice(self, deviceId):
 		deviceManager = DeviceManager(self.context)
