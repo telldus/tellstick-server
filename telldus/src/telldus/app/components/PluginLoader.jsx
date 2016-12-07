@@ -54,7 +54,7 @@ class PluginLoader extends React.Component {
 			packages.push({
 				'name': this.props.plugins[i].name,
 				'main': path.substr(index+1),
-				'location': path.substr(0, index)
+				'location': '/' + path.substr(0, index)
 			})
 		}
 		var dynamicComponent = this;
