@@ -154,7 +154,10 @@ class TelldusLive(Plugin):
 		self.email = ''
 		self.connected = False
 		self.registered = False
-		self.observers.liveDisconnected()
+		def sendNotification():
+			self.observers.liveDisconnected()
+		# Syncronize signal with main thread
+		Application().queue(sendNotification)
 
 	@staticmethod
 	def handler(message):
