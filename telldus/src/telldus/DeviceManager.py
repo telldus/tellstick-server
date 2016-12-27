@@ -99,12 +99,14 @@ class DeviceManager(Plugin):
 				return d
 		return None
 
+	@mainthread
 	def finishedLoading(self, type):
 		""" Finished loading all devices of this type. If there are any unconfirmed, these should be deleted """
 		for device in self.devices:
 			if device.typeString() == type and not device.confirmed():
 				self.removeDevice(device.id())
 
+	@mainthread
 	def removeDevice(self, deviceId):
 		"""Removes a device.
 
