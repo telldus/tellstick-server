@@ -368,7 +368,7 @@ class LuaScript(object):
 					self.p("Error during call: %s", retval['error'])
 					raise AttributeError(retval['error'])
 				elif 'return' in retval:
-					if type(retval) is dict:
+					if type(retval['return']) is dict:
 						# Wrap to lua table
 						return self.lua.table_from(retval['return'])
 					return retval['return']
