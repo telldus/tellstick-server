@@ -350,6 +350,12 @@ class LuaScript(object):
 			# We are in the script thread here, we must syncronize with the main
 			# thread before calling the attribute
 			condition.acquire()
+			args = list(args)
+			for i, arg in enumerate(args):
+				if lua_type(arg) == 'function':
+					t = LuaFunctionWrapper(self, arg)
+					args[i] = t
+					self.references.append(weakref.ref(t))
 			try:
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
