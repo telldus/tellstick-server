@@ -351,6 +351,11 @@ class LuaScript(object):
 			# thread before calling the attribute
 			condition.acquire()
 			args = list(args)
+			if len(args) >= 2 and lua_type(args[1]) == 'table':
+				# First parameter is a lua table. Handle this as **kwargs call
+				kwargs = dict(args[1])
+				del args[1]
+			# TODO: Also loop through kwargs and look for lua types
 			for i, arg in enumerate(args):
 				if lua_type(arg) == 'function':
 					t = LuaFunctionWrapper(self, arg)
