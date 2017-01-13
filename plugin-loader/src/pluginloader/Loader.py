@@ -86,7 +86,7 @@ class LoadedPlugin(object):
 			logging.warning("Loading plugin %s %s", dist.project_name, dist.version)
 			dist.activate()
 			for entry in dist.get_entry_map(group='telldus.plugins'):
-				info = dist.get_entry_info('telldus.startup', entry)
+				info = dist.get_entry_info('telldus.plugins', entry)
 				try:
 					moduleClass = info.load()
 					self.classes.append(moduleClass)
