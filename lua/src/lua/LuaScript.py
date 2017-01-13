@@ -365,6 +365,7 @@ class LuaScript(object):
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
 				if 'error' in retval:
+					self.p("Error during call: %s", retval['error'])
 					raise AttributeError(retval['error'])
 				elif 'return' in retval:
 					return retval['return']
