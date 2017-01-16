@@ -108,6 +108,26 @@ class LuaFunctionWrapper(object):
 	def registerDestructionHandler(self, cb, *args, **kwargs):
 		self.destructionHandlers.append((cb, args, kwargs,))
 
+class PythonObjectWrapper(object):
+	"""
+	On some plattforms python segfaults then we return the python plugin
+	from the require function.
+	This dummy wrapper object seems to solve this issue. Feel free to remove
+	when the actual issue is resolved.
+	"""
+	def __init__(self, obj):
+		self.obj = obj
+
+	def __getitem__(self, item):
+		"""This function seems to be key for the segfaults to not occur"""
+		pass
+
+	def __getattr__(self, attr):
+		method = getattr(self.obj, attr)
+		def fn(self, *args, **kwargs):
+			method(*args, **kwargs)
+		return fn
+	
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
@@ -286,7 +306,8 @@ class LuaScript(object):
 		return True
 
 	def __require(self, plugin):
-		return self.context.request(plugin)
+		obj = self.context.request(plugin)
+		return PythonObjectWrapper(obj) if obj is not None else None
 
 	def __sandboxInterpreter(self):
 		for obj in self.lua.globals():
