@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
-function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginsList, Upload ) {
+	['react', 'react-mdl', 'react-redux', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
+function(React, ReactMDL, ReactRedux, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginsList, Upload ) {
 	var defaultState = {
 		configure: null,
 		importingKey: {
@@ -53,7 +53,7 @@ function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysL
 						<ReactMDL.Cell component={ReactMDL.Card} col={4} shadow={1}>
 							<ReactMDL.CardTitle expand>Plugins</ReactMDL.CardTitle>
 							<ReactMDL.CardText>
-								<PluginsList store={store} />
+								<PluginsList />
 							</ReactMDL.CardText>
 						</ReactMDL.Cell>
 						<ReactMDL.Cell component={ReactMDL.Card} col={3} shadow={1}>
@@ -63,25 +63,34 @@ function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysL
 								load a new plugin
 							</ReactMDL.CardText>
 							<ReactMDL.CardActions>
-								<Upload store={store} />
+								<Upload />
 							</ReactMDL.CardActions>
 						</ReactMDL.Cell>
 					</ReactMDL.Grid>
-					{/*<ReactMDL.Grid>
+					{this.props.keyLength > 0 && <ReactMDL.Grid>
 						<ReactMDL.Cell component={ReactMDL.Card} col={7} shadow={1}>
 							<ReactMDL.CardTitle expand>Trusted developers</ReactMDL.CardTitle>
 							<ReactMDL.CardText>
-								<KeysList store={store} />
+								<KeysList />
 							</ReactMDL.CardText>
 						</ReactMDL.Cell>
-					</ReactMDL.Grid>*/}
-					<KeyImport store={store} />
-					<ConfigurePlugin store={store} />
-					<ErrorMessage store={store} />
+					</ReactMDL.Grid>}
+					<KeyImport />
+					<ConfigurePlugin />
+					<ErrorMessage />
 				</div>
 			)
 		}
 	};
 
-	return PluginsApp;
+	const mapStateToProps = (state) => ({
+		keyLength: state.keys.length,
+	})
+	var WrappedPluginsApp = ReactRedux.connect(mapStateToProps)(PluginsApp);
+
+	return () => (
+		<ReactRedux.Provider store={store}>
+			<WrappedPluginsApp />
+		</ReactRedux.Provider>
+	)
 });
