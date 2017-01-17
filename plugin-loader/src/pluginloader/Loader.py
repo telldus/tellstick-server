@@ -183,6 +183,7 @@ class WebFrontend(Plugin):
 		}]
 
 	def importKey(self, acceptKeyId):
+		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
 		filename = '%s/staging.zip' % Board.pluginPath()
 		if not os.path.exists(filename):
 			return {'success': False, 'msg': 'No plugin uploaded'}
@@ -239,8 +240,9 @@ class WebFrontend(Plugin):
 					os.unlink(p)
 				if result.pubkey_fingerprint is None and result.username is None:
 					# No public key for this plugin
-					return {'success': False, 'key': self.importKey(None)}
-				raise ImportError('Could not verify plugin')
+					#return {'success': False, 'key': self.importKey(None)}
+					pass #  Do not allow importing of custom keys yet.
+				raise ImportError('Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.')
 			path = '%s/%s' % (Board.pluginPath(), cfg['name'])
 			if os.path.exists(path):
 				# Wipe any old plugin

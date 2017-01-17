@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
-function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, KeysList, KeyImport, PluginsList, Upload ) {
+	['react', 'react-mdl', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
+function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginsList, Upload ) {
 	var defaultState = {
 		configure: null,
 		importingKey: {
@@ -19,6 +19,8 @@ function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, KeysList, KeyImport
 				return {...state, configure: null};
 			case 'CONFIGURE_PLUGIN':
 				return {...state, configure: action.plugin}
+			case 'DISCARD_ERROR':
+				return {...state, uploadErrorMsg: ''}
 			case 'IMPORT_KEY':
 				return {...state, importingKey: action.key}
 			case 'KEY_ACCEPTED':
@@ -65,16 +67,17 @@ function(React, ReactMDL, Telldus, Actions, ConfigurePlugin, KeysList, KeyImport
 							</ReactMDL.CardActions>
 						</ReactMDL.Cell>
 					</ReactMDL.Grid>
-					<ReactMDL.Grid>
+					{/*<ReactMDL.Grid>
 						<ReactMDL.Cell component={ReactMDL.Card} col={7} shadow={1}>
 							<ReactMDL.CardTitle expand>Trusted developers</ReactMDL.CardTitle>
 							<ReactMDL.CardText>
 								<KeysList store={store} />
 							</ReactMDL.CardText>
 						</ReactMDL.Cell>
-					</ReactMDL.Grid>
+					</ReactMDL.Grid>*/}
 					<KeyImport store={store} />
 					<ConfigurePlugin store={store} />
+					<ErrorMessage store={store} />
 				</div>
 			)
 		}

@@ -51,6 +51,12 @@ define([], function() {
 		}
 	)
 
+	const discardError = () => (
+		dispatch => {
+			dispatch({type: 'DISCARD_ERROR'})
+		}
+	)
+
 	const discardKey = () => (
 		dispatch => {
 			dispatch({type: 'DISCARD_KEY'})
@@ -155,6 +161,7 @@ define([], function() {
 		configurePlugin,
 		deleteKey,
 		deletePlugin,
+		discardError,
 		discardKey,
 		fetchKeys,
 		fetchPlugins,

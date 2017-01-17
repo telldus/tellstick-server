@@ -33,7 +33,6 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint ) {
 					</form>
 					<ReactMDL.Button raised onClick={() => this.upload()} disabled={this.state.file == null}>Upload</ReactMDL.Button>
 					<ReactMDL.Spinner style={{display: (this.props.uploading ? '' : 'none')}}/>
-					{this.props.errorMsg}
 				</div>
 			)
 		}
@@ -41,11 +40,9 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint ) {
 
 	Upload.propTypes = {
 		uploading: React.PropTypes.bool.isRequired,
-		errorMsg: React.PropTypes.string,
 	};
 	const mapStateToProps = (state) => ({
 		uploading: state.uploading,
-		errorMsg: state.uploadErrorMsg,
 	});
 	const mapDispatchToProps = (dispatch) => ({
 	});
