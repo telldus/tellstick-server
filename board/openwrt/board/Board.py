@@ -46,6 +46,10 @@ class Board(object):
 				'type': 'led',
 				'port': 'tellstick:green:status'
 			},
+			'status:blue': {
+				'type': 'led',
+				'port': 'tellstick:blue:status'
+			},
 			'zwave:reset': {'type': 'none'},
 		}
 
