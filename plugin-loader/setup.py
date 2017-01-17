@@ -12,8 +12,10 @@ import os
 class buildweb(install):
 	def run(self):
 		print("generate web application")
-		os.system('npm install')
-		os.system('npm run build')
+		if os.system('npm install') != 0:
+			raise Exception("Could not install npm packages")
+		if os.system('npm run build') != 0:
+			raise Exception("Could not build web application")
 		install.run(self)
 
 setup(
