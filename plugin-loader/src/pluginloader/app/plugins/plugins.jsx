@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'telldus', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
-function(React, ReactMDL, ReactRedux, Telldus, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginsList, Upload ) {
+	['react', 'react-mdl', 'react-redux', 'telldus', 'websocket', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/pluginslist', 'plugins/upload'],
+function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginsList, Upload ) {
 	var defaultState = {
 		configure: null,
 		importingKey: {
@@ -29,6 +29,8 @@ function(React, ReactMDL, ReactRedux, Telldus, Actions, ConfigurePlugin, ErrorMe
 				return {...state, importingKey: {...defaultState.importingKey}, uploading: false}
 			case 'PLUGIN_UPLOADED':
 				return {...state, uploading: false, uploadErrorMsg: ''}
+			case 'PLUGIN_INFO_RECEIVED':
+				return {...state, plugins: state.plugins.map(plugin => (plugin.name == action.info.name ? action.info : plugin))}
 			case 'RECEIVE_KEYS':
 				return {...state, keys: action.keys};
 			case 'RECEIVE_PLUGINS':
@@ -44,6 +46,10 @@ function(React, ReactMDL, ReactRedux, Telldus, Actions, ConfigurePlugin, ErrorMe
 	var store = Telldus.createStore(reducer)
 	store.dispatch(Actions.fetchPlugins());
 	store.dispatch(Actions.fetchKeys());
+	var websocket = new WebSocket();
+	websocket.onMessage('plugins', 'pluginInfo', (module, action, data) => {
+		store.dispatch(Actions.pluginInfoReceived(data));
+	});
 
 	class PluginsApp extends React.Component {
 		render() {

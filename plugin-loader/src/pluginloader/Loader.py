@@ -2,7 +2,7 @@
 
 from base import Plugin, implements, mainthread, ConfigurationManager
 from board import Board
-from web.base import IWebRequestHandler, WebResponseRedirect, WebResponseJson
+from web.base import Server, IWebRequestHandler, WebResponseRedirect, WebResponseJson
 from telldus import IWebReactHandler
 import glob
 import gnupg
@@ -80,6 +80,8 @@ class LoadedPlugin(object):
 		# TODO: Do not just set the loaded flag here. Make sure the eggs where loaded and store any
 		# backtrace if the loading failed.
 		self.loaded = True
+		# Push new info to web
+		Server(self.context).webSocketSend('plugins', 'pluginInfo', self.infoObject())
 
 	def __loadEgg(self, egg):
 		for dist in pkg_resources.find_distributions('%s/%s' % (self.path, egg)):

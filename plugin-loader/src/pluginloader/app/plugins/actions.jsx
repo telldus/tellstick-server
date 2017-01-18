@@ -108,6 +108,8 @@ define([], function() {
 		}
 	)
 
+	const pluginInfoReceived = (info) => ({ type: 'PLUGIN_INFO_RECEIVED', info })
+
 	const saveConfiguration = (plugin, configuration) => (
 		dispatch => {
 			dispatch({type: 'SAVE_CONFIGURATION', plugin, configuration})
@@ -165,6 +167,7 @@ define([], function() {
 		discardKey,
 		fetchKeys,
 		fetchPlugins,
+		pluginInfoReceived,
 		saveConfiguration,
 		uploadPlugin,
 	};

@@ -23,6 +23,7 @@ gulp.task('scripts', ['babel'], function () {
 				'react-redux': 'empty:',
 				'dialog-polyfill': 'empty:',
 				'telldus': 'empty:',
+				'websocket': 'empty:',
 			},
 			baseUrl: 'src/pluginloader/build',
 			name: 'plugins/plugins'
