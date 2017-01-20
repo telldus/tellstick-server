@@ -124,7 +124,7 @@ case $1 in
 	shell)
 		echo "Starting sandboxed shell"
 		PS1='(TellStick) \[\033[01;32m\]\u@\h\[\033[01;34m\] \$\[\033[00m\] '
-		bash
+		sh
 	;;
 	uninstall)
 		pip uninstall $2
