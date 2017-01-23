@@ -19,6 +19,20 @@ buildDocs() {
 	sphinx-build -b html -d build/doctrees   docs build/html
 }
 
+buildPlugin() {
+	PLUGINPATH=$(getAbsolutePath "$1")
+	shift
+	echo "Building plugin $PLUGINPATH"
+	cd $PLUGINPATH
+	OUT=`python setup.py telldus_plugin "$@"`
+	local EXIT_CODE=$?
+	if [ $EXIT_CODE -ne 0 ]; then
+		echo $OUT
+		echo "Could not build plugin"
+		exit
+	fi
+}
+
 checkPrerequisites() {
 	VIRTUALENV=`which virtualenv`
 	if [ "$VIRTUALENV" == "" ]; then
@@ -56,6 +70,9 @@ printHelp() {
 	echo
 	echo -e "Command chould be one of:"
 	echo -e "  build-docs:\tBuilds the documentation to build/html"
+	echo -e "  build-plugin:\tBuild a distributable plugin from a plugin dir. Usage:"
+	echo -e "  \t\t  $0 build-plugin [path-to-plugin]"
+	echo -e "  \t\t  where [path-to-plugin] should be the path to the plungins root folder"
 	echo -e "  help:\t\tShows this help"
 	echo -e "  install:\tInstall a plugin. Usage:"
 	echo -e "  \t\t  $0 install [path-to-plugin]"
@@ -79,7 +96,7 @@ run() {
 }
 
 setup() {
-	PLUGINS="api base board developer live log telldus web"
+	PLUGINS="api base board developer live log sdk telldus web"
 	for plugin in $PLUGINS; do
 		PLUGINPATH="$BASEDIR/$plugin"
 		installPlugin $PLUGINPATH
@@ -104,6 +121,10 @@ case $1 in
 	build-docs)
 		echo "Building docs"
 		buildDocs
+	;;
+	build-plugin)
+		shift
+		buildPlugin "$@"
 	;;
 	help)
 		printHelp
