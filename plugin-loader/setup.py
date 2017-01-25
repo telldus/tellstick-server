@@ -25,7 +25,8 @@ setup(
 	package_dir = {'':'src'},
 	cmdclass={'install': buildweb},
 	entry_points={ \
-		'telldus.startup': ['c = pluginloader:Loader [cREQ]']
+		'telldus.startup': ['c = pluginloader:Loader [cREQ]'],
+		'telldus.plugins': ['c = pluginloader:WebFrontend [cREQ]'],
 	},
 	extras_require = dict(cREQ = 'Base>=0.1\nTelldusWeb>=0.1'),
 	package_data={'pluginloader' : [
