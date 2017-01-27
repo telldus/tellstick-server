@@ -12,8 +12,10 @@ class Device(object):
 	TURNON  = 1  #: Device flag for devices supporting the on method.
 	TURNOFF = 2  #: Device flag for devices supporting the off method.
 	BELL = 4     #: Device flag for devices supporting the bell method.
+	TOGGLE = 8   #: Device flag for devices supporting the toggle method.
 	DIM = 16     #: Device flag for devices supporting the dim method.
 	LEARN = 32   #: Device flag for devices supporting the learn method.
+	EXECUTE = 64 #: Device flag for devices supporting the execute method.
 	UP = 128     #: Device flag for devices supporting the up method.
 	DOWN = 256   #: Device flag for devices supporting the down method.
 	STOP = 512   #: Device flag for devices supporting the stop method.
