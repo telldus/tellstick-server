@@ -8,6 +8,7 @@ import 'react-mdl/extra/material.js';
 import 'dialog-polyfill/dialog-polyfill.css';
 
 import Menu from './Menu'
+import Logo from './Logo'
 
 export class Index extends React.Component {
 	render() {
@@ -24,10 +25,9 @@ export class About extends React.Component {
 export default class App extends React.Component {
 	render() {
 		return (
-			<Layout fixedDrawer fixedHeader style={{zIndex: 100001}}>
-				<Header transparent title="TellStick Local Access" style={{background: '#1b365d'}}>
-				</Header>
-				<Drawer title="Main Menu">
+			<Layout fixedDrawer style={{zIndex: 100001}}>
+				<Drawer>
+					<Logo />
 					<Menu store={this.props.route.store} />
 				</Drawer>
 				<Content>
