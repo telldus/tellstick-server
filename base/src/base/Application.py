@@ -197,6 +197,9 @@ class Application(object):
 
 	@staticmethod
 	def signal(msg, *args, **kwargs):
+		"""Send a global signal to registered slots.
+		It is not recommended to call this method directly but instead use the signal decorator
+		"""
 		signalManager = SignalManager(Application._instance.pluginContext)
 		signalManager.sendSignal(msg, *args, **kwargs)
 
