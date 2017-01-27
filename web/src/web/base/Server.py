@@ -92,6 +92,15 @@ class WebResponseJson(WebResponse):
 	def output(self, response):
 		response.headers['Content-Type'] = 'application/json; charset=utf-8'
 
+class WebResponseLocalFile(WebResponse):
+	def __init__(self, path):
+		super(WebResponseLocalFile,self).__init__()
+		self.data = open(path, 'r')
+		self.contentType, encoding = mimetypes.guess_type(path, strict=False)
+
+	def output(self, response):
+		response.headers['Content-Type'] = self.contentType
+
 class WebResponseRedirect(object):
 	def __init__(self, url):
 		self.url = url
