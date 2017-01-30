@@ -35,6 +35,10 @@ class ConfigurationValue(object):
 			'description': self.description,
 		}
 
+class ConfigurationList(ConfigurationValue):
+	def __init__(self, defaultValue=[], **kwargs):
+		super(ConfigurationList,self).__init__('list', defaultValue, **kwargs)
+
 class ConfigurationString(ConfigurationValue):
 	def __init__(self, defaultValue='', minLength=0, maxLength=0, **kwargs):
 		self.minLength = minLength
