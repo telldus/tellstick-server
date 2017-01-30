@@ -68,26 +68,18 @@ class ConfigurationManager(Plugin):
 		s[key] = value
 
 	def value(self, callee, key):
-		s = Settings(ConfigurationManager.nameForObject(callee))
-		value = s.get(key, None)
-		if value is not None:
-			return value
-		obj = self.__requestConfigurationObject(callee, key)
-		if obj is None:
-			return None
-		return obj.defaultValue
+		return self.__getValue(callee.__class__, key)
 
 	def __getValue(self, cls, key):
 		name = ConfigurationManager.nameForClass(cls)
-		s = Settings(name)
-		value = s.get(key, None)
-		if value is not None:
-			return value
-		# Find out the default value
+		# Find out the default value, used to parse the value correctly
 		if key not in cls.configuration:
 			logging.warning("%s not in %s", key, cls.configuration)
 			return None
-		return cls.configuration[key].defaultValue
+		s = Settings(name)
+		value = s.get(key, cls.configuration[key].defaultValue)
+		if value is not None:
+			return value
 
 	def __requestConfigurationObject(self, obj, name):
 		cfg = obj.getConfiguration()
