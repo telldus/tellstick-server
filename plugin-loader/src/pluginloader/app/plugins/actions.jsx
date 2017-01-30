@@ -17,6 +17,7 @@ define([], function() {
 		}
 	)
 
+	const closePluginInfo = (plugin) => ({ type: 'CLOSE_PLUGIN_INFO' });
 	const configurePlugin = (plugin) => ({ type: 'CONFIGURE_PLUGIN', plugin });
 
 	const deleteKey = (key, fingerprint) => (
@@ -93,6 +94,17 @@ define([], function() {
 		}
 	)
 
+	const fetchStorePlugins = () => (
+		dispatch => {
+			dispatch({type: 'REQUEST_STORE_PLUGINS'})
+			return fetch('/pluginloader/storePlugins', {
+				credentials: 'include'
+			})
+			.then(response => response.json())
+			.then(json => dispatch({type: 'RECEIVE_STORE_PLUGINS', plugins: json}))
+		}
+	)
+
 	// This is a special action used to continue import after accepting key
 	const importPlugin = () => (
 		dispatch => {
@@ -107,6 +119,26 @@ define([], function() {
 			});
 		}
 	)
+
+	const installStorePlugin = (name) => (
+		dispatch => {
+			dispatch({type: 'INSTALL_STORE_PLUGIN', name})
+			return fetch('/pluginloader/installStorePlugin?pluginname=' + name, {credentials: 'include'})
+			.then(response => response.json())
+			.then(json => {
+				if (json['success'] == true) {
+					// Notifications during installed are sent over websocket
+					dispatch({type: 'INSTALL_STORE_PLUGIN_STARTED'})
+					return;
+				}
+				if ('msg' in json) {
+					dispatch(installStorePluginFailed(json['msg']))
+				}
+			});
+		}
+	)
+	const installStorePluginFailed = (msg) => ({ type: 'INSTALL_STORE_PLUGIN_FAILED', msg })
+	const installStorePluginSuccess = (msg) => ({ type: 'INSTALL_STORE_PLUGIN_SUCCESS', msg })
 
 	const pluginInfoReceived = (info) => ({ type: 'PLUGIN_INFO_RECEIVED', info })
 
@@ -129,6 +161,8 @@ define([], function() {
 			});
 		}
 	)
+
+	const showPluginInfo = (name) => ({ type: 'SHOW_PLUGIN_INFO', name })
 
 	const uploadPlugin = (file) => (
 		dispatch => {
@@ -160,6 +194,7 @@ define([], function() {
 
 	return {
 		acceptKey,
+		closePluginInfo,
 		configurePlugin,
 		deleteKey,
 		deletePlugin,
@@ -167,8 +202,13 @@ define([], function() {
 		discardKey,
 		fetchKeys,
 		fetchPlugins,
+		fetchStorePlugins,
+		installStorePlugin,
+		installStorePluginFailed,
+		installStorePluginSuccess,
 		pluginInfoReceived,
 		saveConfiguration,
+		showPluginInfo,
 		uploadPlugin,
 	};
 });

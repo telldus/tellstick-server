@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from base import Plugin, implements #, mainthread, ConfigurationManager
+from base import Plugin, implements
 from board import Board
-from web.base import IWebRequestHandler, WebResponseJson
+from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson
 from telldus import IWebReactHandler
 from Loader import Loader
 import gnupg
@@ -54,58 +54,6 @@ class WebFrontend(Plugin):
 			return {'success': False, 'msg': str(e)}
 		return {'success': True}
 
-	def importPlugin(self):
-		filename = '%s/staging.zip' % Board.pluginPath()
-		z = None
-		try:
-			z = zipfile.ZipFile(filename, 'r')
-			try:
-				info = z.getinfo('manifest.yml')
-			except KeyError:
-				raise ImportError('Malformed plugin. No manifest found.')
-			cfg = yaml.load(z.read('manifest.yml'))
-			if 'name' not in cfg:
-				raise ImportError('Malformed plugin. Plugin has no name.')
-			if cfg['name'] == 'staging':
-				raise ImportError('Plugin name cannot be "staging", this is a reserved name')
-			if 'packages' not in cfg:
-				raise ImportError('Malformed plugin. Manifest does not list any packages.')
-			gpg = loadGPG()
-			packages = []
-			for p in cfg['packages']:
-				f = z.extract(p, '/tmp/')
-				s = z.getinfo('%s.asc' % p)
-				packages.append((f, s,))
-				result = gpg.verify_file(z.open(s), f)
-				if result.valid is True:
-					continue
-				# remove unpackaged files
-				for p, s in packages:
-					os.unlink(p)
-				if result.pubkey_fingerprint is None and result.username is None:
-					# No public key for this plugin
-					#return {'success': False, 'key': self.importKey(None)}
-					pass #  Do not allow importing of custom keys yet.
-				raise ImportError('Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.')
-			path = '%s/%s' % (Board.pluginPath(), cfg['name'])
-			if os.path.exists(path):
-				# Wipe any old plugin
-				shutil.rmtree(path)
-			os.mkdir(path)
-			for p, s in packages:
-				shutil.move(p, '%s/%s' % (path, os.path.basename(p)))
-				z.extract(s, path)
-			manifest = z.extract(info, path)
-		except zipfile.BadZipfile:
-			raise ImportError('Uploaded file was not a Zip file')
-		finally:
-			if z is not None:
-				z.close()
-		os.unlink(filename)
-		loader = Loader(self.context)
-		loader.loadPlugin(manifest)
-		return {'success': True, 'msg': 'Plugin was imported'}
-
 	def uploadPlugin(self, f):
 		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as wf:
 			wf.write(f.file.read())
@@ -113,15 +61,23 @@ class WebFrontend(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'pluginloader':
 			return False
-		if path in ['import', 'importkey', 'keys', 'remove', 'plugins', 'saveConfiguration', 'upload']:
+		if path in ['icon','import', 'importkey', 'installStorePlugin', 'keys', 'remove', 'plugins', 'saveConfiguration', 'storePlugins', 'upload']:
 			return True
 		return False
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
+		if path == 'icon':
+			for plugin in Loader(self.context).plugins:
+				if plugin.name != params['name']:
+					continue
+				return WebResponseLocalFile('%s/%s' % (plugin.path, plugin.icon))
+			return None
+
 		if path == 'import':
-			if os.path.isfile('%s/staging.zip' % (Board.pluginPath())):
+			filename = '%s/staging.zip' % (Board.pluginPath())
+			if os.path.isfile(filename):
 				try:
-					return WebResponseJson(self.importPlugin())
+					return WebResponseJson(Loader(self.context).importPlugin(filename))
 				except ImportError as e:
 					os.unlink('%s/staging.zip' % (Board.pluginPath()))
 					return WebResponseJson({'success': False, 'msg':'Error importing plugin: %s' % e})
@@ -132,6 +88,15 @@ class WebFrontend(Plugin):
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
 				return WebResponseJson({'success': True})
 			return WebResponseJson(self.importKey(params['key'] if 'key' in params else None))
+
+		if path == 'installStorePlugin':
+			if 'pluginname' not in params:
+				return WebResponseJson({'success': False, 'msg': 'No plugin specified'})
+			for plugin in yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read()):
+				if plugin['name'] == params['pluginname']:
+					Loader(self.context).installRemotePlugin(plugin['name'], plugin['file']['url'], plugin['file']['size'], plugin['file']['sha1'])
+					return WebResponseJson({'success': True})
+			return WebResponseJson({'success': False, 'msg': 'Plugin was not found in the store'})
 
 		if path == 'remove':
 			if 'pluginname' in params:
@@ -164,10 +129,28 @@ class WebFrontend(Plugin):
 				return WebResponseJson({'success': False, 'msg': str(e)})
 			return WebResponseJson({'success': True})
 
+		if path == 'storePlugins':
+			if os.path.exists('%s/plugins.yml' % Board.pluginPath()) == False:
+				return WebResponseJson([])
+			return WebResponseJson([
+				{
+					'author': plugin['author'],
+					'author-email': plugin['author-email'],
+					'color': plugin.get('color', None),
+					'name': plugin['name'],
+					'icon': plugin['icon'] if 'icon' in plugin else '',
+					'description': plugin['description'],
+					'size': plugin['file']['size'],
+					'version': plugin['version'],
+				}
+				for plugin in yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read())
+			])
+
 		if path == 'upload' and request.method() == 'POST':
 			self.uploadPlugin(params['pluginfile'])
+			filename = '%s/staging.zip' % (Board.pluginPath())
 			try:
-				return WebResponseJson(self.importPlugin())
+				return WebResponseJson(Loader(self.context).importPlugin(filename))
 			except ImportError as e:
-				os.unlink('%s/staging.zip' % (Board.pluginPath()))
+				os.unlink(filename)
 				return WebResponseJson({'success': False, 'msg': str(e)})

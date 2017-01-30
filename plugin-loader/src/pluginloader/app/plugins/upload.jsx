@@ -24,13 +24,22 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint ) {
 		}
 		render() {
 			return (
-				<div>
-					<form ref={f => {this.formRef = f}}>
+				<ReactMDL.Card className={this.props.className}>
+					<ReactMDL.CardTitle style={{color: '#fff', backgroundColor: '#757575'}}>Manual upload</ReactMDL.CardTitle>
+					<ReactMDL.CardText>
+						<p>
+							Please select a plugin file and press the upload button to
+							load a new plugin
+						</p>
+						<form ref={f => {this.formRef = f}}>
 						<input type="file" onChange={() => this.fileChanged()} ref={f => {this.fileRef = f}} accept="application/zip" />
-					</form>
-					<ReactMDL.Button raised onClick={() => this.props.onUpload(this.state.file)} disabled={this.state.file == null}>Upload</ReactMDL.Button>
-					<ReactMDL.Spinner style={{display: (this.props.uploading ? '' : 'none')}}/>
-				</div>
+						</form>
+					</ReactMDL.CardText>
+					<ReactMDL.CardActions border>
+						<ReactMDL.Button onClick={() => this.props.onUpload(this.state.file)} disabled={this.state.file == null}>Upload</ReactMDL.Button>
+						<ReactMDL.Spinner style={{display: (this.props.uploading ? '' : 'none')}}/>
+					</ReactMDL.CardActions>
+				</ReactMDL.Card>
 			)
 		}
 	}
