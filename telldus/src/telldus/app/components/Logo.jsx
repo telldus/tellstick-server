@@ -43,7 +43,7 @@ export default class App extends React.Component {
 	render() {
 		return (
 			<div>
-				<canvas ref={canvas => { this.canvas = canvas; }} id="canvas" width="25" height="25" style={{position: 'absolute', left: 100, top: 30}}></canvas>
+				<canvas ref={canvas => { this.canvas = canvas; }} id="canvas" width="25" height="25" style={{position: 'absolute', left: 185, top: 30}}></canvas>
 				<img src="/telldus/img/lamp.png" style={{width: '100%'}} />
 			</div>
 		);
