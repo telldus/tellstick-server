@@ -129,6 +129,7 @@ class telldus_plugin(Command):
 			options, args = cmd.parse_args(['--no-binary', ':all:', '--no-clean', '-b', tempDir, '--dest', tempDir, '-r', 'requirements.txt'])
 			requirement_set = cmd.run(options, args)
 			for req in requirement_set.successfully_downloaded:
+				dist = None
 				if req.req.name in prebuiltPackages:
 					packages.insert(0, prebuiltPackages[req.req.name].location)
 					continue
@@ -142,6 +143,8 @@ class telldus_plugin(Command):
 					dist = run_setup('setup.py', ['bdist_egg', '--exclude-source-files', '--dist-dir', self.packageDir])
 					# Restore
 					sys.path = sysPath
+				if len(dist.dist_files) == 0:
+					raise Exception('Requirement %s does not provide any distribution files' % req.req.name)
 				for d in dist.dist_files:
 					packages.insert(0, d[2])
 		return packages
