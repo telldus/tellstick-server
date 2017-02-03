@@ -4,7 +4,7 @@ from distutils.core import Command, run_setup
 from distutils.errors import DistutilsSetupError
 from pip.commands.download import DownloadCommand
 from pip.utils.build import BuildDirectory
-import logging, os, sys, zipfile, yaml
+import logging, os, pkg_resources, sys, zipfile, yaml
 import gnupg
 
 class chdir():
@@ -24,6 +24,7 @@ class telldus_plugin(Command):
 	user_options = [
 		('dest-dir=', 'd', "Where to put the final plugin file"),
 		('key-id=', 'k', "The key to sign the plugin with"),
+		('prebuilt-packages-dir=', None, "Directory where prebuilt packages can be found. Egg in this dir will not be repackages by this command"),
 		('skip-public-key', None, "Do not include public key in plugin. Only use this option if you know the target already have the public key"),
 		('skip-dependencies=', None, "Skip including a dependency. Supply several by separating them with comma"),
 	]
@@ -35,6 +36,7 @@ class telldus_plugin(Command):
 	def initialize_options(self):
 		self.skip_public_key = False
 		self.skip_dependencies = []
+		self.prebuilt_packages_dir = None
 		self.key_id = None
 		self.dest_dir = None
 
@@ -53,9 +55,19 @@ class telldus_plugin(Command):
 		files = []
 		packages = []
 
+		# Find prebuilt packages
+		prebuiltPackages = {}
+		if self.prebuilt_packages_dir is not None and os.path.exists(self.prebuilt_packages_dir):
+			for filename in os.listdir(self.prebuilt_packages_dir):
+				if not filename.endswith('.egg'):
+					continue
+				path = os.path.abspath(os.path.join(self.prebuilt_packages_dir, filename))
+				for metadata in pkg_resources.find_distributions(path):
+					prebuiltPackages[metadata.project_name] = metadata
+
 		# Download and package dependencies for the project
 		if os.path.exists('%s/requirements.txt' % os.getcwd()):
-			requirements = self.__downloadRequirements()
+			requirements = self.__downloadRequirements(prebuiltPackages)
 			packages.extend(requirements)
 
 		# Build the plugin as egg
@@ -110,13 +122,16 @@ class telldus_plugin(Command):
 			for f in files:
 				plugin.write(f, os.path.basename(f))
 
-	def __downloadRequirements(self):
+	def __downloadRequirements(self, prebuiltPackages):
 		packages = []
 		with BuildDirectory(None, False) as tempDir:
 			cmd = DownloadCommand()
 			options, args = cmd.parse_args(['--no-binary', ':all:', '--no-clean', '-b', tempDir, '--dest', tempDir, '-r', 'requirements.txt'])
 			requirement_set = cmd.run(options, args)
 			for req in requirement_set.successfully_downloaded:
+				if req.req.name in prebuiltPackages:
+					packages.insert(0, prebuiltPackages[req.req.name].location)
+					continue
 				if req.req.name in self.skip_dependencies:
 					logging.info("Do not include dependency %s", req.req.name)
 					continue
