@@ -8,6 +8,7 @@ from RF433Msg import RF433Msg
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
 from board import Board
 import logging, time
+from threading import Timer
 
 class RF433Node(Device):
 	def __init__(self):
@@ -48,6 +49,17 @@ class SensorNode(RF433Node):
 
 	def isSensor(self):
 		return True
+
+	def isValid(self):
+		if self._name and self._name != "Device " + str(self.localId()) and not self._ignored:
+			return True  # name is set and not ignored, don't clean up automatically
+		values = self.sensorValues()
+		for valueType in self._sensorValues:
+			for sensorType in self._sensorValues[valueType]:
+				if sensorType['lastUpdated'] > (time.time() - 604800):
+					# at least some value was updated during the last week
+					return True
+		return False
 
 	def model(self):
 		return self._model
@@ -154,6 +166,7 @@ class RF433(Plugin):
 		self.dev = Adapter(self, Board.rf433Port())
 		deviceNode = DeviceNode(self.dev)
 		self.deviceManager = DeviceManager(self.context)
+		self.registerSensorCleanup()
 		for d in self.deviceManager.retrieveDevices('433'):
 			p = d.params()
 			if 'type' not in p:
@@ -188,6 +201,15 @@ class RF433(Plugin):
 		})
 		self.devices.append(device)
 		self.deviceManager.addDevice(device)
+
+	def cleanupSensors(self):
+		numberOfSensorsBefore = len(self.sensors)
+		for i, sensor in enumerate(self.sensors):
+			if not sensor.isValid():
+				self.deviceManager.removeDevice(sensor.id())
+				del self.sensors[i]
+
+		self.deviceManager.sensorsUpdated()
 
 	@TelldusLive.handler('rf433')
 	def __handleCommand(self, msg):
@@ -315,6 +337,14 @@ class RF433(Plugin):
 			self.sensors.append(sensor)
 			self.deviceManager.addDevice(sensor)
 		sensor.updateValues(sensorData)
+
+	""" Register scheduled job to clean up sensors that have not been updated for a while"""
+	def registerSensorCleanup(self):
+		Application().registerScheduledTask(self.cleanupSensors, hours=12)  # every 12th hour
+		t = Timer(10, self.cleanupSensors)  # run a first time after 10 minutes
+		t.daemon = True
+		t.name='Sensor cleanup'
+		t.start()
 
 	def __noVersion(self):
 		logging.warning("Could not get firmware version for RF433, force upgrade")
