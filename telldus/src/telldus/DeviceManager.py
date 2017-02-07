@@ -164,7 +164,9 @@ class DeviceManager(Plugin):
 			'protocol': device.protocol(),
 			'model': device.model(),
 			'sensor_id': device.id(),
-		}
+			'pcc': 1,
+		}  # pcc = packageCountChecked - already checked package count, just accept it server side directly
+
 		battery = device.battery()
 		if battery is not None:
 			sensor['battery'] = battery

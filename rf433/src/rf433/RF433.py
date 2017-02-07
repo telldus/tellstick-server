@@ -34,6 +34,7 @@ class SensorNode(RF433Node):
 		self._protocol = ''
 		self._model = ''
 		self._sensorId = 0
+		self._packageCount = 0
 
 	def compare(self, protocol, model, sensorId):
 		if self._protocol != protocol:
@@ -85,6 +86,13 @@ class SensorNode(RF433Node):
 		self._sensorId = params.setdefault('sensorId', 0)
 
 	def updateValues(self, data):
+		if self._packageCount == 6:
+			if self._manager:
+				self._manager.addDevice(self)  # add to manager only now, that equals no live updates before this, and no storage to file
+			self._packageCount = self._packageCount + 1
+		if self._packageCount < 6:
+			self._packageCount = self._packageCount + 1
+			return  # don't update any values yet
 		for value in data:
 			self.setSensorValue(value['type'], value['value'], value['scale'])
 
@@ -182,6 +190,7 @@ class RF433(Plugin):
 			device.setNodeId(d.id())
 			device.setParams(p)
 			if p['type'] == 'sensor':
+				device._packageCount = 7  # already loaded, keep it that way!
 				device._sensorValues = d._sensorValues
 
 			self.deviceManager.addDevice(device)
@@ -334,8 +343,8 @@ class RF433(Plugin):
 		if sensor is None:
 			sensor = SensorNode()
 			sensor.setParams({'protocol': p, 'model': m, 'sensorId': sensorId})
+			sensor.setManager(self.deviceManager)
 			self.sensors.append(sensor)
-			self.deviceManager.addDevice(sensor)
 		sensor.updateValues(sensorData)
 
 	""" Register scheduled job to clean up sensors that have not been updated for a while"""
