@@ -168,6 +168,9 @@ class RF433(Plugin):
 				continue
 			device.setNodeId(d.id())
 			device.setParams(p)
+			if p['type'] == 'sensor':
+				device._sensorValues = d._sensorValues
+
 			self.deviceManager.addDevice(device)
 
 		self.deviceManager.finishedLoading('433')

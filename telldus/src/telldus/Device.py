@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging
+import logging, time
 
 class DeviceAbortException(Exception):
 	pass
@@ -66,6 +66,8 @@ class Device(object):
 		self._stateValue = ''
 		self._sensorValues = {}
 		self._confirmed = True
+		self.valueChangedTime = {}
+		self.lastUpdatedLive = {}
 
 	def id(self):
 		return self._id
@@ -175,6 +177,7 @@ class Device(object):
 		self._state = state
 		self._stateValue = stateValue
 		self._ignored = olddevice._ignored
+		self._sensorValues = olddevice._sensorValues
 
 	def loadCount(self):
 		return self._loadCount
@@ -281,13 +284,23 @@ class Device(object):
 		found = False
 		for sensorType in self._sensorValues[valueType]:
 			if sensorType['scale'] == scale:
+				if sensorType['value'] != value or valueType not in self.valueChangedTime:
+					# value has changed
+					self.valueChangedTime[valueType] = int(time.time())
+				else:
+					if sensorType['lastUpdated'] > int(time.time() - 1):
+						# same value and less than a second ago, most probably just the same value being resent, ignore
+						return
 				sensorType['value'] = value
+				sensorType['lastUpdated'] = int(time.time())
 				found = True
 				break
 		if not found:
-			self._sensorValues[valueType].append({'value': value, 'scale': scale})
+			self._sensorValues[valueType].append({'value': value, 'scale': scale, 'lastUpdated': int(time.time())})
+			self.valueChangedTime[valueType] = int(time.time())
 		if self._manager:
 			self._manager.sensorValueUpdated(self, valueType, value, scale)
+			self._manager.save()
 
 	def setState(self, state, stateValue = None, ack=None, origin=None):
 		if stateValue is None:
@@ -413,6 +426,8 @@ class CachedDevice(Device):
 			self._stateValue = settings['stateValue']
 		if 'ignored' in settings:
 			self._ignored = settings['ignored']
+		if 'sensorValues' in settings:
+			self.setSensorValues(settings['sensorValues'])
 
 	def localId(self):
 		return self._localId
@@ -425,6 +440,22 @@ class CachedDevice(Device):
 
 	def setParams(self, params):
 		self.paramsStorage = params
+
+	def setSensorValues(self, sensorValues):
+		# this method just fills cached values, no signals or reports are sent
+		for valueTypeFetch in sensorValues:
+			valueType = int(valueTypeFetch)
+			if valueType not in self._sensorValues:
+				self._sensorValues[valueType] = []
+			sensorType = sensorValues[valueTypeFetch]
+			for sensorValue in sensorType:
+				value = sensorValue['value']
+				scale = sensorValue['scale']
+				if 'lastUpdated' in sensorValue:
+					lastUpdated = sensorValue['lastUpdated']
+				else:
+					lastUpdated = int(time.time())  # not in cache, perhaps first time lastUpdated is used (maybe this should be logged?)
+				self._sensorValues[valueType].append({'value': value, 'scale': scale, 'lastUpdated': lastUpdated})
 
 	def typeString(self):
 		return self.mimikType

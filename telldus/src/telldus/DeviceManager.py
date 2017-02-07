@@ -152,8 +152,12 @@ class DeviceManager(Plugin):
 			return
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
 		if not self.live.registered or device.ignored():
-			# don't send if ignored
+			# don't send if not connected to live or sensor is ignored
 			return
+		if valueType in device.lastUpdatedLive and (valueType in device.valueChangedTime and device.valueChangedTime[valueType] < device.lastUpdatedLive[valueType]) and device.lastUpdatedLive[valueType] > (int(time.time()) - 300):
+			# no values have changed since the last live-update, and the last time this sensor was sent to live was less than 5 minutes ago
+			return
+
 		msg = LiveMessage("SensorEvent")
 		sensor = {
 			'name': device.name(),
@@ -165,17 +169,22 @@ class DeviceManager(Plugin):
 		if battery is not None:
 			sensor['battery'] = battery
 		msg.append(sensor)
+		# small clarification: valueType etc that is sent in here is only used for sending
+		# information about what have changed on to observers, below is instead all the values
+		# of the sensor picked up and sent in a sensor event-message (the sensor values
+		# have already been updated in other words)
 		values = device.sensorValues()
 		valueList = []
-		for valueType in values:
-			for value in values[valueType]:
+		for vt in values:
+			for value in values[vt]:
 				valueList.append({
-					'type': valueType,
-					'lastUp': str(int(time.time())),
+					'type': vt,
+					'lastUp': str(value['lastUpdated']),
 					'value': str(value['value']),
 					'scale': value['scale']
 				})
 		msg.append(valueList)
+		device.lastUpdatedLive[valueType] = int(time.time())
 		self.live.send(msg)
 
 	def stateUpdated(self, device, ackId = None, origin = None):
@@ -270,7 +279,7 @@ class DeviceManager(Plugin):
 				if dev.isDevice():
 					self.__sendDeviceReport()
 				if dev.isSensor:
-					self.__sendSensorReport(True)  # force name change even for ignored sensor
+					self.__sendSensorReport()
 				return
 
 	@TelldusLive.handler('reload')
@@ -337,7 +346,7 @@ class DeviceManager(Plugin):
 		data = []
 		for d in self.devices:
 			(state, stateValue) = d.state()
-			data.append({
+			dev = {
 				"id": d.id(),
 				"loadCount": d.loadCount(),
 				"localId": d.localId(),
@@ -348,7 +357,10 @@ class DeviceManager(Plugin):
 				"state": state,
 				"stateValue": stateValue,
 				"ignored": d.ignored()
-			})
+			}
+			if len(d.sensorValues()) > 0:
+				dev['sensorValues'] = d.sensorValues()
+			data.append(dev)
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId
 
@@ -398,12 +410,12 @@ class DeviceManager(Plugin):
 		msg.append(value)
 		self.live.send(msg)
 
-	def __sendSensorReport(self, forceIgnored=False):
+	def __sendSensorReport(self):
 		if not self.live.registered:
 			return
 		l = []
 		for d in self.devices:
-			if d.isSensor() == False or (d.ignored() and not forceIgnored):
+			if d.isSensor() == False:
 				continue
 			sensorFrame = []
 			sensor = {
@@ -417,10 +429,21 @@ class DeviceManager(Plugin):
 				sensor['battery'] = battery
 			sensorFrame.append(sensor)
 			valueList = []
-			# TODO(micke): Add current values
+			values = d.sensorValues()
+			for valueType in values:
+				for value in values[valueType]:
+					valueList.append({
+						'type': valueType,
+						'lastUp': str(value['lastUpdated']),
+						'value': str(value['value']),
+						'scale': value['scale']
+					})
+					#d.lastUpdatedLive[valueType] = int(time.time())  # Telldus Live! does not aknowledge sensorreportupdates yet, so don't count this yet (wait for Cassandra only)
 			sensorFrame.append(valueList)
 			l.append(sensorFrame)
 		msg = LiveMessage("SensorsReport")
 		msg.append(l)
 		self.live.send(msg)
 
+	def sensorsUpdated(self):
+		self.__sendSensorReport()
