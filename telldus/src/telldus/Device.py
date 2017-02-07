@@ -412,6 +412,7 @@ class CachedDevice(Device):
 		self._localId = 0
 		self.mimikType = ''
 		self.storedmethods = 0
+		self._isSensor = False
 		if 'localId' in settings:
 			self._localId = settings['localId']
 		if 'loadCount' in settings:
@@ -428,6 +429,11 @@ class CachedDevice(Device):
 			self._ignored = settings['ignored']
 		if 'sensorValues' in settings:
 			self.setSensorValues(settings['sensorValues'])
+		if 'isSensor' in settings:
+			self._isSensor = settings['isSensor']
+
+	def isSensor(self):
+		return self._isSensor
 
 	def localId(self):
 		return self._localId

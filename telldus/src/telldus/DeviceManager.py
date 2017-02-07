@@ -358,7 +358,8 @@ class DeviceManager(Plugin):
 				"methods": d.methods(),
 				"state": state,
 				"stateValue": stateValue,
-				"ignored": d.ignored()
+				"ignored": d.ignored(),
+				"isSensor": d.isSensor()
 			}
 			if len(d.sensorValues()) > 0:
 				dev['sensorValues'] = d.sensorValues()
