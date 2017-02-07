@@ -367,6 +367,9 @@ class DeviceManager(Plugin):
 			}
 			if len(d.sensorValues()) > 0:
 				dev['sensorValues'] = d.sensorValues()
+			battery = d.battery()
+			if battery is not None:
+				dev['battery'] = battery
 			data.append(dev)
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId

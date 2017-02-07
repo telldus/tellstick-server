@@ -35,4 +35,5 @@ class ProtocolMandolyn():
 		valueList.append({'type': Device.TEMPERATURE, 'value': temp, 'scale': Device.SCALE_TEMPERATURE_CELCIUS})
 		valueList.append({'type': Device.HUMIDITY, 'value': humidity, 'scale': Device.SCALE_HUMIDITY_PERCENT})
 		data['values'] = valueList
+		data['battery'] = Device.BATTERY_LOW if battOk == 1 else Device.BATTERY_OK
 		return data

@@ -61,6 +61,7 @@ class ProtocolOregon():
 		value >>= 8
 
 		temp3 = (value >> 4) & 0xF
+		battery = (value & 0xF)
 		checksum += (value & 0xF) + temp3
 		value >>= 8
 
@@ -81,7 +82,7 @@ class ProtocolOregon():
 
 		valueList = []
 		valueList.append({'type': Device.TEMPERATURE, 'value': temp, 'scale': Device.SCALE_TEMPERATURE_CELCIUS})
-		return {'id': int(address), 'values': valueList}
+		return {'id': int(address), 'values': valueList, 'battery': self.formatBattery(battery)}
 
 	def decode1984(self, value, model):
 		# wind
@@ -142,7 +143,7 @@ class ProtocolOregon():
 		valueList.append({'type': Device.WINDAVERAGE, 'value': avg, 'scale': Device.SCALE_WIND_VELOCITY_MS})
 		valueList.append({'type': Device.WINDGUST, 'value': gust, 'scale': Device.SCALE_WIND_VELOCITY_MS})
 
-		return {'id': int(rollingcode), 'values': valueList, 'battery': battery}
+		return {'id': int(rollingcode), 'values': valueList, 'battery': self.formatBattery(battery)}
 
 
 	def decode1A2D(self, value):
@@ -165,6 +166,7 @@ class ProtocolOregon():
 		temp1 = (value >> 4) & 0xF
 		value >>= 8
 
+		battery = (value & 0xF)
 		checksum += ((value >> 4) & 0xF) + (value & 0xF)
 		temp3 = (value >> 4) & 0xF
 		value >>= 8
@@ -189,7 +191,7 @@ class ProtocolOregon():
 		valueList = []
 		valueList.append({'type': Device.TEMPERATURE, 'value': temp, 'scale': Device.SCALE_TEMPERATURE_CELCIUS})
 		valueList.append({'type': Device.HUMIDITY, 'value': int('%d%d' % (hum1, hum2)), 'scale': Device.SCALE_HUMIDITY_PERCENT})
-		return {'id': int(address), 'values': valueList}
+		return {'id': int(address), 'values': valueList, 'battery': self.formatBattery(battery)}
 
 	def decode2914(self, value):
 		# rain
@@ -251,7 +253,7 @@ class ProtocolOregon():
 		valueList = []
 		valueList.append({'type': Device.RAINRATE, 'value': rainRate, 'scale': Device.SCALE_RAINRATE_MMH})
 		valueList.append({'type': Device.RAINTOTAL, 'value': totRain, 'scale': Device.SCALE_RAINTOTAL_MM})
-		return {'id': int(rollingcode), 'values': valueList, 'battery': battery}
+		return {'id': int(rollingcode), 'values': valueList, 'battery': self.formatBattery(battery)}
 
 
 	def decodeF824(self, value):
@@ -377,4 +379,9 @@ class ProtocolOregon():
 
 		valueList = []
 		valueList.append({'type': Device.UV, 'value': uvindex, 'scale': Device.SCALE_UV_INDEX})
-		return {'id': int(rollingcode), 'values': valueList, 'battery': battery}
+		return {'id': int(rollingcode), 'values': valueList, 'battery': self.formatBattery(battery)}
+
+	def formatBattery(self, battery):
+		if battery & 0x4:
+			return Device.BATTERY_LOW
+		return Device.BATTERY_OK

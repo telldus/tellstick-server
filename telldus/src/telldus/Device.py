@@ -55,6 +55,10 @@ class Device(object):
 	FAILED_STATUS_TIMEDOUT = 3
 	FAILED_STATUS_NOT_CONFIRMED = 4
 
+	BATTERY_LOW = 255  # Battery status, if not percent value
+	BATTERY_UNKNOWN = 254  # Battery status, if not percent value
+	BATTERY_OK = 253  # Battery status, if not percent value
+
 	def __init__(self):
 		super(Device,self).__init__()
 		self._id = 0
@@ -412,6 +416,7 @@ class CachedDevice(Device):
 		self._localId = 0
 		self.mimikType = ''
 		self.storedmethods = 0
+		self.batteryLevel = Device.BATTERY_UNKNOWN
 		self._isSensor = False
 		if 'localId' in settings:
 			self._localId = settings['localId']
@@ -425,6 +430,8 @@ class CachedDevice(Device):
 			self._state = settings['state']
 		if 'stateValue' in settings:
 			self._stateValue = settings['stateValue']
+		if 'battery' in settings:
+			self.batteryLevel = settings['battery']
 		if 'ignored' in settings:
 			self._ignored = settings['ignored']
 		if 'sensorValues' in settings:

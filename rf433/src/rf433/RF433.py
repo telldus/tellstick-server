@@ -35,6 +35,10 @@ class SensorNode(RF433Node):
 		self._model = ''
 		self._sensorId = 0
 		self._packageCount = 0
+		self.batteryLevel = None
+
+	def battery(self):
+		return self.batteryLevel
 
 	def compare(self, protocol, model, sensorId):
 		if self._protocol != protocol:
@@ -192,6 +196,7 @@ class RF433(Plugin):
 			if p['type'] == 'sensor':
 				device._packageCount = 7  # already loaded, keep it that way!
 				device._sensorValues = d._sensorValues
+				device.batteryLevel = d.batteryLevel
 
 			self.deviceManager.addDevice(device)
 
@@ -345,6 +350,8 @@ class RF433(Plugin):
 			sensor.setParams({'protocol': p, 'model': m, 'sensorId': sensorId})
 			sensor.setManager(self.deviceManager)
 			self.sensors.append(sensor)
+		if 'battery' in data:
+			sensor.batteryLevel = data['battery']
 		sensor.updateValues(sensorData)
 
 	""" Register scheduled job to clean up sensors that have not been updated for a while"""
