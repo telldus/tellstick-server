@@ -67,7 +67,7 @@ class SensorNode(RF433Node):
 
 	def name(self):
 		# empty name for new 433-sensors (becomes "No name" in Telldus Live!)
-		return self._name if self._name is not None else ''
+		return self._name if self._name is not None and self._name != "Device " + str(self.localId()) else ''
 
 	def params(self):
 		return {
