@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from Device import CachedDevice, DeviceAbortException
-import json
+import json, logging, time
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
 from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread, signal
-import time
 
 __name__ = 'telldus'
 
@@ -305,6 +304,11 @@ class DeviceManager(Plugin):
 					dev.setIgnored(value)
 				self.__sendSensorChange(sensorId, updateType, value)
 				return
+		if updateType == 'updateignored' and len(self.devices) > 0:
+			# we don't have this sensor, do something! (can't send sensor change back (__sendSensorChange), because can't create message when sensor is unknown (could create special workaround, but only do that if it's still a problem in the future))
+			logging.warning('Requested ignore change for non-existing sensor %s', str(sensorId))
+			self.__sendSensorReport()  # send an updated sensor report, so that this sensor is hopefully cleaned up
+
 
 	def liveRegistered(self, msg):
 		self.registered = True
