@@ -16,7 +16,7 @@ export default function() {
 			);
 		},
 		loadCSS: function(file) {
-			var requirejs = require('exports?requirejs=requirejs&define!requirejs/require.js');
+			var requirejs = require('exports-loader?requirejs=requirejs&define!requirejs/require.js');
 			requirejs.requirejs(['css!' + file]);
 		}
 	};

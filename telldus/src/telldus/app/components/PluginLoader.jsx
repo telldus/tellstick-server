@@ -6,7 +6,7 @@ import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
 import dialogpolyfill from 'dialog-polyfill'
 
-var requirejs = require('exports?requirejs=requirejs&define!requirejs/require.js');
+var requirejs = require('exports-loader?requirejs=requirejs&define!requirejs/require.js');
 
 // Sorry, the scripts seems to needs this in the global context... :(
 window.define = requirejs.define;
