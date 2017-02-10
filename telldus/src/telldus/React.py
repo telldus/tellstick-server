@@ -7,12 +7,24 @@ class IWebReactHandler(IInterface):
 	def getReactRoutes():
 		"""Return a list of routes this plugin listens to"""
 
+	def getReactComponents():
+		"""Return a list of components this plugin exports"""
+
 class React(Plugin):
 	implements(IWebRequestHandler)
 	observers = ObserverCollection(IWebReactHandler)
 
 	def __init__(self):
 		pass
+
+	def components(self):
+		retval = {}
+		for o in self.observers:
+			components = o.getReactComponents()
+			if type(components) != dict:
+				continue
+			retval.update(components)
+		return retval
 
 	def getTemplatesDirs(self):
 		return [resource_filename('telldus', 'templates')]
@@ -21,6 +33,8 @@ class React(Plugin):
 		if path == '' and plugin == '':
 			return WebResponseHtml('react.html')
 		if plugin == 'telldus':
+			if path == 'reactComponents':
+				return WebResponseJson(self.components())
 			if path == 'reactPlugins':
 				return WebResponseJson(self.routes())
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
@@ -32,7 +46,7 @@ class React(Plugin):
 	def matchRequest(self, plugin, path):
 		if path == '' and plugin == '':
 			return True
-		if plugin == 'telldus' and path in ['reactPlugins']:
+		if plugin == 'telldus' and path in ['reactComponents', 'reactPlugins']:
 			return True
 		# Check if we match a react route
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
