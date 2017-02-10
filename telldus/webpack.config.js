@@ -2,15 +2,14 @@ var webpack = require('webpack');
 var path = require('path');
 
 module.exports = {
-	entry: [
-		'whatwg-fetch',
-		path.resolve(__dirname, 'src/telldus/app/main'),
-		'webpack-material-design-icons'
-	],
+	entry: {
+		main: path.resolve(__dirname, 'src/telldus/app/main'),
+		common: ['webpack-material-design-icons', 'whatwg-fetch'],
+	},
 	output: {
 		path: path.resolve(__dirname, 'src/telldus/htdocs'),
 		publicPath: '/telldus/',
-		filename: './js/bundle.js'
+		filename: './js/[name].entry.js'
 	},
 	module: {
 		rules: [
@@ -23,6 +22,7 @@ module.exports = {
 		extensions: ['.js', '.jsx'],
 	},
 	plugins: [
+		new webpack.optimize.CommonsChunkPlugin({name:'common', filename:'./js/[name].lib.js'})
 // 		new webpack.HotModuleReplacementPlugin(),
 	],
 
