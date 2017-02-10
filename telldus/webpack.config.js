@@ -3,7 +3,7 @@ var path = require('path');
 
 module.exports = {
 	entry: {
-		main: path.resolve(__dirname, 'src/telldus/app/main'),
+		main: path.resolve(__dirname, 'src/telldus/web/app/main'),
 		common: ['webpack-material-design-icons', 'whatwg-fetch'],
 	},
 	output: {
@@ -13,7 +13,7 @@ module.exports = {
 	},
 	module: {
 		rules: [
-			{ test: /\.(js|jsx)$/, include: path.resolve(__dirname, 'src/telldus/app'), exclude: /node_modules/, use: 'babel-loader' },
+			{ test: /\.(js|jsx)$/, include: path.resolve(__dirname, 'src/telldus/web/app'), exclude: /node_modules/, use: 'babel-loader' },
 			{ test: /\.css$/, use: ['style-loader', 'css-loader'] },
 			{ test: /\.(jpe?g|png|gif|svg|eot|woff|ttf|svg|woff2)$/, loader: "file-loader?name=[name].[ext]" }
 		]

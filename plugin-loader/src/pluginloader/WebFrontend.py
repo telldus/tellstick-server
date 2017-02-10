@@ -3,7 +3,7 @@
 from base import Plugin, implements
 from board import Board
 from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson
-from telldus import IWebReactHandler
+from telldus.web import IWebReactHandler
 from Loader import Loader
 import gnupg
 import json

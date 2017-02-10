@@ -19,13 +19,13 @@ class webpack(install):
 setup(
 	name='Telldus',
 	version='0.1',
-	packages=['telldus'],
+	packages=['telldus', 'telldus.web'],
 	package_dir = {'':'src'},
 	cmdclass={'install': webpack},
 	entry_points={ \
 		'telldus.plugins': [
 			'api = telldus.DeviceApiManager',
-			'react = telldus.React'
+			'react = telldus.web.React'
 		]
 	},
 	extras_require = {

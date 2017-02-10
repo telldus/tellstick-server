@@ -4,7 +4,7 @@ from api import IApiCallHandler, apicall
 from base import Application, Plugin, SignalManager, ISignalObserver, implements, slot, signal
 from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
-from telldus import IWebReactHandler
+from telldus.web import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from LuaScript import LuaScript
