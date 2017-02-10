@@ -24,35 +24,35 @@ requirejs.define('websocket', require('./lib/websocket').default)
 class Placeholder extends React.Component {
 	render() {
 		return (
-			<div>Loading <ReactMDL.Spinner /></div>
+			<div><ReactMDL.Spinner /></div>
 		);
 	}
 };
 
-class PluginLoader extends React.Component {
+class ComponentLoader extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {component: Placeholder}
 	}
 
 	componentDidMount() {
-		this.loadPluginComponent(this.props.name)
+		this.loadComponent(this.props.name)
 	}
 
 	componentWillReceiveProps(nextProps) {
-		if (this.props.params.name != nextProps.name) {
+		if (this.props.name != nextProps.name) {
 			// Changing page, load the new page
-			this.loadPluginComponent(nextProps.name);
+			this.loadComponent(nextProps.name);
 		}
 	}
 
-	loadPluginComponent(name) {
+	loadComponent(name) {
 		var packages = [];
-		for(var i in this.props.plugins) {
-			var path = this.props.plugins[i].script.slice(0, -3);  // Remove .js
+		for(var componentName in this.props.components) {
+			var path = this.props.components[componentName].script.slice(0, -3);  // Remove .js
 			var index = path.lastIndexOf('/');
 			packages.push({
-				'name': this.props.plugins[i].name,
+				'name': componentName,
 				'main': path.substr(index+1),
 				'location': '/' + path.substr(0, index)
 			})
@@ -68,16 +68,14 @@ class PluginLoader extends React.Component {
 	render() {
 		var PluginComponent = this.state.component;
 		return (
-			<div>
-				<PluginComponent location={this.props.location} />
-			</div>
+			<PluginComponent location={this.props.location} />
 		);
 	}
 };
 
 const mapStateToProps = (state, ownProps) => {
 	return {
-		plugins: state.plugins
+		components: state.components
 	}
 }
-export default ReactRedux.connect(mapStateToProps)(PluginLoader)
+export default ReactRedux.connect(mapStateToProps)(ComponentLoader)

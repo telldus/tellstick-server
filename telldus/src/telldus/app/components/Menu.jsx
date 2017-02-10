@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigation } from 'react-mdl';
 import { IndexLink, Link } from 'react-router';
 import { connect, Provider } from 'react-redux'
+import { componentsByTag } from './lib/telldus'
 
 class Menu extends React.Component {
 	constructor(props) {
@@ -9,16 +10,13 @@ class Menu extends React.Component {
 	}
 
 	render() {
-		let nodes = this.props.plugins.reduce( (a, b) => (
-			b.title ? a.concat(b) : a
-		), []).map(plugin => (
-			<Link to={`${plugin.path}`} activeClassName="is-active" key={plugin.name}>{plugin.title}</Link>
-		));
 		return (
 			<Provider store={this.props.store}>
 				<Navigation>
 					<IndexLink to="/" activeClassName="is-active">Index</IndexLink>
-					{nodes}
+					{Object.keys(this.props.components).map(name => (
+						<Link to={`${this.props.components[name].path}`} activeClassName="is-active" key={name}>{this.props.components[name].title}</Link>
+					))}
 				</Navigation>
 			</Provider>
 		);
@@ -27,7 +25,7 @@ class Menu extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
 	return {
-		plugins: state.plugins
+		components: componentsByTag(state.components, 'menu'),
 	}
 }
 export default connect(mapStateToProps)(Menu);

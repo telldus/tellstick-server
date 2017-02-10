@@ -77,12 +77,14 @@ class Lua(Plugin):
 				del self.scripts[i]
 				break
 
-	def getReactRoutes(self):
-		return [{
-			'name': 'lua',
-			'title': 'Lua scripts (beta)',
-			'script': 'lua/lua.js'
-		}]
+	def getReactComponents(self):
+		return {
+			'lua': {
+				'title': 'Lua scripts (beta)',
+				'script': 'lua/lua.js',
+				'tags': ['menu'],
+			}
+		}
 
 	def matchRequest(self, plugin, path):
 		if plugin != 'lua':

@@ -19,12 +19,14 @@ class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
 	implements(IWebReactHandler)
 
-	def getReactRoutes(self):
-		return [{
-			'name': 'plugins',
-			'title': 'Plugins (beta)',
-			'script': 'pluginloader/plugins.js'
-		}]
+	def getReactComponents(self):
+		return {
+			'plugins': {
+				'title': 'Plugins (beta)',
+				'script': 'pluginloader/plugins.js',
+				'tags': ['menu']
+			}
+		}
 
 	def importKey(self, acceptKeyId):
 		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}

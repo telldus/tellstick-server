@@ -7,9 +7,10 @@ import thunkMiddleware from 'redux-thunk'
 import createLogger from 'redux-logger'
 
 import App, {Index, About} from './components/App';
-import PluginLoader from './components/PluginLoader';
-import {fetchPlugins} from './actions/plugins'
+import ComponentLoader from './components/ComponentLoader';
+import {fetchComponents} from './actions/components'
 import appReducers from './reducers/index'
+import { componentsByTag } from './components/lib/telldus'
 
 const loggerMiddleware = createLogger()
 
@@ -23,16 +24,18 @@ var store = createStore(
 
 class ComponentWrapper extends React.Component {
 	render() {
-		return (<PluginLoader store={store} {...this.props.route.plugin} {...this.props} />);
+		return (<ComponentLoader store={store} name={this.props.route.name} {...this.props} />);
 	}
 }
 
-store.dispatch(fetchPlugins()).then(() => {
-	var routes = store.getState().plugins.map(function(plugin) {
-		return (
-			<Route path={`${plugin.path}`} key={plugin.name} plugin={plugin} component={ComponentWrapper} />
-		);
-	});
+store.dispatch(fetchComponents()).then(() => {
+	let components = store.getState().components;
+	let routes = Object.keys(components).reduce((a, b) => {
+		if (components[b].path) {
+			a.push(<Route path={components[b].path} key={b} name={b} component={ComponentWrapper} />);
+		}
+		return a;
+	}, []);
 	ReactDOM.render(
 		<Router history={browserHistory}>
 			<Route path="/" component={App} store={store}>

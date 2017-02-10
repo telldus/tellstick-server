@@ -4,9 +4,6 @@ from pkg_resources import resource_filename
 import logging
 
 class IWebReactHandler(IInterface):
-	def getReactRoutes():
-		"""Return a list of routes this plugin listens to"""
-
 	def getReactComponents():
 		"""Return a list of components this plugin exports"""
 
@@ -23,6 +20,11 @@ class React(Plugin):
 			components = o.getReactComponents()
 			if type(components) != dict:
 				continue
+				# Make sure defaults exists
+			for name in components:
+				tags = components[name].setdefault('tags', [])
+				if 'menu' in tags:
+					components[name].setdefault('path', '/%s' % name)
 			retval.update(components)
 		return retval
 
@@ -35,34 +37,22 @@ class React(Plugin):
 		if plugin == 'telldus':
 			if path == 'reactComponents':
 				return WebResponseJson(self.components())
-			if path == 'reactPlugins':
-				return WebResponseJson(self.routes())
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
-		for route in self.routes():
-			if route['path'] == fullPath:
+		components = self.components()
+		for name in components:
+			if components[name].get('path', None) == fullPath:
 				return WebResponseHtml('react.html')
 		return None
 
 	def matchRequest(self, plugin, path):
 		if path == '' and plugin == '':
 			return True
-		if plugin == 'telldus' and path in ['reactComponents', 'reactPlugins']:
+		if plugin == 'telldus' and path in ['reactComponents']:
 			return True
 		# Check if we match a react route
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
-		for route in self.routes():
-			if route['path'] == fullPath:
+		components = self.components()
+		for name in components:
+			if components[name].get('path', None) == fullPath:
 				return True
 		return False
-
-	def routes(self):
-		plugins = []
-		for o in self.observers:
-			routes = o.getReactRoutes()
-			if type(routes) != list:
-				continue
-			for route in routes:
-				if 'path' not in route:
-					route['path'] = '/%s' % route['name']
-			plugins.extend(routes)
-		return plugins
