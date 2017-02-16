@@ -255,7 +255,7 @@ class Device(object):
 			return None
 		for sensorType in self._sensorValues[valueType]:
 			if sensorType['scale'] == scale:
-				return sensorType['value']
+				return float(sensorType['value'])
 		return None
 
 	def sensorValues(self):
@@ -295,12 +295,12 @@ class Device(object):
 					if sensorType['lastUpdated'] > int(time.time() - 1):
 						# same value and less than a second ago, most probably just the same value being resent, ignore
 						return
-				sensorType['value'] = value
+				sensorType['value'] = str(value)
 				sensorType['lastUpdated'] = int(time.time())
 				found = True
 				break
 		if not found:
-			self._sensorValues[valueType].append({'value': value, 'scale': scale, 'lastUpdated': int(time.time())})
+			self._sensorValues[valueType].append({'value': str(value), 'scale': scale, 'lastUpdated': int(time.time())})
 			self.valueChangedTime[valueType] = int(time.time())
 		if self._manager:
 			self._manager.sensorValueUpdated(self, valueType, value, scale)
