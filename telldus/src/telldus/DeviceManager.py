@@ -370,6 +370,8 @@ class DeviceManager(Plugin):
 			battery = d.battery()
 			if battery is not None:
 				dev['battery'] = battery
+			if hasattr(d, 'declaredDead') and d.declaredDead:
+				dev['declaredDead'] = d.declaredDead
 			data.append(dev)
 		self.s['devices'] = data
 		self.s['nextId'] = self.nextId
@@ -437,6 +439,9 @@ class DeviceManager(Plugin):
 			battery = d.battery()
 			if battery is not None:
 				sensor['battery'] = battery
+			if hasattr(d, 'declaredDead') and d.declaredDead:
+				# Sensor shouldn't be removed for a while, but don't update it on server side
+				sensor['declaredDead'] = 1
 			sensorFrame.append(sensor)
 			valueList = []
 			values = d.sensorValues()

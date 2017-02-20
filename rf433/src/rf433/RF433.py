@@ -36,6 +36,7 @@ class SensorNode(RF433Node):
 		self._sensorId = 0
 		self._packageCount = 0
 		self.batteryLevel = None
+		self.declaredDead = False
 
 	def battery(self):
 		return self.batteryLevel
@@ -58,7 +59,14 @@ class SensorNode(RF433Node):
 	def isValid(self):
 		if self._name and self._name != "Device " + str(self.localId()) and not self._ignored:
 			return True  # name is set and not ignored, don't clean up automatically
-		values = self.sensorValues()
+		if not self._sensorValues:
+			if not self.declaredDead:
+				self.declaredDead = time.time()
+				return True  # no sensor values, let the sensor exist for a week before deleting
+			if self.declaredDead < (time.time() - 604800):
+				return False  # Sensor has existed for a week, with no new incoming values. Delete.
+			return True
+
 		for valueType in self._sensorValues:
 			for sensorType in self._sensorValues[valueType]:
 				if sensorType['lastUpdated'] > (time.time() - 604800):
@@ -97,6 +105,8 @@ class SensorNode(RF433Node):
 		if self._packageCount < 6:
 			self._packageCount = self._packageCount + 1
 			return  # don't update any values yet
+		if self.declaredDead:
+			self.declaredDead = False
 		for value in data:
 			self.setSensorValue(value['type'], value['value'], value['scale'])
 
@@ -197,6 +207,8 @@ class RF433(Plugin):
 				device._packageCount = 7  # already loaded, keep it that way!
 				device._sensorValues = d._sensorValues
 				device.batteryLevel = d.batteryLevel
+				if hasattr(d, 'declaredDead'):
+					device.declaredDead = d.declaredDead
 
 			self.deviceManager.addDevice(device)
 

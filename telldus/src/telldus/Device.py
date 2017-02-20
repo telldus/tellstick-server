@@ -438,6 +438,8 @@ class CachedDevice(Device):
 			self.setSensorValues(settings['sensorValues'])
 		if 'isSensor' in settings:
 			self._isSensor = settings['isSensor']
+		if 'declaredDead' in settings:
+			self.declaredDead = settings['declaredDead']
 
 	def isSensor(self):
 		return self._isSensor
