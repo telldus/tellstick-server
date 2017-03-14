@@ -69,6 +69,9 @@ class Protocol(object):
 			decoded = ProtocolComen.decodeData(data)
 			if decoded is not None:
 				retval.append(decoded)
+			decoded = ProtocolSartano.decodeData(data)
+			if decoded is not None:
+				retval.append(decoded)
 		return retval
 
 	def stringForMethod(self, method):
