@@ -6,7 +6,8 @@ from pwd import getpwnam
 from grp import getgrnam
 
 plugins = {
-	'telldus': ['DeviceManager', 'DeviceApiManager', 'React'],
+	'telldus': ['DeviceManager', 'DeviceApiManager'],
+	'telldus.web': ['React'],
 	'tellduslive.web': ['WebRequestHandler'],
 	#PLUGINS#
 }
