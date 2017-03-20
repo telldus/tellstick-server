@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import daemon, os
+from pwd import getpwnam
+from grp import getgrnam
+
 plugins = {
 	'telldus': ['DeviceManager', 'DeviceApiManager', 'React'],
 	'tellduslive.web': ['WebRequestHandler'],
@@ -25,7 +29,7 @@ def loadClasses(cls):
 			classes.append(getattr(m, c))
 	return classes
 
-if __name__ == "__main__":
+def main():
 	from base import Application
 
 	p = loadClasses(plugins)
@@ -33,3 +37,29 @@ if __name__ == "__main__":
 
 	app = Application(run=False)
 	app.run(startup=s)
+
+class PIDFile(object):
+	def __init__(self):
+		self.f = open('/var/run/tellstick-server.pid', 'w')
+
+	def fileno(self):
+		return self.f.fileno()
+
+	def __enter__(self):
+		self.f.write(str(os.getpid()))
+		self.f.flush()
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		self.f.close()
+
+if __name__ == "__main__":
+	pidfile = PIDFile()
+	params = {
+		'detach_process': True,
+		'pidfile': pidfile,
+		'uid': getpwnam('nobody').pw_uid,
+		'gid': getgrnam('nogroup').gr_gid,
+		'files_preserve': [pidfile]
+	}
+	with daemon.DaemonContext(**params):
+		main()
