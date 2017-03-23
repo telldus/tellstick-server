@@ -436,6 +436,9 @@ class DeviceManager(Plugin):
 				'model': d.model(),
 				'sensor_id': d.id(),
 			}
+			if d.params() and 'sensorId' in d.params():
+				sensor['channelId'] = d.params()['sensorId']
+
 			battery = d.battery()
 			if battery is not None:
 				sensor['battery'] = battery
