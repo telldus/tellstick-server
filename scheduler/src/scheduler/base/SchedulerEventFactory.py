@@ -271,10 +271,27 @@ class SuntimeCondition(Condition):
 		currentDate = pytz.utc.localize(datetime.utcnow())
 		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
 		currentStatus = 1
-		if (riseSet['sunrise'] + (self.sunriseOffset*60)) < (riseSet['sunset'] + (self.sunsetOffset*60)):
-			# the sun is down (with offset)
-			currentStatus = 0
-
+		sunToday = sunCalc.riseset(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		sunRise = None
+		sunSet = None
+		if sunToday['sunrise']:
+			sunRise = sunToday['sunrise'] + (self.sunriseOffset*60)
+		if sunToday['sunset']:
+			sunSet = sunToday['sunset'] + (self.sunsetOffset*60)
+		if sunRise or sunSet:
+			if (sunRise and time.time() < sunRise) or (sunSet and time.time() > sunSet):
+				currentStatus = 0
+		else:
+			# no sunset or sunrise, is it winter or summer?
+			nextRiseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+			if riseSet['sunrise'] < riseSet['sunset']:
+				# next is a sunrise, it's dark now (winter)
+				if time.time() < (riseSet['sunrise'] + (self.sunriseOffset*60)):
+					currentStatus = 0
+			else:
+				# next is a sunset, it's light now (summer)
+				if time.time() > (riseSet['sunset'] + (self.sunriseOffset*60)):
+					currentStatus = 0
 		if self.sunStatus == currentStatus:
 			success()
 		else:
