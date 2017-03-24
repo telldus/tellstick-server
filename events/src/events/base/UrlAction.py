@@ -13,7 +13,7 @@ class UrlAction(Action):
 		if name == 'url':
 			self.url = str(value)
 
-	def execute(self):
+	def execute(self, triggerInfo={}):
 		# Invoke in a new thread to not block
 		thread = Thread(target=self.__execute, name='UrlAction')
 		thread.start()

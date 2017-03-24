@@ -67,16 +67,16 @@ class Event(object):
 			self.triggers[id] = trigger
 
 	@mainthread
-	def execute(self, trigger):
+	def execute(self, trigger, triggerInfo={}):
 		self.manager.live.pushToWeb('event', 'trigger', {'event': self.eventId,'trigger': trigger.id})
 		if (self.lastRun is not None) and (time.time() - self.lastRun < self.minimumRepeatInterval):
 			return
 		try:
 			if len(self.conditions) == 0:
 				# No conditions
-				self.__execute()
+				self.__execute(triggerInfo)
 			else:
-				c = ConditionContext(self, self.conditions, success=self.__execute, failure=self.__failure)
+				c = ConditionContext(self, self.conditions, success=self.__execute, failure=self.__failure, triggerInfo=triggerInfo)
 				self.__cleanContexts()
 				if len(self.evaluatingConditions) == 0:
 					c.evaluate()
@@ -90,14 +90,14 @@ class Event(object):
 		# Clean contexts
 		self.evaluatingConditions[:] = [x for x in self.evaluatingConditions if x.state is not ConditionContext.DONE]
 
-	def __execute(self):
+	def __execute(self, triggerInfo={}):
 		# Clear all pending contexts
 		self.evaluatingConditions = []
 		self.lastRun = time.time()
 		self.manager.live.pushToWeb('event', 'update', {'event': self.eventId, 'suspended': self.minimumRepeatInterval})
 		for id in self.actions:
 			try:
-				self.actions[id].start()
+				self.actions[id].start(triggerInfo)
 				self.manager.live.pushToWeb('event', 'action', {'event': self.eventId, 'action': id})
 			except Exception as e:
 				logging.error("Could not execute action due to: %s" % str(e))

@@ -22,5 +22,5 @@ class Trigger(object):
 	def parseParam(self, name, value):
 		pass
 
-	def triggered(self):
-		self.event.execute(self)
+	def triggered(self, triggerInfo={}):
+		self.event.execute(self, triggerInfo)

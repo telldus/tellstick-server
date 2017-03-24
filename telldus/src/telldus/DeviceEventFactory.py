@@ -60,7 +60,7 @@ class DeviceEventFactory(Plugin):
 	def stateChanged(self, device, method, statevalue):
 		for trigger in self.deviceTriggers:
 			if trigger.deviceId == device.id() and trigger.method == int(method):
-				trigger.triggered()
+				trigger.triggered({'triggertype': 'device', 'clientdeviceid': device.id(), 'method': int(method)})
 
 class DeviceActionExecutor(object):
 	def __init__(self, device, method, value, repeats, description):
@@ -109,7 +109,7 @@ class DeviceAction(Action):
 		elif name == 'value':
 			self.value = int(value)
 
-	def execute(self):
+	def execute(self, triggerInfo={}):
 		device = self.manager.device(self.deviceId)
 		if device is None:
 			return
@@ -270,7 +270,7 @@ class SensorTrigger(Trigger):
 					self.isTriggered = True
 					self.requireReload = True
 					if not self.firstValue:
-						self.triggered()
+						self.triggered({'triggertype': 'sensor', 'clientsensorid': self.sensorId, 'value': value, 'valueType': ttype,  'scale': scale})
 			else:
 				if self.requireReload:
 					self.requireReload = abs(value-self.value) < self.reloadValue

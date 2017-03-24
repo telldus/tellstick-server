@@ -70,12 +70,18 @@ class TimeTriggerManager(object):
 				triggersToRemove = []
 				for trigger in self.triggers[currentMinute]:
 					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
+						triggertype = 'time'
+						if type(trigger) is SuntimeTrigger:
+							triggertype = 'suntime'
+						elif type(trigger) is BlockheaterTrigger:
+							triggertype = 'blockheater'
+
 						if type(trigger) is SuntimeTrigger and trigger.recalculate():
 							# suntime (time or active-status) was updated (new minute), move it around
 							triggersToRemove.append(trigger)
 						if trigger.active:
 							# is active (not inactive due to sunrise/sunset-thing)
-							trigger.triggered()
+							trigger.triggered({'triggertype': triggertype})
 				with self.timeLock:
 					for trigger in triggersToRemove:
 						self.triggers[currentMinute].remove(trigger)

@@ -5,11 +5,12 @@ from threading import Timer
 class ConditionContext(object):
 	EVALUATING, DONE = range(2)
 
-	def __init__(self, event, conditions, success, failure):
+	def __init__(self, event, conditions, success, failure, **kwargs):
 		super(ConditionContext,self).__init__()
 		self.event = event
 		self.success = success
 		self.failure = failure
+		self.kwargs = kwargs
 		self.conditions = []
 		self.state = ConditionContext.EVALUATING
 		for i in conditions:
@@ -32,7 +33,7 @@ class ConditionContext(object):
 			if success == True:
 				# No need to evaluate more conditions
 				self.state = ConditionContext.DONE
-				self.success()
+				self.success(**self.kwargs)
 				return
 		self.state = ConditionContext.DONE
 		self.failure()

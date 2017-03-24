@@ -31,10 +31,14 @@ class Action(object):
 		if 'delayExecTime' not in storedAction or storedAction['delay'] != self.delay or self.delayPolicy != "continue" or storedAction['delayPolicy'] != self.delayPolicy:
 			return
 		# action is waiting for a delay, and delaytime or delaypolicy hasn't been changed, so readd this delay
+		self.triggerInfo = None
+		if 'triggerInfo' in storedAction:
+			self.triggerInfo = storedAction['triggerInfo']
 		self.delayExecTime = float(storedAction['delayExecTime'])
 		if self.delayExecTime < (time.time() - 900):
 			# to late to execute this delayed action now, just ignore it
 			self.delayExecTime = None
+			self.triggerInfo = None
 			self.updateStoredAction()
 		elif self.delayExecTime < time.time():
 			# execute it now, it's within the correct interval
@@ -46,13 +50,15 @@ class Action(object):
 			self.timeout = Timer(self.delayExecTime - time.time(), self.executeDelayed)
 			self.timeout.start()
 
-	def execute(self):
+	def execute(self, triggerInfo={}):
 		pass
 
 	def executeDelayed(self):
 		self.delayExecTime = None
+		triggerInfo = self.triggerInfo
+		self.triggerInfo = None
 		self.updateStoredAction()
-		self.execute()
+		self.execute(triggerInfo)
 
 	def loadParams(self, params):
 		for param in params:
@@ -65,9 +71,9 @@ class Action(object):
 	def parseParam(self, name, value):
 		pass
 
-	def start(self):
+	def start(self, triggerInfo={}):
 		if self.delay == 0:
-			self.execute()
+			self.execute(triggerInfo)
 			return
 		else:
 			if self.delayPolicy == "continue" and self.delayExecTime:
@@ -75,6 +81,7 @@ class Action(object):
 				return
 		if self.timeout:
 			self.timeout.cancel()
+		self.triggerInfo = triggerInfo
 		self.timeout = Timer(self.delay, self.executeDelayed)
 		self.timeout.start()
 		self.delayExecTime = time.time() + self.delay
@@ -98,9 +105,11 @@ class Action(object):
 					action = actions[str(self.id)]
 					if self.delayExecTime:
 						action['delayExecTime'] = self.delayExecTime
+						action['triggerInfo'] = self.triggerInfo
 					else:
 						try:
 							del action['delayExecTime']
+							del action['triggerInfo']
 						except Exception as e:
 							pass
 		self.s['events'] = storeddata
@@ -109,9 +118,10 @@ class RemoteAction(Action):
 	def __init__(self, **kwargs):
 		super(RemoteAction,self).__init__(**kwargs)
 
-	def execute(self):
+	def execute(self, triggerInfo={}):
 		msg = LiveMessage('event-executeaction')
 		msg.append({
-			'action': self.id
+			'action': self.id,
+			'triggerInfo': triggerInfo
 		})
 		self.event.manager.live.send(msg)
