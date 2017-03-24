@@ -20,24 +20,6 @@ function(React, ReactMDL, ReactRedux, Actions, PluginCard ) {
 					)}
 				</ReactMDL.Grid>
 			);
-			return (
-				<ReactMDL.List>
-					{this.props.plugins.map(plugin =>
-						<ReactMDL.ListItem key={plugin.name} twoLine>
-							<ReactMDL.ListItemContent>{plugin.name}</ReactMDL.ListItemContent>
-							<ReactMDL.ListItemAction>
-								{function() {
-									if (Object.keys(plugin.config).length == 0) {
-										return null;
-									}
-									return <a onClick={() => this.props.onConfigurePlugin(plugin.name)}><ReactMDL.Icon name="settings" /></a>
-								}.bind(this)()}
-								<a onClick={() => this.props.onRemovePlugin(plugin.name)}><ReactMDL.Icon name="delete" /></a>
-							</ReactMDL.ListItemAction>
-						</ReactMDL.ListItem>
-					)}
-				</ReactMDL.List>
-			)
 		}
 	}
 
