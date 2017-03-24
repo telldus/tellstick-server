@@ -1,28 +1,36 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'plugins/actions'],
-function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions ) {
+	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions'],
+function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 	class ConfigTextInput extends React.Component {
-	}
-	class ConfigInput extends React.Component {
 		constructor(props) {
 			super(props)
 			this.state = {
 				value: this.props.value
 			}
 		}
-		handleChange(event) {
-			this.setState({value: event.target.value});
-			this.props.onChange(event.target.value)
+		handleChange(value) {
+			this.setState({value: value});
+			this.props.onChange(value)
 		}
 		render() {
 			return (
 				<ReactMDL.Textfield
 					floatingLabel
-					onChange={e => this.handleChange(e)}
+					onChange={e => this.handleChange(e.target.value)}
 					label={this.props.title}
 					value={this.state.value}
 				/>
 			);
+
+		}
+	}
+	class ConfigInput extends React.Component {
+		render() {
+			if (this.props.type == 'reactcomponent') {
+				return <Telldus.ComponentLoader name={this.props.component} />
+			}
+			// Default to a string
+			return <ConfigTextInput onChange={value => this.onChange(value)} {...this.props} />
 		}
 	}
 	ConfigInput.propTypes = {
