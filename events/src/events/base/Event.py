@@ -37,13 +37,13 @@ class Event(object):
 			if 'actions' in storeddata[str(self.eventId)]:
 				storedActions = storeddata[str(self.eventId)]['actions']
 		for id in data:
-			action = self.manager.requestAction(event=self, id=id, **data[id])
+			action = self.manager.requestAction(event=self, id=int(id), **data[id])
 			if not action:
-				action = RemoteAction(event=self, id=id, **data[id])
+				action = RemoteAction(event=self, id=int(id), **data[id])
 			if 'params' in data[id]:
 				action.loadParams(data[id]['params'])
 			action.compareStoredDelay(storedActions)
-			self.actions[id] = action
+			self.actions[int(id)] = action
 
 	def loadConditions(self, data):
 		for id in data:
