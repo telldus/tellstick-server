@@ -68,7 +68,7 @@ class ComponentLoader extends React.Component {
 	render() {
 		var PluginComponent = this.state.component;
 		return (
-			<PluginComponent location={this.props.location} />
+			<PluginComponent location={this.props.location} {...this.props} />
 		);
 	}
 };

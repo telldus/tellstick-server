@@ -22,17 +22,21 @@ class configuration(object):
 		return cls
 
 class ConfigurationValue(object):
-	def __init__(self, valueType, defaultValue, **kwargs):
+	def __init__(self, valueType, defaultValue, writable=True, readable=True, **kwargs):
 		self.valueType = valueType
 		self.defaultValue = defaultValue
+		self.readable = readable
+		self.writable = writable
 		self.title = kwargs.setdefault('title', '')
 		self.description = kwargs.setdefault('description', '')
 
 	def serialize(self):
 		return {
-			'type': self.valueType,
-			'title': self.title,
 			'description': self.description,
+			'readable': self.readable,
+			'title': self.title,
+			'type': self.valueType,
+			'writable': self.writable,
 		}
 
 class ConfigurationList(ConfigurationValue):
@@ -60,7 +64,8 @@ class ConfigurationManager(Plugin):
 			cfgObj[key] = cls.configuration[key].serialize()
 			if cfgObj[key]['title'] == '':
 				cfgObj[key]['title'] = key
-			cfgObj[key]['value'] = self.__getValue(cls, key)
+			if cfgObj[key]['readable'] == True:
+				cfgObj[key]['value'] = self.__getValue(cls, key)
 		return cfgObj
 
 	def setValue(self, callee, key, value):

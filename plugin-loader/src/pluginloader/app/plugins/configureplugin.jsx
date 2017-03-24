@@ -26,11 +26,11 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 	}
 	class ConfigInput extends React.Component {
 		render() {
-			if (this.props.type == 'reactcomponent') {
-				return <Telldus.ComponentLoader name={this.props.component} />
+			if (this.props.config.type == 'reactcomponent') {
+				return <Telldus.ComponentLoader name={this.props.config.component} {...this.props.config} />
 			}
 			// Default to a string
-			return <ConfigTextInput onChange={value => this.onChange(value)} {...this.props} />
+			return <ConfigTextInput onChange={value => this.onChange(value)} {...this.props.config} />
 		}
 	}
 	ConfigInput.propTypes = {
@@ -69,7 +69,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 								{Object.keys(this.props.plugin.config[name]).map(config => (
 									<div key={config}>
 										<ConfigInput
-											{...this.props.plugin.config[name][config]}
+											config={this.props.plugin.config[name][config]}
 											onChange={v => this.handleChange(name, config, v)}
 										/>
 									</div>
