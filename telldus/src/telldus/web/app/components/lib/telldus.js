@@ -1,6 +1,7 @@
 import {applyMiddleware, createStore, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
+import ComponentLoader from '../ComponentLoader';
 
 export const componentsByTag = (components, tag) => (
 	Object.keys(components).reduce((p, name) => {
@@ -13,6 +14,7 @@ export const componentsByTag = (components, tag) => (
 
 export default function() {
 	return {
+		ComponentLoader: ComponentLoader,
 		createStore: function(reducers) {
 			return createStore(
 				reducers,

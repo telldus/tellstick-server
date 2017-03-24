@@ -72,6 +72,9 @@ class ComponentLoader extends React.Component {
 		);
 	}
 };
+ComponentLoader.propTypes = {
+	name: React.PropTypes.string.isRequired,
+}
 
 const mapStateToProps = (state, ownProps) => {
 	return {
