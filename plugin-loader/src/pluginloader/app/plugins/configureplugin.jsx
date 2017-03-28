@@ -30,7 +30,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 				return <Telldus.ComponentLoader name={this.props.config.component} {...this.props.config} />
 			}
 			// Default to a string
-			return <ConfigTextInput onChange={value => this.onChange(value)} {...this.props.config} />
+			return <ConfigTextInput onChange={value => this.props.onChange(value)} {...this.props.config} />
 		}
 	}
 	ConfigInput.propTypes = {
