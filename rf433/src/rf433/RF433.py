@@ -325,7 +325,12 @@ class RF433(Plugin):
 				if parameter not in deviceParams:
 					thisDevice = False
 					break
-				if msg[parameter] != deviceParams[parameter]:
+				convertedParameter = deviceParams[parameter]
+				try:
+					convertedParameter = str(convertedParameter)
+				except:
+					pass
+				if msg[parameter] != convertedParameter:
 					thisDevice = False
 					break
 			if thisDevice:

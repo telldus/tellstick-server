@@ -66,6 +66,11 @@ class Protocol(object):
 			decoded = ProtocolArctech.decodeData(data)
 			if decoded is not None:
 				retval.append(decoded)
+				if decoded['method'] == Device.TURNON:
+					decodedBell = decoded.copy()
+					decodedBell['model'] = 'selflearning-bell'
+					decodedBell['method'] = Device.BELL
+					retval.append(decodedBell)
 			decoded = ProtocolComen.decodeData(data)
 			if decoded is not None:
 				retval.append(decoded)
