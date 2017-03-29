@@ -11,6 +11,8 @@ class UrlAction(Action):
 
 	def parseParam(self, name, value):
 		if name == 'url':
+			if type(value) == unicode:
+				value = value.encode('utf-8')
 			self.url = str(value)
 
 	def execute(self, triggerInfo={}):
