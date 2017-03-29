@@ -28,7 +28,7 @@ class Action(object):
 		if not storedActions or str(self.id) not in storedActions:
 			return
 		storedAction = storedActions[str(self.id)]
-		if 'delayExecTime' not in storedAction or storedAction['delay'] != self.delay or self.delayPolicy != "continue" or storedAction['delayPolicy'] != self.delayPolicy:
+		if 'delayExecTime' not in storedAction or storedAction['delay'] != self.delay or storedAction['delayPolicy'] != self.delayPolicy:
 			return
 		# action is waiting for a delay, and delaytime or delaypolicy hasn't been changed, so readd this delay
 		self.triggerInfo = None

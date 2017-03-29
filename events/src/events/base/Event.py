@@ -29,10 +29,9 @@ class Event(object):
 		for actionId in self.actions:
 			self.actions[actionId].close()
 
-	def loadActions(self, data):
+	def loadActions(self, data, storeddata):
 		# check for running action delays
 		storedActions = None
-		storeddata = self.s.get('events', {})
 		if str(self.eventId) in storeddata:
 			if 'actions' in storeddata[str(self.eventId)]:
 				storedActions = storeddata[str(self.eventId)]['actions']

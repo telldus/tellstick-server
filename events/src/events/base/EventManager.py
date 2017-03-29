@@ -33,9 +33,9 @@ class EventManager(Plugin):
 		self.longitude = self.schedulersettings.get('longitude', '13.187836')
 		self.loadLocalEvents()
 
-	def loadEvent(self, eventId, data):
+	def loadEvent(self, eventId, data, storeddata):
 		event = Event(self, eventId, data['minRepeatInterval'], data['description'])
-		event.loadActions(data['actions'])
+		event.loadActions(data['actions'], storeddata)
 		event.loadConditions(data['conditions'])
 		event.loadTriggers(data['triggers'])
 		self.events[eventId] = event
@@ -65,7 +65,7 @@ class EventManager(Plugin):
 			data = self.s.get('events', {})
 			for eventId in data:
 				if eventId not in self.events and data[eventId] != "":
-					self.loadEvent(eventId, data[eventId])
+					self.loadEvent(eventId, data[eventId], {})
 
 	def recalcTriggers(self):
 		for observer in self.observers:
@@ -97,13 +97,17 @@ class EventManager(Plugin):
 	@TelldusLive.handler('events-report')
 	def receiveEventsFromServer(self, msg):
 		data = msg.argument(0).toNative()
-		self.s['events'] = data
+		for eventId in self.events:
+			# clear old timers
+			self.events[eventId].close()
 		self.events = {}
+		storeddata = self.s.get('events', {})
+		self.s['events'] = data
 		for observer in self.observers:
 			observer.clearAll()
 		for eventId in data:
 			if eventId not in self.events:
-				self.loadEvent(eventId, data[eventId])
+				self.loadEvent(eventId, data[eventId], storeddata)
 
 	@TelldusLive.handler('one-event-deleted')
 	def receiveDeletedEventFromServer(self, msg):
@@ -122,10 +126,11 @@ class EventManager(Plugin):
 		if eventId in self.events:
 			self.events[eventId].close()
 			del self.events[eventId]
-		self.loadEvent(eventId, data)
 		storeddata = self.s.get('events', {})
-		storeddata[str(eventId)] = data
-		self.s['events'] = storeddata
+		newstoreddata = storeddata.copy()
+		newstoreddata[str(eventId)] = data
+		self.s['events'] = newstoreddata
+		self.loadEvent(eventId, data, storeddata)
 
 	@TelldusLive.handler('event-conditionresult')
 	def receiveConditionResultFromServer(self, msg):
