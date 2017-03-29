@@ -71,6 +71,7 @@ class Device(object):
 		self._sensorValues = {}
 		self._confirmed = True
 		self.valueChangedTime = {}
+		self.lastUpdated = None  # internal use only, last time state was changed
 		self.lastUpdatedLive = {}
 
 	def id(self):
@@ -309,6 +310,10 @@ class Device(object):
 	def setState(self, state, stateValue = None, ack=None, origin=None):
 		if stateValue is None:
 			stateValue = ''
+		if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
+			# same state/statevalue and less than one second ago, most probably just the same value being resent, ignore
+			return
+		self.lastUpdated = time.time()
 		self._state = state
 		self._stateValue = stateValue
 		if self._manager:
