@@ -151,6 +151,8 @@ class Protocol(object):
 			return ProtocolSartano()
 		if (protocol == 'silvanchip'):
 			return ProtocolSilvanChip()
+		if (protocol == 'upm'):
+			return ProtocolUpm()
 		if (protocol == 'waveman'):
 			return ProtocolWaveman()
 		if (protocol == 'x10'):
@@ -173,6 +175,7 @@ from ProtocolOregon import *
 from ProtocolRisingSun import *
 from ProtocolSartano import *
 from ProtocolSilvanChip import *
+from ProtocolUpm import *
 from ProtocolWaveman import *
 from ProtocolX10 import *
 from ProtocolYidong import *
