@@ -125,7 +125,7 @@ class PythonObjectWrapper(object):
 	def __getattr__(self, attr):
 		method = getattr(self.obj, attr)
 		def fn(self, *args, **kwargs):
-			method(*args, **kwargs)
+			return method(*args, **kwargs)
 		return fn
 	
 class LuaScript(object):
