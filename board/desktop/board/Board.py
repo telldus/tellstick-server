@@ -48,7 +48,7 @@ class Board(object):
 
 	@staticmethod
 	def product():
-		return 'tellstick-znet-desktop'
+		return 'tellstick-desktop'
 
 	@staticmethod
 	def rf433Port():
