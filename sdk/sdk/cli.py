@@ -9,6 +9,7 @@ def writePluginsXml(files):
 		with zipfile.ZipFile(filename, 'r') as z:
 			cfg = yaml.load(z.read('manifest.yml'))
 			plugin = ET.SubElement(root, "plugin", name=cfg['name'])
+			plugin.attrib['category'] = cfg.get('category', 'other')
 			if 'color' in cfg:
 				plugin.attrib['color'] = cfg['color']
 			ET.SubElement(plugin, "description").text = cfg['description']

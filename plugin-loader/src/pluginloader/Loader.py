@@ -45,6 +45,7 @@ class LoadedPlugin(object):
 		return {
 			'author': self.manifest.get('author', ''),
 			'author-email': self.manifest.get('author-email', ''),
+			'category': self.manifest.get('category', 'other'),
 			'color': self.manifest.get('color', ''),
 			'config': configs,
 			'description': self.manifest.get('description', ''),

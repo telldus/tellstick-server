@@ -102,6 +102,9 @@ class telldus_plugin(Command):
 
 	@staticmethod
 	def validate_attribute(dist, attr, value):
+		if attr == 'category':
+			if type(value) != str:
+				raise DistutilsSetupError('Attribute "category" must be a string')
 		if attr == 'color':
 			if type(value) != str:
 				raise DistutilsSetupError('Attribute "color" must be a string')
@@ -186,6 +189,8 @@ class telldus_plugin(Command):
 				'packages': [os.path.basename(p) for p in packages],
 				'version': self.distribution.metadata.version,
 			}
+			if self.distribution.category is not None:
+				data['category'] = self.distribution.category
 			if self.distribution.color is not None:
 				data['color'] = self.distribution.color
 			if self.distribution.icon is not None and os.path.exists(self.distribution.icon):

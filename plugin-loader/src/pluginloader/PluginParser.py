@@ -27,6 +27,7 @@ class PluginParser(object):
 					'author': '',
 					'author-email': '',
 					'name': str(attrs['name']),
+					'category': str(attrs['category']),
 					'compatible': False,
 				}
 				if 'color' in attrs:

@@ -138,6 +138,7 @@ class WebFrontend(Plugin):
 				{
 					'author': plugin['author'],
 					'author-email': plugin['author-email'],
+					'category': plugin.get('category', 'other'),
 					'color': plugin.get('color', None),
 					'name': plugin['name'],
 					'icon': plugin['icon'] if 'icon' in plugin else '',

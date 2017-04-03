@@ -14,6 +14,7 @@ setup(
 			'telldus_plugin = sdk.plugin:telldus_plugin'
 		],
 		'distutils.setup_keywords': [
+			'category = sdk.plugin:telldus_plugin.validate_attribute',
 			'color = sdk.plugin:telldus_plugin.validate_attribute',
 			'compatible_platforms = sdk.plugin:telldus_plugin.validate_attribute',
 			'icon = sdk.plugin:telldus_plugin.validate_attribute',
