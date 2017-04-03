@@ -45,7 +45,7 @@ class Lua(Plugin):
 		Calls a lua function in a script. Required methods:
 		  script: The name of the script. With or witout the .lua extension.
 		  function: The name of the function to call.
-		
+
 		Any extra parameters will be sent to the function as a lua table as the
 		first parameter.
 		"""
