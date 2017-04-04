@@ -167,7 +167,10 @@ class Loader(Plugin):
 				raise ImportError('Plugin name cannot be "staging", this is a reserved name')
 			if 'packages' not in cfg:
 				raise ImportError('Malformed plugin. Manifest does not list any packages.')
-			gpg = loadGPG()
+			try:
+				gpg = loadGPG()
+			except Exception as e:
+				raise ImportError(str(e))
 			packages = []
 			for p in cfg['packages']:
 				f = z.extract(p, '/tmp/')
