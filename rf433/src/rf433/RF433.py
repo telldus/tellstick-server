@@ -374,7 +374,7 @@ class RF433(Plugin):
 	""" Register scheduled job to clean up sensors that have not been updated for a while"""
 	def registerSensorCleanup(self):
 		Application().registerScheduledTask(self.cleanupSensors, hours=12)  # every 12th hour
-		t = Timer(10, self.cleanupSensors)  # run a first time after 10 minutes
+		t = Timer(600, self.cleanupSensors)  # run a first time after 10 minutes
 		t.daemon = True
 		t.name='Sensor cleanup'
 		t.start()
