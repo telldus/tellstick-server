@@ -28,7 +28,7 @@ class ServerList():
 
 	def retrieveServerList(self):
 		conn = httplib.HTTPConnection('%s:80' % Board.liveServer())
-		conn.request('GET', "/server/assign?protocolVersion=2&mac=%s" % ServerList.getMacAddr(Board.networkInterface()))
+		conn.request('GET', "/server/assign?protocolVersion=3&mac=%s" % ServerList.getMacAddr(Board.networkInterface()))
 		response = conn.getresponse()
 
 		p = xml.parsers.expat.ParserCreate()

@@ -178,7 +178,7 @@ class TelldusLive(Plugin):
 			'hash': 'sha1'
 		})
 		msg.append({
-			'protocol': 2,
+			'protocol': 3,
 			'version': Board.firmwareVersion(),
 			'os': 'linux',
 			'os-version': 'telldus'
