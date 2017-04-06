@@ -290,7 +290,7 @@ class Device(object):
 		found = False
 		for sensorType in self._sensorValues[valueType]:
 			if sensorType['scale'] == scale:
-				if sensorType['value'] != value or valueType not in self.valueChangedTime:
+				if sensorType['value'] != str(value) or valueType not in self.valueChangedTime:
 					# value has changed
 					self.valueChangedTime[valueType] = int(time.time())
 				else:
