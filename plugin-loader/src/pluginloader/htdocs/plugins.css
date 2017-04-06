@@ -1,0 +1,39 @@
+.buttonWhiteBorder {
+  border: 2px solid #fff;
+  border-radius: 18px;
+  color: #fff;
+  line-height: 32px;
+  font-weight: normal;
+}
+.buttonWhiteBorder:hover {
+  background: #fff;
+  color: inherit;
+}
+.dialogTitleIcon {
+  font-size: 2.5rem;
+}
+button.buttonAccept:disabled {
+  background: none !important;
+}
+button.buttonRounded {
+  border-radius: 18px;
+}
+button.buttonAccept {
+  background-color: #9ccc65;
+}
+button.buttonAccept:hover {
+  background-color: #88b654;
+}
+button.buttonDecline {
+  background-color: #ef5350;
+}
+button.buttonDecline:hover {
+  background-color: #d63e3b;
+}
+button.buttonWhite {
+  background-color: #fff;
+  color: inherit;
+}
+button.buttonWhite:hover {
+  background-color: rgba(255,255,255, 0.60);
+}

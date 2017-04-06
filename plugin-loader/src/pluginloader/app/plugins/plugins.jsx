@@ -1,6 +1,8 @@
 define(
 	['react', 'react-mdl', 'react-redux', 'telldus', 'websocket', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/plugininfo', 'plugins/pluginslist', 'plugins/store', 'plugins/upload'],
 function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginInfo, PluginsList, Store, Upload ) {
+	Telldus.loadCSS('/pluginloader/plugins.css');
+
 	var defaultState = {
 		configure: null,
 		importingKey: {

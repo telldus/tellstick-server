@@ -31,6 +31,7 @@ setup(
 	extras_require = dict(cREQ = 'Base>=0.1\nTelldusWeb>=0.1'),
 	package_data={'pluginloader' : [
 		'htdocs/plugins.js',
+		'htdocs/*.css',
 		'files/telldus.gpg',
 	]}
 )
