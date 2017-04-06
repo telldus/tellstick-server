@@ -41,6 +41,10 @@ class ConfigurationValue(object):
 			'writable': self.writable,
 		}
 
+class ConfigurationDict(ConfigurationValue):
+	def __init__(self, defaultValue={}, **kwargs):
+		super(ConfigurationDict,self).__init__('dict', defaultValue, **kwargs)
+
 class ConfigurationList(ConfigurationValue):
 	def __init__(self, defaultValue=[], **kwargs):
 		super(ConfigurationList,self).__init__('list', defaultValue, **kwargs)
