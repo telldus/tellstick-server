@@ -49,6 +49,10 @@ class ConfigurationList(ConfigurationValue):
 	def __init__(self, defaultValue=[], **kwargs):
 		super(ConfigurationList,self).__init__('list', defaultValue, **kwargs)
 
+class ConfigurationNumber(ConfigurationValue):
+	def __init__(self, defaultValue=0, **kwargs):
+		super(ConfigurationNumber,self).__init__('number', defaultValue, **kwargs)
+
 class ConfigurationString(ConfigurationValue):
 	def __init__(self, defaultValue='', minLength=0, maxLength=0, **kwargs):
 		self.minLength = minLength
