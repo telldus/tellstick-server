@@ -102,6 +102,13 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 								</ReactMDL.FABButton>
 							</ReactMDL.Tooltip>
 						</div>
+						<ReactMDL.Textfield
+							 onChange={() => {}}
+							 label="Search"
+							 expandable
+							 expandableIcon="search"
+							 className="searchField"
+						/>
 						<br style={{clear: 'both'}} />
 					</div>
 					<PluginsList />

@@ -37,3 +37,35 @@ button.buttonWhite {
 button.buttonWhite:hover {
   background-color: rgba(255,255,255, 0.60);
 }
+
+.searchField {
+  border: none;
+  height: 56px;
+  min-width: 56px;
+  border-radius: 28px;
+  background: rgba(158,158,158, 0.20);
+  box-shadow: 0 1px 1.5px 0 rgba(0, 0, 0, 0.12), 0 1px 1px 0 rgba(0, 0, 0, 0.24);
+  padding: 0 12px 0 0;
+}
+.searchField .mdl-button {
+  top: 12px;
+  left: 12px;
+}
+.searchField .mdl-button:hover {
+  background: none;
+}
+
+.searchField .mdl-textfield__expandable-holder {
+  margin-left: 40px;
+  padding: 16px 0 0 0;
+}
+.searchField .mdl-textfield__input {
+  border-bottom: none;
+}
+.searchField .mdl-textfield__label {
+  border-bottom: none;
+  font-size: 1px;
+}
+.searchField .mdl-textfield__label::after {
+  background-color: transparent;
+}
