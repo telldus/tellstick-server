@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'plugins/actions'],
-function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions) {
+	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'plugins/actions', 'plugins/categoryicon'],
+function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 	const formatSize = size => {
 		let ext = 'bytes';
 		if (size >= 1024) {
@@ -17,8 +17,10 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions) {
 		}
 		render() {
 			return (
-				<ReactMDL.Dialog open={this.props.show} ref={(c) => this.dialog = c} onCancel={this.props.onClose} style={{width: '500px'}}>
-					<ReactMDL.DialogTitle>{this.props.name}</ReactMDL.DialogTitle>
+				<ReactMDL.Dialog open={this.props.show} ref={(c) => this.dialog = c} onCancel={this.props.onClose} style={{width: '500px', padding: 0}}>
+					<ReactMDL.DialogTitle style={{color: '#555'}}>
+						<CategoryIcon category={this.props.category} color={this.props.color} />{this.props.name}
+					</ReactMDL.DialogTitle>
 					<ReactMDL.DialogContent>
 						<div style={{float: 'left', paddingRight: '16px', paddingBottom: '16px'}}>
 							{this.props.icon && <img src={this.props.icon} />}
@@ -72,6 +74,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions) {
 			description: plugin.description,
 			errorMessage: state.installErrorMsg,
 			icon: plugin.icon,
+			category: plugin.category,
+			color: plugin.color,
 			installed: installed,
 			installing: state.installing == plugin.name,
 			name: plugin.name,
