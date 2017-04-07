@@ -95,6 +95,14 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 				<div>
 					<div style={{padding: '16px'}}>
 						<ReactMDL.Cell component={Upload} col={3} shadow={1} />
+						<div style={{float: 'left'}}>
+							<ReactMDL.Tooltip label="Refresh List" position="right" large>
+								<ReactMDL.FABButton style={{float: 'left', marginRight: '8px'}}>
+									<ReactMDL.Icon name="refresh" />
+								</ReactMDL.FABButton>
+							</ReactMDL.Tooltip>
+						</div>
+						<br style={{clear: 'both'}} />
 					</div>
 					<PluginsList />
 					<Store />
