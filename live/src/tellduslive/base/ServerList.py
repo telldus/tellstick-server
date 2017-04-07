@@ -43,7 +43,7 @@ class ServerList():
 
 	@staticmethod
 	def getMacAddr(ifname):
-		addrs = netifaces.ifaddresses(ifname)[netifaces.AF_LINK]
+		addrs = netifaces.ifaddresses(ifname)
 		try:
 			mac = addrs[netifaces.AF_LINK][0]['addr']
 		except IndexError, KeyError:
