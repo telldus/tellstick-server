@@ -93,11 +93,11 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 		render() {
 			return (
 				<div>
+					<div style={{padding: '16px'}}>
+						<ReactMDL.Cell component={Upload} col={3} shadow={1} />
+					</div>
 					<PluginsList />
 					<Store />
-					<ReactMDL.Grid>
-						<ReactMDL.Cell component={Upload} col={3} shadow={1} />
-					</ReactMDL.Grid>
 					{this.props.keyLength > 0 && <ReactMDL.Grid>
 						<ReactMDL.Cell component={ReactMDL.Card} col={7} shadow={1}>
 							<ReactMDL.CardTitle expand>Trusted developers</ReactMDL.CardTitle>
