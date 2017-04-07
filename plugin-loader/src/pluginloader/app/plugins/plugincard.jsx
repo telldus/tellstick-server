@@ -1,32 +1,47 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'plugins/actions'],
-function(React, ReactMDL, ReactRedux, Actions ) {
+	['react', 'react-mdl', 'react-redux', 'plugins/actions', 'plugins/categoryicon'],
+function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 	class PluginCard extends React.Component {
 		render() {
 			return (
+
 				<ReactMDL.Card className={this.props.className}>
 					<ReactMDL.CardTitle style={{
-						color: '#fff',
-						backgroundColor: this.props.color ? this.props.color : PluginCard.defaultProps.color
+						padding: '16px 16px 0 16px'
 					}}>
-						{this.props.name}
+						<CategoryIcon category={this.props.category} color={this.props.color} />
 					</ReactMDL.CardTitle>
 					<ReactMDL.CardText style={{
 						height: '96px',
 						background: 'url(' + this.props.icon + ') center no-repeat',
 						textAlign: 'center',
+						padding: '0 16px'
 					}}>
 						{!this.props.icon && <ReactMDL.Icon name="extension" style={{fontSize: '96px', lineHeight: '96px'}} />}
 					</ReactMDL.CardText>
+
 					<ReactMDL.CardText style={{
+						textAlign: 'center',
+						fontSize: '18px',
+						padding: '16px 16px 0 16px'
+					}}>
+						{this.props.name}
+					</ReactMDL.CardText>
+
+
+					<ReactMDL.CardText style={{
+						textAlign: 'center',
 						whiteSpace: 'nowrap',
 						textOverflow: 'ellipsis',
 						height: '25px'
 					}}>
 						{this.props.description}
 					</ReactMDL.CardText>
-					<ReactMDL.CardActions border>
-						<ReactMDL.Button onClick={() => this.props.onMoreInfo()}>More info</ReactMDL.Button>
+					<ReactMDL.CardActions style={{
+						color: this.props.color ? this.props.color : PluginCard.defaultProps.color,
+						backgroundColor: this.props.color ? this.props.color : PluginCard.defaultProps.color
+					}}>
+						<ReactMDL.Button className='buttonWhiteBorder' onClick={() => this.props.onMoreInfo()}>More info</ReactMDL.Button>
 					</ReactMDL.CardActions>
 					<ReactMDL.CardMenu>
 						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#fff'}} onClick={() => this.props.onSettingsClicked()}/>}
