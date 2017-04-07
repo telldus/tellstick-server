@@ -9,6 +9,28 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 		}
 		return Math.round(size) + ' ' + ext;
 	}
+	// Simple header with scrollable tabs
+	class Demo extends React.Component {
+		constructor(props) {
+			super(props)
+			this.state = { activeTab: 2 };
+		}
+		render() {
+			return (
+				<div className="demo-tabs">
+					<ReactMDL.Tabs activeTab={this.state.activeTab} onChange={(tabId) => this.setState({ activeTab: tabId })} ripple>
+						<ReactMDL.Tab>Starks</ReactMDL.Tab>
+						<ReactMDL.Tab>Lannisters</ReactMDL.Tab>
+						<ReactMDL.Tab>Targaryens</ReactMDL.Tab>
+					</ReactMDL.Tabs>
+					<section>
+						<div className="content">Content for the tab: {this.state.activeTab}</div>
+					</section>
+				</div>
+			);
+		}
+	}
+
 	class PluginInfo extends React.Component {
 		componentDidMount() {
 			if (!this.dialog.dialogRef.showModal) {
@@ -22,25 +44,40 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 						<CategoryIcon category={this.props.category} color={this.props.color} />{this.props.name}
 					</ReactMDL.DialogTitle>
 					<ReactMDL.DialogContent>
-						<div style={{float: 'left', paddingRight: '16px', paddingBottom: '16px'}}>
-							{this.props.icon && <img src={this.props.icon} />}
-							{!this.props.icon && <ReactMDL.Icon name="extension" style={{fontSize: '96px', lineHeight: '96px'}} />}
+
+						<div>
+							<ReactMDL.Tabs ripple>
+								<ReactMDL.Tab>Overview</ReactMDL.Tab>
+								<ReactMDL.Tab>Details</ReactMDL.Tab>
+							</ReactMDL.Tabs>
+							<section>
+								<div className="content" style={{padding: '12px 0'}}>
+									<div style={{float: 'left', paddingRight: '16px', paddingBottom: '16px'}}>
+										{this.props.icon && <img src={this.props.icon} />}
+										{!this.props.icon && <ReactMDL.Icon name="extension" style={{fontSize: '96px', lineHeight: '96px'}} />}
+									</div>
+									<div>Author:&nbsp;{this.props.author && this.props.author.replace(' ', "\u00a0")}</div>
+									<div>Email:&nbsp;{this.props.authorEmail}</div>
+									<div>Version:&nbsp;{this.props.version}</div>
+									<div>Size:&nbsp;{formatSize(this.props.size)}</div>
+									<br style={{clear: 'both'}} />
+									<p>{this.props.description}</p>
+								</div>
+							</section>
 						</div>
-						<div>Author:&nbsp;{this.props.author && this.props.author.replace(' ', "\u00a0")}</div>
-						<div>Email:&nbsp;{this.props.authorEmail}</div>
-						<div>Version:&nbsp;{this.props.version}</div>
-						<div>Size:&nbsp;{formatSize(this.props.size)}</div>
-						<br style={{clear: 'both'}} />
-						<p>{this.props.description}</p>
+
 						<div style={{color: 'red', display: this.props.errorMessage == '' ? 'none' : ''}}>Install failed: {this.props.errorMessage}</div>
 					</ReactMDL.DialogContent>
-					<ReactMDL.DialogActions>
-						<ReactMDL.Button type='button' onClick={() => this.props.onClose()} raised>Close</ReactMDL.Button>
+					<ReactMDL.DialogActions style={{
+						backgroundColor: this.props.color,
+						padding: '12px'
+					}}>
+						<ReactMDL.Button type='button' className="buttonRounded buttonWhite" onClick={() => this.props.onClose()} raised>Close</ReactMDL.Button>
 						{this.props.installed &&
-							<ReactMDL.Button type='button' onClick={() => this.props.onUninstall(this.props.name)} style={{backgroundColor: '#dc5e51'}} raised>Uninstall</ReactMDL.Button>
+							<ReactMDL.Button type='button' className="buttonRounded buttonDecline" onClick={() => this.props.onUninstall(this.props.name)} raised>Uninstall</ReactMDL.Button>
 						}
 						{!this.props.installed &&
-							<ReactMDL.Button type='button' onClick={() => this.props.onInstall(this.props.name)} style={{backgroundColor: '#9ccc66'}} raised disabled={this.props.installing}>Install</ReactMDL.Button>
+							<ReactMDL.Button type='button' className="buttonRounded buttonAccept" onClick={() => this.props.onInstall(this.props.name)} raised disabled={this.props.installing}>Install</ReactMDL.Button>
 						}
 					</ReactMDL.DialogActions>
 				</ReactMDL.Dialog>
