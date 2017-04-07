@@ -163,6 +163,7 @@ define([], function() {
 	)
 
 	const showPluginInfo = (name) => ({ type: 'SHOW_PLUGIN_INFO', name })
+	const showUpload = (show) => ({ type: 'SHOW_UPLOAD', show })
 
 	const uploadPlugin = (file) => (
 		dispatch => {
@@ -209,6 +210,7 @@ define([], function() {
 		pluginInfoReceived,
 		saveConfiguration,
 		showPluginInfo,
+		showUpload,
 		uploadPlugin,
 	};
 });

@@ -14,6 +14,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 		pluginInfo: null,
 		plugins: [],
 		requireReboot: false,
+		showUploadDialog: false,
 		storePlugins: [],
 		uploading: false,
 		uploadErrorMsg: '',
@@ -49,7 +50,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			case 'PLUGIN_INFO_RECEIVED':
 				return {...state, plugins: state.plugins.map(plugin => (plugin.name == action.info.name ? action.info : plugin))}
 			case 'PLUGIN_UPLOADED':
-				return {...state, uploading: false, uploadErrorMsg: ''}
+				return {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
 			case 'RECEIVE_KEYS':
 				return {...state, keys: action.keys};
 			case 'RECEIVE_PLUGINS':
@@ -58,6 +59,8 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 				return {...state, storePlugins: action.plugins};
 			case 'SHOW_PLUGIN_INFO':
 				return {...state, pluginInfo: action.name};
+			case 'SHOW_UPLOAD':
+				return {...state, showUploadDialog: action.show};
 			case 'UPLOAD_PLUGIN':
 				return {...state, uploading: true, uploadErrorMsg: ''}
 			case 'UPLOAD_PLUGIN_FAILED':
@@ -94,7 +97,13 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			return (
 				<div>
 					<div style={{padding: '16px'}}>
-						<ReactMDL.Cell component={Upload} col={3} shadow={1} />
+						<div style={{float: 'left'}}>
+							<ReactMDL.Tooltip label="Manual upload" position="right" large>
+								<ReactMDL.FABButton style={{marginRight: '8px'}} onClick={() => this.props.onUpload()}>
+									<ReactMDL.Icon name="file_upload" />
+								</ReactMDL.FABButton>
+							</ReactMDL.Tooltip>
+						</div>
 						<div style={{float: 'left'}}>
 							<ReactMDL.Tooltip label="Refresh List" position="right" large>
 								<ReactMDL.FABButton style={{float: 'left', marginRight: '8px'}}>
@@ -125,6 +134,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 					<KeyImport />
 					<ConfigurePlugin />
 					<ErrorMessage />
+					<Upload />
 				</div>
 			)
 		}
@@ -133,7 +143,10 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 	const mapStateToProps = (state) => ({
 		keyLength: state.keys.length,
 	})
-	var WrappedPluginsApp = ReactRedux.connect(mapStateToProps)(PluginsApp);
+	const mapDispatchToProps = (dispatch) => ({
+		onUpload: () => dispatch(Actions.showUpload(true)),
+	});
+	var WrappedPluginsApp = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(PluginsApp);
 
 	return () => (
 		<ReactRedux.Provider store={store}>

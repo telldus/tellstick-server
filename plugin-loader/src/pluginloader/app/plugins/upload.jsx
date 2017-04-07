@@ -1,14 +1,19 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'plugins/actions', 'plugins/formatfingerprint', 'plugins/categoryicon'],
-function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint, CategoryIcon ) {
+	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'plugins/actions', 'plugins/formatfingerprint', 'plugins/categoryicon'],
+function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, formatFingerPrint, CategoryIcon ) {
 	class Upload extends React.Component {
 		constructor(props) {
 			super(props);
 			this.state = {
-				file: null
+				file: null,
 			}
 			this.fileRef = null;
 			this.formRef = null;
+		}
+		componentDidMount() {
+			if (!this.dialog.dialogRef.showModal) {
+				DialogPolyfill.registerDialog(this.dialog.dialogRef);
+			}
 		}
 		componentWillReceiveProps(nextProps) {
 			if (this.props.uploading != nextProps.uploading) {
@@ -24,17 +29,10 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint, CategoryIcon )
 		}
 		render() {
 			return (
-				<div style={{float: 'left'}}>
-				<ReactMDL.Tooltip label="Manual upload" position="right" large>
-					<ReactMDL.FABButton style={{marginRight: '8px'}}>
-						<ReactMDL.Icon name="file_upload" />
-					</ReactMDL.FABButton>
-				</ReactMDL.Tooltip>
-
 				<ReactMDL.Dialog style={{
 					width: '400px',
 					padding: '0'
-				}}>
+				}} open={this.props.open} ref={c => {this.dialog = c}}>
 					<ReactMDL.DialogTitle style={{
 						color: '#555'
 					}}>
@@ -51,14 +49,13 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint, CategoryIcon )
 						backgroundColor: '#757575',
 						padding: '12px'
 					}}>
-						<ReactMDL.Button className="buttonRounded buttonWhite" raised>Close</ReactMDL.Button>
+						<ReactMDL.Button className="buttonRounded buttonWhite" onClick={() => this.props.onClose()} raised>Close</ReactMDL.Button>
 						<ReactMDL.Button raised className="buttonRounded buttonAccept" onClick={() => this.props.onUpload(this.state.file)} disabled={this.state.file == null} style={{
 							backgroundColor: '#9ccc65'
 						}}>Upload</ReactMDL.Button>
 						<ReactMDL.Spinner style={{display: (this.props.uploading ? '' : 'none')}}/>
 					</ReactMDL.DialogActions>
 				</ReactMDL.Dialog>
-				</div>
 			)
 		}
 	}
@@ -69,8 +66,10 @@ function(React, ReactMDL, ReactRedux, Actions, formatFingerPrint, CategoryIcon )
 	};
 	const mapStateToProps = (state) => ({
 		uploading: state.uploading,
+		open: state.showUploadDialog,
 	});
 	const mapDispatchToProps = (dispatch) => ({
+		onClose: () => dispatch(Actions.showUpload(false)),
 		onUpload: (file) => {
 			dispatch(Actions.uploadPlugin(file));
 		}
