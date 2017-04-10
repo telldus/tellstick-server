@@ -14,6 +14,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 		pluginInfo: null,
 		plugins: [],
 		requireReboot: false,
+		search: '',
 		showUploadDialog: false,
 		storePlugins: [],
 		storePluginsRefreshing: false,
@@ -60,6 +61,8 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 				return {...state, storePlugins: action.plugins, storePluginsRefreshing: false};
 			case 'REFRESH_STORE_PLUGINS':
 				return {...state, storePluginsRefreshing: true};
+			case 'SEARCH':
+				return {...state, search: action.search};
 			case 'SHOW_PLUGIN_INFO':
 				return {...state, pluginInfo: action.name};
 			case 'SHOW_UPLOAD':
@@ -118,7 +121,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 							</ReactMDL.Tooltip>
 						</div>
 						<ReactMDL.Textfield
-							 onChange={() => {}}
+							 onChange={e => this.props.onSearch(e.target.value)}
 							 label="Search"
 							 expandable
 							 expandableIcon="search"
@@ -152,6 +155,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 	})
 	const mapDispatchToProps = (dispatch) => ({
 		onRefreshStorePlugins: () => dispatch(Actions.refreshStorePlugins()),
+		onSearch: (value) => dispatch(Actions.search(value)),
 		onUpload: () => dispatch(Actions.showUpload(true)),
 	});
 	var WrappedPluginsApp = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(PluginsApp);

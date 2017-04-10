@@ -175,6 +175,7 @@ define([], function() {
 		}
 	)
 
+	const search = (search) => ({ type: 'SEARCH', search })
 	const showPluginInfo = (name) => ({ type: 'SHOW_PLUGIN_INFO', name })
 	const showUpload = (show) => ({ type: 'SHOW_UPLOAD', show })
 
@@ -223,6 +224,7 @@ define([], function() {
 		pluginInfoReceived,
 		refreshStorePlugins,
 		saveConfiguration,
+		search,
 		showPluginInfo,
 		showUpload,
 		uploadPlugin,

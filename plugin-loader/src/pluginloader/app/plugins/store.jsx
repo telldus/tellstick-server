@@ -35,6 +35,10 @@ function(React, ReactMDL, ReactRedux, Actions, PluginCard ) {
 			if (state.plugins.find(p => (p.name == b.name))) {
 				return a;
 			}
+			// Reduce on search filter
+			if (state.search != '' && b.name, b.name.toLowerCase().indexOf(state.search.toLowerCase()) == -1) {
+				return a;
+			}
 			return a.concat(b)
 		}, [])
 	})
