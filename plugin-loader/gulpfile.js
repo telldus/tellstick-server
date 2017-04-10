@@ -19,6 +19,7 @@ gulp.task('scripts', ['babel'], function () {
 			//optimize: 'none',
 			paths: {
 				'react': 'empty:',
+				'react-markdown': 'empty:',
 				'react-mdl': 'empty:',
 				'react-redux': 'empty:',
 				'dialog-polyfill': 'empty:',

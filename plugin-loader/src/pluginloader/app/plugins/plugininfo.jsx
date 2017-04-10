@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'plugins/actions', 'plugins/categoryicon'],
-function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
+	['react', 'react-mdl', 'react-redux', 'react-markdown', 'dialog-polyfill', 'plugins/actions', 'plugins/categoryicon'],
+function(React, ReactMDL, ReactRedux, ReactMarkdown, DialogPolyfill, Actions, CategoryIcon) {
 	const formatSize = size => {
 		let ext = 'bytes';
 		if (size >= 1024) {
@@ -10,6 +10,15 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 		return Math.round(size) + ' ' + ext;
 	}
 	class PluginInfo extends React.Component {
+		constructor(props) {
+			super(props)
+			this.state = { activeTab: 0 };
+		}
+		componentWillReceiveProps(nextProps) {
+			if (this.props.show != nextProps.show && nextProps.show == true) {
+				this.setState({activeTab: 0});
+			}
+		}
 		componentDidMount() {
 			if (!this.dialog.dialogRef.showModal) {
 				DialogPolyfill.registerDialog(this.dialog.dialogRef);
@@ -22,13 +31,12 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 						<CategoryIcon category={this.props.category} color={this.props.color} />{this.props.name}
 					</ReactMDL.DialogTitle>
 					<ReactMDL.DialogContent>
-
 						<div>
-							<ReactMDL.Tabs ripple>
+							{this.props.longDescription && <ReactMDL.Tabs activeTab={this.state.activeTab} onChange={(tabId) => this.setState({ activeTab: tabId })} ripple>
 								<ReactMDL.Tab>Overview</ReactMDL.Tab>
 								<ReactMDL.Tab>Details</ReactMDL.Tab>
-							</ReactMDL.Tabs>
-							<section>
+							</ReactMDL.Tabs>}
+							{this.state.activeTab == 0  && <section>
 								<div className="content" style={{padding: '12px 0'}}>
 									<div style={{float: 'left', paddingRight: '16px', paddingBottom: '16px'}}>
 										{this.props.icon && <img src={this.props.icon} />}
@@ -41,7 +49,10 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 									<br style={{clear: 'both'}} />
 									<p>{this.props.description}</p>
 								</div>
-							</section>
+							</section>}
+							{this.state.activeTab == 1  && <section>
+								<ReactMarkdown.Markdown source={this.props.longDescription} />
+							</section>}
 						</div>
 
 						<div style={{color: 'red', display: this.props.errorMessage == '' ? 'none' : ''}}>Install failed: {this.props.errorMessage}</div>
@@ -68,6 +79,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 	PluginInfo.defaultProps = {
 		errorMessage: '',
 		installing: false,
+		longDescription: '',
 		version: '?',
 	};
 	const mapStateToProps = (state) => {
@@ -93,6 +105,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 			color: plugin.color,
 			installed: installed,
 			installing: state.installing == plugin.name,
+			longDescription: plugin.long_description,
 			name: plugin.name,
 			show: true,
 			size: plugin.size,

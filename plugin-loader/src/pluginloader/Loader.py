@@ -48,6 +48,7 @@ class LoadedPlugin(object):
 			'category': self.manifest.get('category', 'other'),
 			'color': self.manifest.get('color', ''),
 			'config': configs,
+			'long_description': self.manifest.get('long_description', ''),
 			'description': self.manifest.get('description', ''),
 			'icon': '/pluginloader/icon?%s' % urllib.urlencode({'name': self.name}) if self.icon != '' else '',
 			'loaded': self.loaded,
