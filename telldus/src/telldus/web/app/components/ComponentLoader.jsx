@@ -16,6 +16,7 @@ requirejs.define('react', [], React);
 requirejs.define('react-mdl', [], ReactMDL);
 requirejs.define('react-redux', [], ReactRedux);
 requirejs.define('react-router', [], require('react-router'));
+requirejs.define('react-markdown', [], {Markdown: require('react-markdown')});
 requirejs.define('css', require('./lib/css').default);
 requirejs.define('dialog-polyfill', dialogpolyfill);
 requirejs.define('telldus', require('./lib/telldus').default);

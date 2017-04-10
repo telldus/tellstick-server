@@ -13,6 +13,7 @@
     "dialog-polyfill": "^0.4.4",
     "react": "15.x",
     "react-dom": "15.x",
+    "react-markdown": "^2.4.6",
     "react-mdl": "^1.7.1",
     "react-redux": "^4.4.5",
     "react-router": "^2.8.0",
