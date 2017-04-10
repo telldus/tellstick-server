@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions'],
-function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
+	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions', 'plugins/categoryicon'],
+function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, CategoryIcon ) {
 	class ConfigTextInput extends React.Component {
 		constructor(props) {
 			super(props)
@@ -61,8 +61,10 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 		}
 		render() {
 			return (
-				<ReactMDL.Dialog open={this.props.show} ref={(c) => this.dialog = c} style={{width: 700}}>
-					<ReactMDL.DialogTitle>Configure {this.props.plugin.name}</ReactMDL.DialogTitle>
+				<ReactMDL.Dialog open={this.props.show} ref={(c) => this.dialog = c} style={{width: 700, padding: '0'}}>
+					<ReactMDL.DialogTitle>
+						<CategoryIcon category={this.props.plugin.category} color={this.props.plugin.color} />
+						Configure {this.props.plugin.name}</ReactMDL.DialogTitle>
 					<ReactMDL.DialogContent>
 						{Object.keys(this.props.plugin.config).map(name => (
 							<div key={name}>
@@ -77,9 +79,12 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 							</div>
 						))}
 					</ReactMDL.DialogContent>
-					<ReactMDL.DialogActions>
-						<ReactMDL.Button type='button' onClick={() => this.save()}>Save</ReactMDL.Button>
-						<ReactMDL.Button type='button' onClick={() => this.props.onClose()}>Close</ReactMDL.Button>
+					<ReactMDL.DialogActions style={{
+						backgroundColor: this.props.plugin.color,
+						padding: '12px'
+					}}>
+						<ReactMDL.Button type='button' className="buttonRounded buttonAccept" raised onClick={() => this.save()}>Save</ReactMDL.Button>
+						<ReactMDL.Button type='button' className="buttonRounded buttonWhite" raised onClick={() => this.props.onClose()}>Close</ReactMDL.Button>
 					</ReactMDL.DialogActions>
 				</ReactMDL.Dialog>
 			)
@@ -90,8 +95,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions ) {
 		plugin: React.PropTypes.object,
 	};
 	const mapStateToProps = (state) => ({
-		plugin: state.plugins.find((plugin) => (plugin.name == state.configure)) || {name: '', config: {}},
-		show: state.configure !== null
+		plugin: state.plugins.find((plugin) => (plugin.name == state.configure)) || {name: '', config: {}, category: 'other', color: '#757575'},
+		show: state.configure !== null,
 	});
 	const mapDispatchToProps = (dispatch) => ({
 		onSave: (plugin, values) => dispatch(Actions.saveConfiguration(plugin, values)),

@@ -44,7 +44,7 @@ function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 						<ReactMDL.Button className='buttonWhiteBorder' onClick={() => this.props.onMoreInfo()}>More info</ReactMDL.Button>
 					</ReactMDL.CardActions>
 					<ReactMDL.CardMenu>
-						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#fff'}} onClick={() => this.props.onSettingsClicked()}/>}
+						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#aaa'}} onClick={() => this.props.onSettingsClicked()}/>}
 					</ReactMDL.CardMenu>
 				</ReactMDL.Card>
 			)
