@@ -9,28 +9,6 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Actions, CategoryIcon) {
 		}
 		return Math.round(size) + ' ' + ext;
 	}
-	// Simple header with scrollable tabs
-	class Demo extends React.Component {
-		constructor(props) {
-			super(props)
-			this.state = { activeTab: 2 };
-		}
-		render() {
-			return (
-				<div className="demo-tabs">
-					<ReactMDL.Tabs activeTab={this.state.activeTab} onChange={(tabId) => this.setState({ activeTab: tabId })} ripple>
-						<ReactMDL.Tab>Starks</ReactMDL.Tab>
-						<ReactMDL.Tab>Lannisters</ReactMDL.Tab>
-						<ReactMDL.Tab>Targaryens</ReactMDL.Tab>
-					</ReactMDL.Tabs>
-					<section>
-						<div className="content">Content for the tab: {this.state.activeTab}</div>
-					</section>
-				</div>
-			);
-		}
-	}
-
 	class PluginInfo extends React.Component {
 		componentDidMount() {
 			if (!this.dialog.dialogRef.showModal) {
