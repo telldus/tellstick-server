@@ -63,7 +63,7 @@ class WebFrontend(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'pluginloader':
 			return False
-		if path in ['icon','import', 'importkey', 'installStorePlugin', 'keys', 'remove', 'plugins', 'saveConfiguration', 'storePlugins', 'upload']:
+		if path in ['icon','import', 'importkey', 'installStorePlugin', 'keys', 'refreshStorePlugins', 'remove', 'plugins', 'saveConfiguration', 'storePlugins', 'upload']:
 			return True
 		return False
 
@@ -99,6 +99,10 @@ class WebFrontend(Plugin):
 					Loader(self.context).installRemotePlugin(plugin['name'], plugin['file']['url'], plugin['file']['size'], plugin['file']['sha1'])
 					return WebResponseJson({'success': True})
 			return WebResponseJson({'success': False, 'msg': 'Plugin was not found in the store'})
+
+		if path == 'refreshStorePlugins':
+			Loader(self.context).updatePluginsList()
+			return WebResponseJson({'success': True})
 
 		if path == 'remove':
 			if 'pluginname' in params:

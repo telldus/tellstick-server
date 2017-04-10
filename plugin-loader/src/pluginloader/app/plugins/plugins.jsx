@@ -16,6 +16,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 		requireReboot: false,
 		showUploadDialog: false,
 		storePlugins: [],
+		storePluginsRefreshing: false,
 		uploading: false,
 		uploadErrorMsg: '',
 	}
@@ -56,7 +57,9 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			case 'RECEIVE_PLUGINS':
 				return {...state, plugins: action.plugins};
 			case 'RECEIVE_STORE_PLUGINS':
-				return {...state, storePlugins: action.plugins};
+				return {...state, storePlugins: action.plugins, storePluginsRefreshing: false};
+			case 'REFRESH_STORE_PLUGINS':
+				return {...state, storePluginsRefreshing: true};
 			case 'SHOW_PLUGIN_INFO':
 				return {...state, pluginInfo: action.name};
 			case 'SHOW_UPLOAD':
@@ -91,6 +94,9 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			store.dispatch(Actions.installStorePluginFailed(data['msg']));
 		}
 	});
+	websocket.onMessage('plugins', 'storePluginsUpdated', (module, action, data) => {
+		store.dispatch(Actions.fetchStorePlugins());
+	});
 
 	class PluginsApp extends React.Component {
 		render() {
@@ -106,7 +112,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 						</div>
 						<div style={{float: 'left'}}>
 							<ReactMDL.Tooltip label="Refresh List" position="right" large>
-								<ReactMDL.FABButton style={{float: 'left', marginRight: '8px'}}>
+								<ReactMDL.FABButton style={{float: 'left', marginRight: '8px'}} onClick={() => this.props.onRefreshStorePlugins()} disabled={this.props.storePluginsRefreshing}>
 									<ReactMDL.Icon name="refresh" />
 								</ReactMDL.FABButton>
 							</ReactMDL.Tooltip>
@@ -142,8 +148,10 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 
 	const mapStateToProps = (state) => ({
 		keyLength: state.keys.length,
+		storePluginsRefreshing: state.storePluginsRefreshing,
 	})
 	const mapDispatchToProps = (dispatch) => ({
+		onRefreshStorePlugins: () => dispatch(Actions.refreshStorePlugins()),
 		onUpload: () => dispatch(Actions.showUpload(true)),
 	});
 	var WrappedPluginsApp = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(PluginsApp);

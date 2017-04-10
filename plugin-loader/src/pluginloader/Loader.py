@@ -304,3 +304,5 @@ class Loader(Plugin):
 		data = parser.parse()
 		with open('%s/plugins.yml' % Board.pluginPath(), 'w') as f:
 			yaml.dump(data, f, default_flow_style=False)
+		# Notify clients through websocket
+		Server(self.context).webSocketSend('plugins', 'storePluginsUpdated', None)

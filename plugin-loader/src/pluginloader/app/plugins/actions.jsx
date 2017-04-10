@@ -142,6 +142,19 @@ define([], function() {
 
 	const pluginInfoReceived = (info) => ({ type: 'PLUGIN_INFO_RECEIVED', info })
 
+	const refreshStorePlugins = () => (
+		dispatch => {
+			dispatch({type: 'REFRESH_STORE_PLUGINS'})
+			return fetch('/pluginloader/refreshStorePlugins', {credentials: 'include'})
+			.then(response => response.json())
+			.then(json => {
+				if (json['success'] == true) {
+					dispatch({type: 'STORE_PLUGINS_REFRESH_STARTED'})
+				}
+			});
+		}
+	)
+
 	const saveConfiguration = (plugin, configuration) => (
 		dispatch => {
 			dispatch({type: 'SAVE_CONFIGURATION', plugin, configuration})
@@ -208,6 +221,7 @@ define([], function() {
 		installStorePluginFailed,
 		installStorePluginSuccess,
 		pluginInfoReceived,
+		refreshStorePlugins,
 		saveConfiguration,
 		showPluginInfo,
 		showUpload,
