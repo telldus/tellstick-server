@@ -307,6 +307,10 @@ class LuaScript(object):
 
 	def __require(self, plugin):
 		obj = self.context.request(plugin)
+		if obj is None:
+			self.p("Plugin %s not found. Available plugins:", plugin)
+			for key in self.context.pluginsList():
+				self.p(key)
 		return PythonObjectWrapper(obj) if obj is not None else None
 
 	def __sandboxInterpreter(self):
