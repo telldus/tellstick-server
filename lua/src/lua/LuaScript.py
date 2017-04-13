@@ -378,14 +378,10 @@ class LuaScript(object):
 			args = list(args)
 			if len(args) >= 2 and lua_type(args[1]) == 'table':
 				# First parameter is a lua table. Handle this as **kwargs call
-				kwargs = dict(args[1])
+				kwargs = self.__wrapArgument(args[1])
 				del args[1]
-			# TODO: Also loop through kwargs and look for lua types
 			for i, arg in enumerate(args):
-				if lua_type(arg) == 'function':
-					t = LuaFunctionWrapper(self, arg)
-					args[i] = t
-					self.references.append(weakref.ref(t))
+				args[i] = self.__wrapArgument(args[i])
 			try:
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
@@ -405,3 +401,16 @@ class LuaScript(object):
 	def __setter(self, obj, attrName, value):
 		# Set it in the main thread
 		Application().queue(setattr, obj, attrName, value)
+
+	def __wrapArgument(self, arg):
+		if lua_type(arg) == 'function':
+			t = LuaFunctionWrapper(self, arg)
+			self.references.append(weakref.ref(t))
+			return t
+		elif lua_type(arg) == 'table':
+			table = dict(arg)
+			for key in table:
+				# Recursive wrap
+				table[key] = self.__wrapArgument(table[key])
+			return table
+		return arg
