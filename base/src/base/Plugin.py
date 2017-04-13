@@ -11,6 +11,9 @@ class PluginContext(object):
 			return None
 		return PluginMeta._plugins[name](self)
 
+	def pluginsList(self):
+		return [x for x in PluginMeta._plugins if PluginMeta._plugins[x].public == True]
+
 class Observers(object):
 	def __init__(self, interface, observers):
 		self.interface = interface
@@ -86,6 +89,8 @@ class PluginMeta(type):
 
 class Plugin(object):
 	__metaclass__ = PluginMeta
+
+	public = False
 
 	def __getattr__(self, name):
 		for i in self._implements:

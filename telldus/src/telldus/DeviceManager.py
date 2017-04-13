@@ -27,6 +27,8 @@ class DeviceManager(Plugin):
 
 	observers = ObserverCollection(IDeviceChange)
 
+	public = True
+
 	def __init__(self):
 		self.devices = []
 		self.s = Settings('telldus.devicemanager')
