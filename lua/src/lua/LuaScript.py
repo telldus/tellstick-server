@@ -127,7 +127,10 @@ class PythonObjectWrapper(object):
 		def fn(self, *args, **kwargs):
 			return method(*args, **kwargs)
 		return fn
-	
+
+	def __repr__(self):
+		return repr(self.obj)
+
 class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
