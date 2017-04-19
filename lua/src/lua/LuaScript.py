@@ -110,7 +110,7 @@ class LuaFunctionWrapper(object):
 
 class PythonObjectWrapper(object):
 	"""
-	On some plattforms python segfaults then we return the python plugin
+	On some platforms python segfaults then we return the python plugin
 	from the require function.
 	This dummy wrapper object seems to solve this issue. Feel free to remove
 	when the actual issue is resolved.
