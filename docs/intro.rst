@@ -22,7 +22,4 @@ code runs in a sandbox and has only limited access to the system.
 To create a Lua script you need to access the local web server in TellStick ZNet.
 Browse to: http://[ipaddress]/lua to access the editor.
 
-Globally accessible objects:
-deviceManager
-
 Lua codes works by signals from the server triggers the execution.
