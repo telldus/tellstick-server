@@ -53,7 +53,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'TellStick ZNet'
+project = u'Telldus TellStick'
 copyright = u'%s, Telldus Technologies' % datetime.now().year
 author = u'Telldus Technologies'
 
