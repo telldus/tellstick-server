@@ -13,6 +13,7 @@
 # serve to show the default.
 
 import sys
+from datetime import datetime
 import os
 import shlex
 import subprocess
@@ -53,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'TellStick ZNet'
-copyright = u'2015, Telldus Technologies'
+copyright = u'%s, Telldus Technologies' % datetime.now().year
 author = u'Telldus Technologies'
 
 # The version info for the project you're documenting, acts as replacement for
