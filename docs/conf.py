@@ -84,6 +84,22 @@ language = None
 # directories to ignore when looking for source files.
 exclude_patterns = []
 
+autodoc_mock_imports = [
+    'cherrypy',
+    'configobj',
+    'Crypto.Cipher',
+    'genshi.template',
+    'jose',
+    'lupa',
+    'netifaces',
+    'pbkdf2',
+    'watchdog.events',
+    'watchdog.observers',
+    'ws4py.messaging',
+    'ws4py.server.cherrypyserver',
+    'ws4py.websocket',
+]
+
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #default_role = None
