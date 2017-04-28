@@ -68,3 +68,6 @@ Replace `[path-to-plugin]` with the path to the plugin root folder.
 Build the documentation:
 
     ./tellstick.sh build-docs
+
+The documentation can be read online here:
+http://tellstick-server.readthedocs.io
