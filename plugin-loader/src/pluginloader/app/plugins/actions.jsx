@@ -155,6 +155,21 @@ define([], function() {
 		}
 	)
 
+	const reboot = () => (
+		dispatch => {
+			dispatch({type: 'REBOOT'})
+			return fetch('/pluginloader/reboot', {credentials: 'include'})
+			.then(response => response.json())
+			.then(json => {
+				if (json['success'] == true) {
+					dispatch({type: 'REBOOT_STARTED'})
+				} else {
+					dispatch({type: 'REBOOT_FAILED'})
+				}
+			});
+		}
+	)
+
 	const saveConfiguration = (plugin, configuration) => (
 		dispatch => {
 			dispatch({type: 'SAVE_CONFIGURATION', plugin, configuration})
@@ -178,6 +193,7 @@ define([], function() {
 	const search = (search) => ({ type: 'SEARCH', search })
 	const showPluginInfo = (name) => ({ type: 'SHOW_PLUGIN_INFO', name })
 	const showUpload = (show) => ({ type: 'SHOW_UPLOAD', show })
+	const showRebootDialog = (show) => ({ type: 'SHOW_REBOOT_DIALOG', show })
 
 	const uploadPlugin = (file) => (
 		dispatch => {
@@ -222,10 +238,12 @@ define([], function() {
 		installStorePluginFailed,
 		installStorePluginSuccess,
 		pluginInfoReceived,
+		reboot,
 		refreshStorePlugins,
 		saveConfiguration,
 		search,
 		showPluginInfo,
+		showRebootDialog,
 		showUpload,
 		uploadPlugin,
 	};

@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'telldus', 'websocket', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/plugininfo', 'plugins/pluginslist', 'plugins/store', 'plugins/upload'],
-function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginInfo, PluginsList, Store, Upload ) {
+	['react', 'react-mdl', 'react-redux', 'telldus', 'websocket', 'plugins/actions', 'plugins/configureplugin', 'plugins/errormessage', 'plugins/keyslist', 'plugins/keyimport', 'plugins/plugininfo', 'plugins/pluginslist', 'plugins/rebootdialog', 'plugins/store', 'plugins/upload'],
+function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlugin, ErrorMessage, KeysList, KeyImport, PluginInfo, PluginsList, RebootDialog, Store, Upload ) {
 	Telldus.loadCSS('/pluginloader/plugins.css');
 
 	var defaultState = {
@@ -13,9 +13,11 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 		keys: [],
 		pluginInfo: null,
 		plugins: [],
+		rebootStatus: 0,
 		requireReboot: false,
 		search: '',
 		showUploadDialog: false,
+		showRebootDialog: false,
 		storePlugins: [],
 		storePluginsRefreshing: false,
 		uploading: false,
@@ -46,13 +48,19 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 				return {...state, importingKey: {...defaultState.importingKey}, uploading: false}
 			case 'PLUGIN_DELETED':
 				if (action.name == state.pluginInfo) {
-					return {...state, pluginInfo: null, requireReboot: true};
+					return {...state, pluginInfo: null, requireReboot: true, showRebootDialog: true};
 				}
-				return {...state, requireReboot: true};
+				return {...state, requireReboot: true, showRebootDialog: true};
 			case 'PLUGIN_INFO_RECEIVED':
 				return {...state, plugins: state.plugins.map(plugin => (plugin.name == action.info.name ? action.info : plugin))}
 			case 'PLUGIN_UPLOADED':
 				return {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
+			case 'REBOOT':
+				return {...state, rebootStatus: 1}
+			case 'REBOOT_FAILED':
+				return {...state, rebootStatus: -1}
+			case 'REBOOT_STARTED':
+				return {...state, rebootStatus: 2}
 			case 'RECEIVE_KEYS':
 				return {...state, keys: action.keys};
 			case 'RECEIVE_PLUGINS':
@@ -65,6 +73,8 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 				return {...state, search: action.search};
 			case 'SHOW_PLUGIN_INFO':
 				return {...state, pluginInfo: action.name};
+			case 'SHOW_REBOOT_DIALOG':
+				return {...state, showRebootDialog: action.show};
 			case 'SHOW_UPLOAD':
 				return {...state, showUploadDialog: action.show};
 			case 'UPLOAD_PLUGIN':
@@ -120,6 +130,13 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 								</ReactMDL.FABButton>
 							</ReactMDL.Tooltip>
 						</div>
+						<div style={{float: 'left'}}>
+							<ReactMDL.Tooltip label="Restart TellStick" position="right" large>
+								<ReactMDL.FABButton style={{float: 'left', marginRight: '8px'}} onClick={() => this.props.onRebootClicked()}>
+									<i className="telldus-icons">restart</i>
+								</ReactMDL.FABButton>
+							</ReactMDL.Tooltip>
+						</div>
 						<ReactMDL.Textfield
 							 onChange={e => this.props.onSearch(e.target.value)}
 							 label="Search"
@@ -140,6 +157,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 						</ReactMDL.Cell>
 					</ReactMDL.Grid>}
 					<PluginInfo />
+					<RebootDialog />
 					<KeyImport />
 					<ConfigurePlugin />
 					<ErrorMessage />
@@ -151,9 +169,11 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 
 	const mapStateToProps = (state) => ({
 		keyLength: state.keys.length,
+		requireReboot: state.requireReboot,
 		storePluginsRefreshing: state.storePluginsRefreshing,
 	})
 	const mapDispatchToProps = (dispatch) => ({
+		onRebootClicked: () => dispatch(Actions.showRebootDialog(true)),
 		onRefreshStorePlugins: () => dispatch(Actions.refreshStorePlugins()),
 		onSearch: (value) => dispatch(Actions.search(value)),
 		onUpload: () => dispatch(Actions.showUpload(true)),
