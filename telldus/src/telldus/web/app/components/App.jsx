@@ -6,6 +6,7 @@ import { connect } from 'react-redux'
 import 'react-mdl/extra/material.css';
 import 'react-mdl/extra/material.js';
 import 'dialog-polyfill/dialog-polyfill.css';
+import '../fonts/telldusicons.css';
 
 import Menu from './Menu'
 import Logo from './Logo'

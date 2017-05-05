@@ -15,7 +15,8 @@ module.exports = {
 		rules: [
 			{ test: /\.(js|jsx)$/, include: path.resolve(__dirname, 'src/telldus/web/app'), exclude: /node_modules/, use: 'babel-loader' },
 			{ test: /\.css$/, use: ['style-loader', 'css-loader'] },
-			{ test: /\.(jpe?g|png|gif|svg|eot|woff|ttf|svg|woff2)$/, loader: "file-loader?name=[name].[ext]" }
+			{ test: /\.(jpe?g|png|gif|svg)$/, loader: "file-loader?name=[name].[ext]" },
+			{ test: /\.(eot|woff|ttf|woff2)$/, loader: "file-loader?name=fonts/[name].[ext]" }
 		]
 	},
 	resolve: {
