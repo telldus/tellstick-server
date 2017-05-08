@@ -205,8 +205,8 @@ class Loader(Plugin):
 			if z is not None:
 				z.close()
 		os.unlink(filename)
-		self.loadPlugin(manifest)
-		return {'success': True, 'msg': 'Plugin was imported'}
+		status = self.loadPlugin(manifest)
+		return {'success': True, 'msg': 'Plugin was imported', 'restartRequired': True if status == 1 else False}
 
 	def initializeKeychain(self):
 		filename = pkg_resources.resource_filename('pluginloader', 'files/telldus.gpg')
