@@ -23,6 +23,8 @@ function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 					<ReactMDL.CardText style={{
 						textAlign: 'center',
 						fontSize: '18px',
+						whiteSpace: 'nowrap',
+						textOverflow: 'ellipsis',
 						padding: '16px 16px 0 16px'
 					}}>
 						{this.props.name}
