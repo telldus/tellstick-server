@@ -54,7 +54,11 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			case 'PLUGIN_INFO_RECEIVED':
 				return {...state, plugins: state.plugins.map(plugin => (plugin.name == action.info.name ? action.info : plugin))}
 			case 'PLUGIN_UPLOADED':
-				return {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
+				let newState = {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
+				if (action.restartRequired == true) {
+					newState = {...newState, requireReboot: true, showRebootDialog: true}
+				}
+				return newState;
 			case 'REBOOT':
 				return {...state, rebootStatus: 1}
 			case 'REBOOT_FAILED':

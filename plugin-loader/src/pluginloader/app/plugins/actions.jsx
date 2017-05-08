@@ -208,7 +208,7 @@ define([], function() {
 			.then(response => response.json())
 			.then(json => {
 				if (json['success'] == true) {
-					dispatch({type: 'PLUGIN_UPLOADED'})
+					dispatch({type: 'PLUGIN_UPLOADED', restartRequired: json['restartRequired']})
 					dispatch(fetchPlugins());
 					return;
 				}

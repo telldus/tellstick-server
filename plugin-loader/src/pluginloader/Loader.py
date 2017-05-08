@@ -265,7 +265,12 @@ class Loader(Plugin):
 	def loadPlugin(self, manifest):
 		plugin = LoadedPlugin(manifest, self.context)
 		plugin.verifyAndLoad()
+		for i, p in enumerate(self.plugins):
+			if p.name == plugin.name:
+				self.plugins[i] = plugin
+				return 1
 		self.plugins.append(plugin)
+		return 0
 
 	def loadPlugins(self):
 		for f in glob.glob('%s/**/manifest.yml' % Board.pluginPath()):
