@@ -28,34 +28,6 @@ class WebFrontend(Plugin):
 			}
 		}
 
-	def importKey(self, acceptKeyId):
-		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
-		filename = '%s/staging.zip' % Board.pluginPath()
-		if not os.path.exists(filename):
-			return {'success': False, 'msg': 'No plugin uploaded'}
-		try:
-			gpg = loadGPG()
-			with zipfile.ZipFile(filename, 'r') as z:
-				cfg = yaml.load(z.read('manifest.yml'))
-				k = z.extract(cfg['key'], '/tmp/')
-				keys = gpg.scan_keys(k)
-				if len(keys) != 1:
-					raise Exception('Key must only contain exactly one public key')
-				key = keys[0]
-				name = key['uids']
-				fingerprint = key['fingerprint']
-				keyid = key['keyid']
-				if keyid != acceptKeyId:
-					return {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
-				result = gpg.import_keys(open(k).read())
-				os.unlink(k)
-				# Reload loaded keys
-				Loader(self.context).initializeKeychain()
-		except Exception as e:
-			os.unlink(filename)
-			return {'success': False, 'msg': str(e)}
-		return {'success': True}
-
 	def uploadPlugin(self, f):
 		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as wf:
 			wf.write(f.file.read())
@@ -89,7 +61,7 @@ class WebFrontend(Plugin):
 			if 'discard' in params:
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
 				return WebResponseJson({'success': True})
-			return WebResponseJson(self.importKey(params['key'] if 'key' in params else None))
+			return WebResponseJson(Loader(self.context).importKey(params['key'] if 'key' in params else None))
 
 		if path == 'installStorePlugin':
 			if 'pluginname' not in params:
