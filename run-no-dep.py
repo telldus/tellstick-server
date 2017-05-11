@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import daemon, os
+import daemon
+import getopt
+import os
+import sys
 from pwd import getpwnam
 from grp import getgrnam
 
@@ -54,6 +57,17 @@ class PIDFile(object):
 		self.f.close()
 
 if __name__ == "__main__":
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "n", ["nodaemon"])
+	except getopt.GetoptError as exc:
+		print(exc)
+		sys.exit(2)
+
+	daemonize = True
+	for opt, arg in opts:
+		if opt == '--nodaemon':
+			daemonize = False
+
 	pidfile = PIDFile()
 	params = {
 		'detach_process': True,
@@ -62,5 +76,10 @@ if __name__ == "__main__":
 		'gid': getgrnam('nogroup').gr_gid,
 		'files_preserve': [pidfile]
 	}
+	if not daemonize:
+		params['detach_process'] = False
+		params['stdout'] = sys.stdout
+		params['stderr'] = sys.stderr
+
 	with daemon.DaemonContext(**params):
 		main()
