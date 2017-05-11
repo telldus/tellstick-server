@@ -8,7 +8,7 @@ except ImportError:
 import os
 
 if 'HWBOARD' not in os.environ:
-	print 'HWBOARD environmental variable not set'
+	print('HWBOARD environmental variable not set')
 	quit(1)
 
 setup(

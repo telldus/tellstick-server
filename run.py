@@ -12,7 +12,7 @@ if __name__ == "__main__":
 			print("Loading plugin %s" % dist)
 			try:
 				pkg_resources.working_set.add(dist)
-			except Exception, e:
+			except Exception as e:
 				print("Could not load", dist, e)
 	for entry in pkg_resources.working_set.iter_entry_points('telldus.main'):
 		moduleClass = entry.load()

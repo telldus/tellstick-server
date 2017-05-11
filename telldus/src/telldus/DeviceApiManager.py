@@ -2,8 +2,8 @@
 
 from api import IApiCallHandler, apicall
 from base import Plugin, implements
-from Device import Device
-from DeviceManager import DeviceManager
+from .Device import Device
+from .DeviceManager import DeviceManager
 
 class DeviceApiManager(Plugin):
 	implements(IApiCallHandler)
@@ -149,7 +149,7 @@ class DeviceApiManager(Plugin):
 				sensor['battery'] = battery
 			if includeValues:
 				data = []
-				for sensorType, values in d.sensorValues().items():
+				for sensorType, values in list(d.sensorValues().items()):
 					for value in values:
 						if includeScale:
 							data.append({
@@ -177,7 +177,7 @@ class DeviceApiManager(Plugin):
 		"""
 		device = self.__retrieveDevice(id)
 		sensorData = []
-		for sensorType, values in device.sensorValues().items():
+		for sensorType, values in list(device.sensorValues().items()):
 			for value in values:
 				sensorData.append({
 					'name': Device.sensorTypeIntToStr(sensorType),

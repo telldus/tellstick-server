@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Plugin import Plugin, PluginMeta
-from Settings import Settings
+from .Plugin import Plugin, PluginMeta
+from .Settings import Settings
 import logging
 
 class configuration(object):

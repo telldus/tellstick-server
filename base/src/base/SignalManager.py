@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from Application import Application
-from Plugin import IInterface, ObserverCollection, Plugin
+from .Application import Application
+from .Plugin import IInterface, ObserverCollection, Plugin
 import sys, types
 
 class ISignalObserver(IInterface):

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import socket, ssl, errno, select, logging
-from LiveMessage import LiveMessage
+from .LiveMessage import LiveMessage
 from base import Settings
 
 class ServerConnection(object):
-	CLOSED, CONNECTING, CONNECTED, READY, MSG_RECEIVED, DISCONNECTED = range(6)
+	CLOSED, CONNECTING, CONNECTED, READY, MSG_RECEIVED, DISCONNECTED = list(range(6))
 
 	def __init__(self):
 		self.publicKey = ''
@@ -122,7 +122,7 @@ class ServerConnection(object):
 				if (len(data) < buffSize):
 					hasMoreData = False
 				resp += data
-			except ssl.SSLError, e:
+			except ssl.SSLError as e:
 				if e.args[0] == ssl.SSL_ERROR_WANT_READ:
 					pass
 				else:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from Device import CachedDevice, DeviceAbortException
+from .Device import CachedDevice, DeviceAbortException
 import json, logging, time
 from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
 from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread, signal

@@ -9,6 +9,9 @@ class PrintCollector(object):
 		self.buffer = ''
 		self.stream = stream
 
+	def flush(self):
+		pass
+
 	def write(self, data, *args, **kwargs):
 		if data == "\n":
 			if self.stream == 'stderr':

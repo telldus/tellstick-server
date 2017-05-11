@@ -11,7 +11,7 @@ import sys
 import threading
 import time
 import traceback
-import urllib
+from six.moves.urllib.parse import urlencode
 import urllib2
 import yaml
 import zipfile
@@ -54,7 +54,7 @@ class LoadedPlugin(object):
 			'long_description': self.manifest.get('long_description', ''),
 			'description': self.manifest.get('description', ''),
 			'icon': '/pluginloader/icon?%s' %
-				urllib.urlencode({'name': self.name}) if self.icon != '' else '',
+				urlencode({'name': self.name}) if self.icon != '' else '',
 			'loaded': self.loaded,
 			'name': self.name,
 			'size': self.size(),

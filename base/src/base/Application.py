@@ -10,7 +10,7 @@ import time
 import traceback
 import signal
 import sys
-from Plugin import Plugin, PluginContext
+from .Plugin import Plugin, PluginContext
 
 class mainthread(object):
 	""".. py:decorator:: mainthread
@@ -256,4 +256,4 @@ class Application(object):
 		finally:
 			self.__taskLock.release()
 
-from SignalManager import SignalManager
+from .SignalManager import SignalManager

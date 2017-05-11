@@ -4,11 +4,11 @@ import os
 import json
 import logging
 import time
-from Application import Application
+from .Application import Application
 from configobj import ConfigObj
 from threading import Timer
 from board import Board
-import ConfigParser
+from six.moves.configparser import ConfigParser
 
 class Settings(object):
 	_config = None

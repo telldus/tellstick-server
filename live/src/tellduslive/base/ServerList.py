@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import httplib, logging, time
+import logging, time
+from six.moves import http_client
 import netifaces
 import xml.parsers.expat
 from board import Board
@@ -27,7 +28,7 @@ class ServerList():
 		return self.list.pop(0)
 
 	def retrieveServerList(self):
-		conn = httplib.HTTPConnection('%s:80' % Board.liveServer())
+		conn = http_client.HTTPConnection('%s:80' % Board.liveServer())
 		conn.request('GET', "/server/assign?protocolVersion=3&mac=%s" % ServerList.getMacAddr(Board.networkInterface()))
 		response = conn.getresponse()
 
@@ -46,6 +47,6 @@ class ServerList():
 		addrs = netifaces.ifaddresses(ifname)
 		try:
 			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except IndexError, KeyError:
+		except (IndexError, KeyError) as e:
 			return ''
 		return mac.upper().replace(':', '')

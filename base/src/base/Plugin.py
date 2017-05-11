@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from six import add_metaclass
 
 class PluginContext(object):
 	def __init__(self):
@@ -87,8 +88,8 @@ class PluginMeta(type):
 			self.__init__()
 		return self
 
+@add_metaclass(PluginMeta)
 class Plugin(object):
-	__metaclass__ = PluginMeta
 
 	public = False
 

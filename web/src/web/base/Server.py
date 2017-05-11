@@ -85,9 +85,9 @@ class WebResponseJson(WebResponse):
 	def __init__(self, data, pretty=True, statusCode = 200):
 		super(WebResponseJson,self).__init__(statusCode)
 		if pretty:
-			self.data = json.dumps(data, sort_keys=True, indent=2, separators=(',', ': '))
+			self.data = json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')).encode('utf-8')
 		else:
-			self.data = json.dumps(data)
+			self.data = json.dumps(data).encode('utf-8')
 
 	def output(self, response):
 		response.headers['Content-Type'] = 'application/json; charset=utf-8'

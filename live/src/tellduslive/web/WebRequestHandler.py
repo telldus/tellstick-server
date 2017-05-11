@@ -40,7 +40,7 @@ class WebRequestHandler(Plugin):
 		if path == 'login':
 			try:
 				authrequest = oidconsumer.begin('http://login.telldus.com')
-			except consumer.DiscoveryFailure, exc:
+			except consumer.DiscoveryFailure as exc:
 				logging.error(str(exc[0]))
 				return None  # TODO(micke): Error
 			sregRequest = sreg.SRegRequest(required=['fullname', 'email'])
@@ -57,7 +57,7 @@ class WebRequestHandler(Plugin):
 				return None  # TODO(micke): Error
 			elif info.status == consumer.SUCCESS:
 				sregResp = sreg.SRegResponse.fromSuccessResponse(info)
-				data = dict(sregResp.items())
+				data = dict(list(sregResp.items()))
 				if 'email' not in data:
 					return None  # TODO(micke): Error
 				tellduslive = TelldusLive(self.context)

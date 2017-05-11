@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
-from LiveMessageToken import *
+from .LiveMessageToken import LiveMessageToken
 
 class LiveMessage():
 	def __init__(self, name = ""):

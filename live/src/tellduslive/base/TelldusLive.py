@@ -5,9 +5,9 @@ import threading
 
 from base import Application, Settings, IInterface, ObserverCollection, Plugin, mainthread
 from board import Board
-from ServerList import *
-from ServerConnection import ServerConnection
-from LiveMessage import *
+from .ServerList import *
+from .ServerConnection import ServerConnection
+from .LiveMessage import *
 
 class ITelldusLiveObserver(IInterface):
 	def liveConnected():
@@ -21,7 +21,7 @@ class TelldusLive(Plugin):
 	observers = ObserverCollection(ITelldusLiveObserver)
 
 	def __init__(self):
-		print("Telldus Live! loading")
+		logging.info("Telldus Live! loading")
 		self.email = ''
 		self.supportedMethods = 0
 		self.connected = False
@@ -45,7 +45,7 @@ class TelldusLive(Plugin):
 			self.registered = False
 			params = message.argument(0).dictVal
 			self.s['uuid'] = params['uuid'].stringVal
-			print("This client isn't activated, please activate it using this url:\n%s" % params['url'].stringVal)
+			logging.info("This client isn't activated, please activate it using this url:\n%s", params['url'].stringVal)
 			self.observers.liveConnected()
 			return
 
@@ -80,7 +80,7 @@ class TelldusLive(Plugin):
 				f(o, message)
 				handled = True
 		if not handled:
-			print "Did not understand: %s" % message.toByteArray()
+			logging.warning("Did not understand: %s", message.toByteArray())
 
 	def isConnected(self):
 		return self.connected
@@ -103,11 +103,11 @@ class TelldusLive(Plugin):
 				server = self.serverList.popServer()
 				if not server:
 					wait = random.randint(60, 300)
-					print("No servers found, retry in %i seconds" % wait)
+					logging.warning("No servers found, retry in %i seconds", wait)
 					continue
 				if not self.conn.connect(server['address'], int(server['port'])):
 					wait = random.randint(60, 300)
-					print("Could not connect, retry in %i seconds" % wait)
+					logging.warning("Could not connect, retry in %i seconds", wait)
 
 			elif state == ServerConnection.CONNECTED:
 				pongTimer, self.pingTimer = (time.time(), time.time())
@@ -122,14 +122,14 @@ class TelldusLive(Plugin):
 
 			elif state == ServerConnection.DISCONNECTED:
 				wait = random.randint(10, 50)
-				print("Disconnected, reconnect in %i seconds" % wait)
+				logging.warning("Disconnected, reconnect in %i seconds", wait)
 				self.__disconnected()
 
 			else:
 				if (time.time() - pongTimer >= 360):  # No pong received
 					self.conn.close()
 					wait = random.randint(10, 50)
-					print("No pong received, disconnecting. Reconnect in %i seconds" % wait)
+					logging.warning("No pong received, disconnecting. Reconnect in %i seconds", wait)
 					self.__disconnected()
 				elif (time.time() - self.pingTimer >= 120):
 					# Time to ping
@@ -190,6 +190,6 @@ class TelldusLive(Plugin):
 		addrs = netifaces.ifaddresses(ifname)
 		try:
 			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except IndexError, KeyError:
+		except (IndexError, KeyError) as e:
 			return ''
 		return mac.upper().replace(':', '')

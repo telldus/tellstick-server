@@ -2,9 +2,10 @@
 
 import base64
 import logging
+import six
 
 class LiveMessageToken(object):
-	TYPE_INVALID, TYPE_INT, TYPE_STRING, TYPE_BASE64, TYPE_LIST, TYPE_DICTIONARY = range(6)
+	TYPE_INVALID, TYPE_INT, TYPE_STRING, TYPE_BASE64, TYPE_LIST, TYPE_DICTIONARY = list(range(6))
 
 	def __init__(self, value = None):
 		self.valueType = LiveMessageToken.TYPE_INVALID
@@ -12,7 +13,7 @@ class LiveMessageToken(object):
 		self.intVal = 0
 		self.dictVal = {}
 		self.listVal = []
-		if (type(value) is int or type(value) is long):
+		if (type(value) in six.integer_types):
 			self.valueType = self.TYPE_INT
 			self.intVal = value
 
@@ -20,7 +21,7 @@ class LiveMessageToken(object):
 			self.valueType = self.TYPE_INT
 			self.intVal = int(value)
 
-		elif (type(value) is str or type(value) is unicode):
+		elif (type(value) in six.string_types):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = value
 
@@ -94,7 +95,7 @@ class LiveMessageToken(object):
 				retval = retval + LiveMessageToken(str(key)).toByteArray() + self.dictVal[key].toByteArray()
 			return retval + 's'
 
-		if type(self.stringVal) == unicode:
+		if six.PY2 and type(self.stringVal) == unicode:
 			s = base64.b64encode(self.stringVal.encode('utf-8'))
 			return 'u%X:%s' % (len(s), str(s),)
 
@@ -167,4 +168,3 @@ class LiveMessageToken(object):
 			token.valueType = LiveMessageToken.TYPE_STRING
 
 		return (start, token)
-
