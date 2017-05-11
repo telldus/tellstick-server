@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 try:
 	from setuptools import setup
 	from setuptools.command.install import install
 except ImportError:
 	from distutils.core import setup
 	from distutils.command.install import install
-import os
 
-class webpack(install):
+class Webpack(install):
 	def run(self):
 		print("generate webpack application")
 		os.system('npm install')
@@ -20,15 +20,15 @@ setup(
 	name='Telldus',
 	version='0.1',
 	packages=['telldus', 'telldus.web'],
-	package_dir = {'':'src'},
-	cmdclass={'install': webpack},
+	package_dir={'':'src'},
+	cmdclass={'install': Webpack},
 	entry_points={ \
 		'telldus.plugins': [
 			'api = telldus.DeviceApiManager',
 			'react = telldus.web.React'
 		]
 	},
-	extras_require = {
+	extras_require={
 		'telldus': ['Base>=0.1\nEvent>=0.1'],
 	},
 	package_data={'telldus' : [
