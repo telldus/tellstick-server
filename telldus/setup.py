@@ -36,7 +36,7 @@ setup(
 		'htdocs/img/*.png',
 		'htdocs/img/*.ico',
 		'htdocs/fonts/*.eot',
-		'htdocs/fonts/*.tff',
+		'htdocs/fonts/*.ttf',
 		'htdocs/fonts/*.woff',
 		'htdocs/fonts/*.woff2',
 		'htdocs/js/*.js',
