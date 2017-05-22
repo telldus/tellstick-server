@@ -68,6 +68,7 @@ function(React, ReactMDL, ReactRedux, ReactMarkdown, DialogPolyfill, Actions, Ca
 						{!this.props.installed &&
 							<ReactMDL.Button type='button' className="buttonRounded buttonAccept" onClick={() => this.props.onInstall(this.props.name)} raised disabled={this.props.installing}>Install</ReactMDL.Button>
 						}
+						<ReactMDL.Button type='button' className="buttonRounded buttonAccept" raised>Upgrade</ReactMDL.Button>
 					</ReactMDL.DialogActions>
 				</ReactMDL.Dialog>
 			)

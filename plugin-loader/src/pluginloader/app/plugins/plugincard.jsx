@@ -46,7 +46,10 @@ function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 						<ReactMDL.Button className='buttonWhiteBorder' onClick={() => this.props.onMoreInfo()}>More info</ReactMDL.Button>
 					</ReactMDL.CardActions>
 					<ReactMDL.CardMenu>
-						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#aaa'}} onClick={() => this.props.onSettingsClicked()}/>}
+						<ReactMDL.Tooltip label="Upgrade plugin" position="left">
+						<ReactMDL.IconButton name="arrow_upward" style={{color: '#fff', backgroundColor: '#9ccc65'}} onClick={() => this.props.onMoreInfo()} />
+						</ReactMDL.Tooltip>
+						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#aaa', marginLeft: '5px'}} onClick={() => this.props.onSettingsClicked()}/>}
 					</ReactMDL.CardMenu>
 				</ReactMDL.Card>
 			)
