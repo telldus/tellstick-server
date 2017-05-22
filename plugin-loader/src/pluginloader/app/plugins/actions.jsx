@@ -138,7 +138,7 @@ define([], function() {
 		}
 	)
 	const installStorePluginFailed = (msg) => ({ type: 'INSTALL_STORE_PLUGIN_FAILED', msg })
-	const installStorePluginSuccess = (msg) => ({ type: 'INSTALL_STORE_PLUGIN_SUCCESS', msg })
+	const installStorePluginSuccess = (msg, restartRequired) => ({ type: 'INSTALL_STORE_PLUGIN_SUCCESS', msg, restartRequired })
 
 	const pluginInfoReceived = (info) => ({ type: 'PLUGIN_INFO_RECEIVED', info })
 

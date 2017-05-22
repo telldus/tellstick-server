@@ -46,9 +46,11 @@ function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 						<ReactMDL.Button className='buttonWhiteBorder' onClick={() => this.props.onMoreInfo()}>More info</ReactMDL.Button>
 					</ReactMDL.CardActions>
 					<ReactMDL.CardMenu>
-						<ReactMDL.Tooltip label="Upgrade plugin" position="left">
-						<ReactMDL.IconButton name="arrow_upward" style={{color: '#fff', backgroundColor: '#9ccc65'}} onClick={() => this.props.onMoreInfo()} />
-						</ReactMDL.Tooltip>
+						{this.props.upgradeAvailable &&
+							<ReactMDL.Tooltip label="Upgrade plugin" position="left">
+								<ReactMDL.IconButton name="arrow_upward" style={{color: '#fff', backgroundColor: '#9ccc65'}} onClick={() => this.props.onMoreInfo()} />
+							</ReactMDL.Tooltip>
+						}
 						{this.props.showSettings && <ReactMDL.IconButton name="settings" style={{color: '#aaa', marginLeft: '5px'}} onClick={() => this.props.onSettingsClicked()}/>}
 					</ReactMDL.CardMenu>
 				</ReactMDL.Card>
@@ -62,10 +64,12 @@ function(React, ReactMDL, ReactRedux, Actions, CategoryIcon ) {
 		name: React.PropTypes.string.isRequired,
 		onSettingsClicked:React.PropTypes.func,
 		onMoreInfo: React.PropTypes.func,
+		upgradeAvailable: React.PropTypes.bool,
 	};
 	PluginCard.defaultProps = {
 		color: '#757575',
-		onMoreInfo: () => {}
+		onMoreInfo: () => {},
+		upgradeAvailable: false,
 	};
 	return PluginCard;
 });

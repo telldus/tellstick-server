@@ -41,7 +41,11 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			case 'INSTALL_STORE_PLUGIN_FAILED':
 				return {...state, installing: null, installErrorMsg: action.msg}
 			case 'INSTALL_STORE_PLUGIN_SUCCESS':
-				return {...state, pluginInfo: null, installing: null, installErrorMsg: ''}
+				var newState = {...state, pluginInfo: null, installing: null, installErrorMsg: ''}
+				if (action.restartRequired == true) {
+					newState = {...newState, requireReboot: true, showRebootDialog: true}
+				}
+				return newState;
 			case 'KEY_ACCEPTED':
 				return {...state, importingKey: {...defaultState.importingKey}}
 			case 'KEY_DISCARDED':
@@ -54,7 +58,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 			case 'PLUGIN_INFO_RECEIVED':
 				return {...state, plugins: state.plugins.map(plugin => (plugin.name == action.info.name ? action.info : plugin))}
 			case 'PLUGIN_UPLOADED':
-				let newState = {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
+				var newState = {...state, uploading: false, uploadErrorMsg: '', showUploadDialog: false}
 				if (action.restartRequired == true) {
 					newState = {...newState, requireReboot: true, showRebootDialog: true}
 				}
@@ -105,7 +109,7 @@ function(React, ReactMDL, ReactRedux, Telldus, WebSocket, Actions, ConfigurePlug
 	});
 	websocket.onMessage('plugins', 'install', (module, action, data) => {
 		if (data['success'] == true) {
-			store.dispatch(Actions.installStorePluginSuccess(data['msg']));
+			store.dispatch(Actions.installStorePluginSuccess(data['msg'], data['restartRequired']));
 			store.dispatch(Actions.fetchPlugins());
 		} else {
 			store.dispatch(Actions.installStorePluginFailed(data['msg']));

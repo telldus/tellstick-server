@@ -13,6 +13,7 @@ function(React, ReactMDL, ReactRedux, Actions, PluginCard ) {
 							key={plugin.name}
 							{...plugin}
 							installed={true}
+							upgradeAvailable={plugin.version != plugin.availableVersion}
 							onMoreInfo={() => this.props.onMoreInfo(plugin.name)}
 							onSettingsClicked={() => this.props.onConfigurePlugin(plugin.name)}
 							showSettings={Object.keys(plugin.config).length > 0}
@@ -30,7 +31,10 @@ function(React, ReactMDL, ReactRedux, Actions, PluginCard ) {
 		onRemovePlugin: React.PropTypes.func,
 	};
 	const mapStateToProps = (state) => ({
-		plugins: state.plugins,
+		plugins: state.plugins.map(plugin => {
+			let storePlugin = state.storePlugins.find(storePlugin => storePlugin.name == plugin.name);
+			return {...plugin, availableVersion: storePlugin ? storePlugin.version : plugin.version};
+		}),
 	})
 	const mapDispatchToProps = (dispatch) => ({
 		onConfigurePlugin: (plugin) => dispatch(Actions.configurePlugin(plugin)),

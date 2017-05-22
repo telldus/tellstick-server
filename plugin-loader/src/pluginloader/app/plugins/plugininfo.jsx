@@ -68,7 +68,9 @@ function(React, ReactMDL, ReactRedux, ReactMarkdown, DialogPolyfill, Actions, Ca
 						{!this.props.installed &&
 							<ReactMDL.Button type='button' className="buttonRounded buttonAccept" onClick={() => this.props.onInstall(this.props.name)} raised disabled={this.props.installing}>Install</ReactMDL.Button>
 						}
-						<ReactMDL.Button type='button' className="buttonRounded buttonAccept" raised>Upgrade</ReactMDL.Button>
+						{this.props.version != this.props.availableVersion &&
+							<ReactMDL.Button type='button' className="buttonRounded buttonAccept" onClick={() => this.props.onUpgrade(this.props.name)} raised disabled={this.props.installing}>Upgrade</ReactMDL.Button>
+						}
 					</ReactMDL.DialogActions>
 				</ReactMDL.Dialog>
 			)
@@ -89,16 +91,21 @@ function(React, ReactMDL, ReactRedux, ReactMarkdown, DialogPolyfill, Actions, Ca
 		}
 		var installed = true;
 		let plugin = state.plugins.find(plugin => plugin.name == state.pluginInfo);
+		let storePlugin = state.storePlugins.find(plugin => plugin.name == state.pluginInfo);
 		if (!plugin) {
-			plugin = state.storePlugins.find(plugin => plugin.name == state.pluginInfo);
+			plugin = storePlugin;
 			installed = false;
 		}
 		if (!plugin) {
 			return {}
 		}
+		if (!storePlugin) {
+			storePlugin = plugin;
+		}
 		return {
 			author: plugin.author,
 			authorEmail: plugin['author-email'],
+			availableVersion: storePlugin.version,
 			description: plugin.description,
 			errorMessage: state.installErrorMsg,
 			icon: plugin.icon,
@@ -117,6 +124,7 @@ function(React, ReactMDL, ReactRedux, ReactMarkdown, DialogPolyfill, Actions, Ca
 		onClose: () => dispatch(Actions.closePluginInfo()),
 		onInstall: (name) => dispatch(Actions.installStorePlugin(name)),
 		onUninstall: (name) => dispatch(Actions.deletePlugin(name)),
+		onUpgrade: (name) => dispatch(Actions.installStorePlugin(name)),
 	});
 	return ReactRedux.connect(mapStateToProps, mapDispatchToProps)(PluginInfo);
 });
