@@ -195,6 +195,8 @@ class telldus_plugin(Command):
 				data['color'] = self.distribution.color
 			if self.distribution.icon is not None and os.path.exists(self.distribution.icon):
 				data['icon'] = self.distribution.icon
+			if self.distribution.metadata.long_description is not None:
+				data['long_description'] = self.distribution.metadata.long_description
 			if not self.skip_public_key:
 				data['key'] = 'key.pub'
 			if self.distribution.compatible_platforms:
