@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import logging
 import six
 
 class LiveMessageToken(object):
 	TYPE_INVALID, TYPE_INT, TYPE_STRING, TYPE_BASE64, TYPE_LIST, TYPE_DICTIONARY = list(range(6))
 
-	def __init__(self, value = None):
+	def __init__(self, value=None):
 		self.valueType = LiveMessageToken.TYPE_INVALID
-		self.stringVal = u''
+		self.stringVal = ''
 		self.intVal = 0
 		self.dictVal = {}
 		self.listVal = []
@@ -17,7 +16,7 @@ class LiveMessageToken(object):
 			self.valueType = self.TYPE_INT
 			self.intVal = value
 
-		elif (type(value) is bool):
+		elif isinstance(value, bool):
 			self.valueType = self.TYPE_INT
 			self.intVal = int(value)
 
@@ -25,25 +24,25 @@ class LiveMessageToken(object):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = value
 
-		elif (type(value) is list):
+		elif isinstance(value, list):
 			self.valueType = self.TYPE_LIST
-			for v in value:
-				self.listVal.append(LiveMessageToken(v))
+			for item in value:
+				self.listVal.append(LiveMessageToken(item))
 
-		elif (type(value) is dict):
+		elif isinstance(value, dict):
 			self.valueType = self.TYPE_DICTIONARY
 			for key in value:
 				self.dictVal[key] = LiveMessageToken(value[key])
 
-		elif (type(value) is float):
+		elif isinstance(value, float):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = str(value)
 
 	def toJSON(self):
-		if (self.valueType == LiveMessageToken.TYPE_INT):
+		if self.valueType == LiveMessageToken.TYPE_INT:
 			return '%d' % self.intVal
 
-		if (self.valueType == LiveMessageToken.TYPE_LIST):
+		if self.valueType == LiveMessageToken.TYPE_LIST:
 			retval = '['
 			for token in self.listVal:
 				if len(retval) > 1:
@@ -51,7 +50,7 @@ class LiveMessageToken(object):
 				retval = retval + token.toJSON()
 			return retval + ']'
 
-		if (self.valueType == LiveMessageToken.TYPE_DICTIONARY):
+		if self.valueType == LiveMessageToken.TYPE_DICTIONARY:
 			retval = '{'
 			for key in self.dictVal:
 				if len(retval) > 1:
@@ -62,55 +61,55 @@ class LiveMessageToken(object):
 		return self.stringVal
 
 	def toNative(self):
-		if (self.valueType == LiveMessageToken.TYPE_INT):
+		if self.valueType == LiveMessageToken.TYPE_INT:
 			return self.intVal
 
-		if (self.valueType == LiveMessageToken.TYPE_LIST):
+		if self.valueType == LiveMessageToken.TYPE_LIST:
 			retval = []
 			for token in self.listVal:
 				retval.append(token.toNative())
 			return retval
 
-		if (self.valueType == LiveMessageToken.TYPE_DICTIONARY):
-			retval = {}
+		if self.valueType == LiveMessageToken.TYPE_DICTIONARY:
+			retdict = {}
 			for key in self.dictVal:
-				retval[key] = self.dictVal[key].toNative()
-			return retval
+				retdict[key] = self.dictVal[key].toNative()
+			return retdict
 
 		return self.stringVal
 
 	def toByteArray(self):
-		if (self.valueType == LiveMessageToken.TYPE_INT):
+		if self.valueType == LiveMessageToken.TYPE_INT:
 			return 'i%Xs' % self.intVal
 
-		if (self.valueType == LiveMessageToken.TYPE_LIST):
+		if self.valueType == LiveMessageToken.TYPE_LIST:
 			retval = 'l'
 			for token in self.listVal:
 				retval = retval + token.toByteArray()
 			return retval + 's'
 
-		if (self.valueType == LiveMessageToken.TYPE_DICTIONARY):
+		if self.valueType == LiveMessageToken.TYPE_DICTIONARY:
 			retval = 'h'
 			for key in self.dictVal:
 				retval = retval + LiveMessageToken(str(key)).toByteArray() + self.dictVal[key].toByteArray()
 			return retval + 's'
 
-		if six.PY2 and type(self.stringVal) == unicode:
-			s = base64.b64encode(self.stringVal.encode('utf-8'))
-			return 'u%X:%s' % (len(s), str(s),)
+		if six.PY2 and isinstance(self.stringVal, unicode):
+			stringVal = base64.b64encode(self.stringVal.encode('utf-8'))
+			return 'u%X:%s' % (len(stringVal), str(stringVal),)
 
 		return '%X:%s' % (len(self.stringVal), str(self.stringVal),)
 
 	@staticmethod
 	def parseToken(string, start):
 		token = LiveMessageToken()
-		if (start >= len(string)):
+		if start >= len(string):
 			return (start, token)
 
-		if (string[start] == 'i'):
-			start+=1
+		if string[start] == 'i':
+			start += 1
 			index = string.find('s', start)
-			if (index < 0):
+			if index < 0:
 				return (start, token)
 
 			try:
@@ -120,20 +119,20 @@ class LiveMessageToken(object):
 			except:
 				return (start, token)
 
-		elif (string[start] == 'l'):
-			start+=1
+		elif string[start] == 'l':
+			start += 1
 			token.valueType = LiveMessageToken.TYPE_LIST
-			while (start < len(string) and string[start] != 's'):
+			while start < len(string) and string[start] != 's':
 				start, listToken = LiveMessageToken.parseToken(string, start)
-				if (listToken.valueType == LiveMessageToken.TYPE_INVALID):
+				if listToken.valueType == LiveMessageToken.TYPE_INVALID:
 					break
 				token.listVal.append(listToken)
-			start+=1
+			start += 1
 
-		elif (string[start] == 'h'):
-			start+=1
+		elif string[start] == 'h':
+			start += 1
 			token.valueType = LiveMessageToken.TYPE_DICTIONARY
-			while (start < len(string) and string[start] != 's'):
+			while start < len(string) and string[start] != 's':
 				start, keyToken = LiveMessageToken.parseToken(string, start)
 				if keyToken.valueType == LiveMessageToken.TYPE_STRING:
 					key = keyToken.stringVal
@@ -142,20 +141,20 @@ class LiveMessageToken(object):
 				else:
 					break
 				start, valueToken = LiveMessageToken.parseToken(string, start)
-				if (valueToken.valueType == LiveMessageToken.TYPE_INVALID):
+				if valueToken.valueType == LiveMessageToken.TYPE_INVALID:
 					break
 				token.dictVal[key] = valueToken
-			start+=1
+			start += 1
 
-		elif (string[start] == 'u'): #Base64
-			start+=1
+		elif string[start] == 'u':  # Base64
+			start += 1
 			start, token = LiveMessageToken.parseToken(string, start)
 			token.valueType = LiveMessageToken.TYPE_BASE64
 			token.stringVal = unicode(base64.decodestring(token.stringVal), 'utf-8')
 
 		else: #String
 			index = string.find(':', start)
-			if (index < 0):
+			if index < 0:
 				return (start, token)
 
 			try:
