@@ -13,7 +13,7 @@ class LiveMessageToken(object):
 		self.intVal = 0
 		self.dictVal = {}
 		self.listVal = []
-		if (type(value) in six.integer_types):
+		if isinstance(value, six.integer_types):
 			self.valueType = self.TYPE_INT
 			self.intVal = value
 
@@ -21,7 +21,7 @@ class LiveMessageToken(object):
 			self.valueType = self.TYPE_INT
 			self.intVal = int(value)
 
-		elif (type(value) in six.string_types):
+		elif isinstance(value, six.string_types):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = value
 
