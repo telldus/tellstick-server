@@ -12,8 +12,10 @@ except ImportError:
 class Webpack(install):
 	def run(self):
 		print("generate webpack application")
-		os.system('npm install')
-		os.system('npm run deploy')
+		if os.system('npm install') != 0:
+			raise Exception("Could not install npm packages")
+		if os.system('npm run deploy') != 0:
+			raise Exception("Could not build web application")
 		install.run(self)
 
 setup(
