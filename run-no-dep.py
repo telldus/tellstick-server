@@ -31,9 +31,9 @@ startup = {
 def loadClasses(cls):
 	classes = []
 	for module in cls:
-		m = __import__(module, globals(), locals(), cls[module])
+		mod = __import__(module, globals(), locals(), cls[module])
 		for c in cls[module]:
-			classes.append(getattr(m, c))
+			classes.append(getattr(mod, c))
 	return classes
 
 def watchdog():
@@ -79,25 +79,25 @@ def watchdog():
 def main():
 	from base import Application
 
-	p = loadClasses(plugins)
-	s = loadClasses(startup)
+	loadClasses(plugins)
+	startupClasses = loadClasses(startup)
 
 	app = Application(run=False)
-	app.run(startup=s)
+	app.run(startup=startupClasses)
 
-class PIDFile(object):
+class PIDFile(object):  # pylint: disable=too-few-public-methods
 	def __init__(self):
-		self.f = open('/var/run/tellstick-server.pid', 'w')
+		self.fd = open('/var/run/tellstick-server.pid', 'w')
 
 	def fileno(self):
-		return self.f.fileno()
+		return self.fd.fileno()
 
 	def __enter__(self):
-		self.f.write(str(os.getpid()))
-		self.f.flush()
+		self.fd.write(str(os.getpid()))
+		self.fd.flush()
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
-		self.f.close()
+		self.fd.close()
 
 if __name__ == "__main__":
 	try:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
 		'pidfile': pidfile,
 		'uid': getpwnam('nobody').pw_uid,
 		'gid': getgrnam('nogroup').gr_gid,
-		'files_preserve': [pidfile]
+		'files_preserve': [pidfile],
 	}
 	if not daemonize:
 		params['detach_process'] = False
