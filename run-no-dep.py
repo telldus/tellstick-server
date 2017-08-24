@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import daemon
+import errno
 import getopt
 import os
+import signal
 import sys
+import time
 from pwd import getpwnam
 from grp import getgrnam
 
@@ -32,6 +35,46 @@ def loadClasses(cls):
 		for c in cls[module]:
 			classes.append(getattr(m, c))
 	return classes
+
+def watchdog():
+	def signalhandler(signum, frame):
+		print("SIGTERM received")
+		raise SystemExit("SIGTERM received")
+	# Install signal handler
+	signal.signal(signal.SIGTERM, signalhandler)
+	while 1:
+		clientPID = os.fork()
+		if clientPID:
+			print("Child started with PID %i" % clientPID)
+			running = True
+			exitCode = 0
+			while running:
+				try:
+					(pid, exitCode) = os.waitpid(clientPID, 0)
+					running = False
+				except (KeyboardInterrupt, SystemExit):
+					os.kill(clientPID, signal.SIGINT)
+					(pid, exitCode) = os.waitpid(clientPID, 0)
+					running = False
+					exitCode = 0
+				except OSError as error:
+					if error.errno == errno.EINTR:
+						os.kill(clientPID, signal.SIGINT)
+					else:
+						running = False
+						exitCode = 0
+				except Exception as error:
+					print("Unknown exception", error)
+					running = False
+					exitCode = 0
+			if exitCode == 0:
+				print("Child exited successfully")
+				sys.exit(0)
+			else:
+				print("Server crashed, restarting!")
+				time.sleep(10)  # Don't flood
+		else:
+			main()
 
 def main():
 	from base import Application
@@ -82,4 +125,7 @@ if __name__ == "__main__":
 		params['stderr'] = sys.stderr
 
 	with daemon.DaemonContext(**params):
-		main()
+		if daemonize:
+			watchdog()
+		else:
+			main()
