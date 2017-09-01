@@ -4,7 +4,7 @@ import * as ReactRedux from 'react-redux';
 import * as Redux from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import createLogger from 'redux-logger';
-import dialogpolyfill from 'dialog-polyfill'
+import dialogpolyfill from 'dialog-polyfill';
 
 var requirejs = require('exports-loader?requirejs=requirejs&define!requirejs/require.js');
 
