@@ -28,6 +28,13 @@ class ComponentWrapper extends React.Component {
 	}
 }
 
+class PageWrapper extends React.Component {
+	render() {
+		let Component = this.props.route.pageComponent;
+		return (<Component store={store} />);
+	}
+}
+
 store.dispatch(fetchComponents()).then(() => {
 	let components = store.getState().components;
 	let routes = Object.keys(components).reduce((a, b) => {
