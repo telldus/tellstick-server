@@ -33,7 +33,7 @@ class Placeholder extends React.Component {
 class ComponentLoader extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {component: Placeholder}
+		this.state = {component: Placeholder, props: {}}
 	}
 
 	componentDidMount() {
@@ -48,8 +48,16 @@ class ComponentLoader extends React.Component {
 	}
 
 	loadComponent(name) {
+		if (name in ComponentLoader.builtins) {
+			// Built in compoent
+			this.setState({component: ComponentLoader.builtins[name], props: {store: this.props.store}});
+			return;
+		}
 		var packages = [];
 		for(var componentName in this.props.components) {
+			if (!this.props.components[componentName].script) {
+				continue;
+			}
 			var path = this.props.components[componentName].script.slice(0, -3);  // Remove .js
 			var index = path.lastIndexOf('/');
 			packages.push({
@@ -62,20 +70,23 @@ class ComponentLoader extends React.Component {
 
 		requirejs.requirejs.config({packages: packages});
 		requirejs.requirejs([name], function(component) {
-			dynamicComponent.setState({component: component});
+			dynamicComponent.setState({component: component, props: {}});
 		});
 	}
 
 	render() {
 		var PluginComponent = this.state.component;
 		return (
-			<PluginComponent location={this.props.location} {...this.props} />
+			<PluginComponent location={this.props.location} {...this.props} {...this.state.props} />
 		);
 	}
 };
 ComponentLoader.propTypes = {
 	name: React.PropTypes.string.isRequired,
 }
+ComponentLoader.builtins = {
+}
+requirejs.define('ComponentLoader', ComponentLoader)
 
 const mapStateToProps = (state, ownProps) => {
 	return {
