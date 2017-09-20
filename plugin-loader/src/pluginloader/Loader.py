@@ -157,7 +157,8 @@ class LoadedPlugin(object):
 		return True
 
 class Loader(Plugin):
-	def __init__(self):
+	def __init__(self, *args):
+		del args
 		self.plugins = []
 		self.initializeKeychain()
 		self.loadPlugins()
@@ -223,8 +224,8 @@ class Loader(Plugin):
 				raise ImportError('Malformed plugin. Manifest does not list any packages.')
 			try:
 				gpg = loadGPG()
-			except Exception as exception:
-				raise ImportError(str(exception))
+			except OSError as error:
+				raise ImportError(str(error))
 			packages = []
 			for package in cfg['packages']:
 				packageFilename = zipF.extract(package, '/tmp/')
@@ -280,6 +281,7 @@ class Loader(Plugin):
 		self.keys = [x for x in gpg.list_keys() if x['keyid'] not in defaultKeys]
 
 	def installRemotePlugin(self, name, url, size, sha1):
+		del sha1
 		# Install in a separate thread since calls are blocking
 		filename = '%s/staging.zip' % Board.pluginPath()
 		server = Server(self.context)

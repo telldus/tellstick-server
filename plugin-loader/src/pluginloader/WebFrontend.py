@@ -4,13 +4,11 @@ from base import Plugin, implements
 from board import Board
 from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson, WebResponseRedirect
 from telldus.web import IWebReactHandler
-from Loader import Loader
-import gnupg
 import json
 import os
-import shutil
 import yaml
-import zipfile
+from pluginloader.Loader import Loader
+import gnupg
 
 def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
@@ -19,7 +17,7 @@ class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
 	implements(IWebReactHandler)
 
-	def getReactComponents(self):
+	def getReactComponents(self):  # pylint: disable=R0201
 		return {
 			'plugins': {
 				'title': 'Plugins (beta)',
@@ -31,11 +29,7 @@ class WebFrontend(Plugin):
 			}
 		}
 
-	def uploadPlugin(self, f):
-		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as wf:
-			wf.write(f.file.read())
-
-	def matchRequest(self, plugin, path):
+	def matchRequest(self, plugin, path):  # pylint: disable=R0201
 		if plugin != 'pluginloader':
 			return False
 		if path in [
@@ -77,11 +71,12 @@ class WebFrontend(Plugin):
 				}
 			}
 			Loader(self.context).saveConfiguration(plugin, config)
-		except Exception as e:
-			return WebResponseJson({'success': False, 'msg': str(e)})
+		except Exception as error:
+			return WebResponseJson({'success': False, 'msg': str(error)})
 		return WebResponseRedirect('%s/plugins?settings=%s' % (request.base(), plugin))
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
+		del kwargs
 		if path == 'oauth2':
 			return self.handleOauth2Request(params, request)
 
@@ -97,23 +92,30 @@ class WebFrontend(Plugin):
 			if os.path.isfile(filename):
 				try:
 					return WebResponseJson(Loader(self.context).importPlugin(filename))
-				except ImportError as e:
+				except ImportError as error:
 					os.unlink('%s/staging.zip' % (Board.pluginPath()))
-					return WebResponseJson({'success': False, 'msg':'Error importing plugin: %s' % e})
+					return WebResponseJson({'success': False, 'msg':'Error importing plugin: %s' % error})
 			return WebResponseJson({'success': False, 'msg':'Error importing plugin: No plugin uploaded'})
 
 		if path == 'importkey':
 			if 'discard' in params:
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
 				return WebResponseJson({'success': True})
-			return WebResponseJson(Loader(self.context).importKey(params['key'] if 'key' in params else None))
+			return WebResponseJson(Loader(self.context).importKey(
+				params['key'] if 'key' in params else None)
+			)
 
 		if path == 'installStorePlugin':
 			if 'pluginname' not in params:
 				return WebResponseJson({'success': False, 'msg': 'No plugin specified'})
 			for plugin in yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read()):
 				if plugin['name'] == params['pluginname']:
-					Loader(self.context).installRemotePlugin(plugin['name'], plugin['file']['url'], plugin['file']['size'], plugin['file']['sha1'])
+					Loader(self.context).installRemotePlugin(
+						plugin['name'],
+						plugin['file']['url'],
+						plugin['file']['size'],
+						plugin['file']['sha1']
+					)
 					return WebResponseJson({'success': True})
 			return WebResponseJson({'success': False, 'msg': 'Plugin was not found in the store'})
 
@@ -154,12 +156,12 @@ class WebFrontend(Plugin):
 			configuration = json.loads(params['configuration'])
 			try:
 				Loader(self.context).saveConfiguration(plugin, configuration)
-			except Exception as e:
-				return WebResponseJson({'success': False, 'msg': str(e)})
+			except Exception as error:
+				return WebResponseJson({'success': False, 'msg': str(error)})
 			return WebResponseJson({'success': True})
 
 		if path == 'storePlugins':
-			if os.path.exists('%s/plugins.yml' % Board.pluginPath()) == False:
+			if not os.path.exists('%s/plugins.yml' % Board.pluginPath()):
 				return WebResponseJson([])
 			return WebResponseJson([
 				{
@@ -181,6 +183,11 @@ class WebFrontend(Plugin):
 			filename = '%s/staging.zip' % (Board.pluginPath())
 			try:
 				return WebResponseJson(Loader(self.context).importPlugin(filename))
-			except ImportError as e:
+			except ImportError as error:
 				os.unlink(filename)
-				return WebResponseJson({'success': False, 'msg': str(e)})
+				return WebResponseJson({'success': False, 'msg': str(error)})
+
+	@staticmethod
+	def uploadPlugin(fileobject):
+		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as fd:
+			fd.write(fileobject.file.read())
