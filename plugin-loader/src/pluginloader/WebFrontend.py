@@ -2,7 +2,7 @@
 
 from base import Plugin, implements
 from board import Board
-from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson
+from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson, WebResponseRedirect
 from telldus.web import IWebReactHandler
 from Loader import Loader
 import gnupg
@@ -25,6 +25,9 @@ class WebFrontend(Plugin):
 				'title': 'Plugins (beta)',
 				'script': 'pluginloader/plugins.js',
 				'tags': ['menu']
+			},
+			'plugins/oauth2': {
+				'script': 'pluginloader/oauth2.js'
 			}
 		}
 
@@ -35,11 +38,53 @@ class WebFrontend(Plugin):
 	def matchRequest(self, plugin, path):
 		if plugin != 'pluginloader':
 			return False
-		if path in ['icon','import', 'importkey', 'installStorePlugin', 'keys', 'reboot', 'refreshStorePlugins', 'remove', 'plugins', 'saveConfiguration', 'storePlugins', 'upload']:
+		if path in [
+			'oauth2',
+			'icon',
+			'import',
+			'importkey',
+			'installStorePlugin',
+			'keys',
+			'reboot',
+			'refreshStorePlugins',
+			'remove',
+			'plugins',
+			'saveConfiguration',
+			'storePlugins',
+			'upload'
+		]:
 			return True
 		return False
 
+	def handleOauth2Request(self, params, request):
+		plugin = params['pluginname']
+		pluginClass = params['pluginclass']
+		pluginConfig = params['config']
+		configuration = Loader(self.context).configurationForPlugin(plugin, pluginClass, pluginConfig)
+		if not configuration:
+			return WebResponseJson({'success': False, 'msg': 'Configuration not found'})
+		if 'code' not in params:
+			redirectUri = params['redirectUri']
+			if not hasattr(configuration, 'activate'):
+				return WebResponseJson({'success': False, 'msg': 'Configuration cannot be activated'})
+			url = configuration.activate(redirectUri)
+			return WebResponseJson({'success': True, 'url': url})
+		params = configuration.activateCode(params['code'])
+		try:
+			config = {
+				pluginClass: {
+					pluginConfig: params
+				}
+			}
+			Loader(self.context).saveConfiguration(plugin, config)
+		except Exception as e:
+			return WebResponseJson({'success': False, 'msg': str(e)})
+		return WebResponseRedirect('%s/plugins?settings=%s' % (request.base(), plugin))
+
 	def handleRequest(self, plugin, path, params, request, **kwargs):
+		if path == 'oauth2':
+			return self.handleOauth2Request(params, request)
+
 		if path == 'icon':
 			for plugin in Loader(self.context).plugins:
 				if plugin.name != params['name']:

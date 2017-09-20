@@ -2,7 +2,7 @@ var gulp = require('gulp');
 var babel = require("gulp-babel");
 var requirejsOptimize = require('gulp-requirejs-optimize');
 
-gulp.task('default', ['scripts'], function() {
+gulp.task('default', ['plugins', 'oauth2'], function() {
 });
 
 gulp.task("babel", function () {
@@ -13,7 +13,21 @@ gulp.task("babel", function () {
 		.pipe(gulp.dest('src/pluginloader/build'));
 });
 
-gulp.task('scripts', ['babel'], function () {
+gulp.task('oauth2', ['babel'], function () {
+	return gulp.src('src/pluginloader/build/plugins/oauth2.js')
+		.pipe(requirejsOptimize({
+			//optimize: 'none',
+			paths: {
+				'react': 'empty:',
+				'react-mdl': 'empty:',
+			},
+			baseUrl: 'src/pluginloader/build',
+			name: 'plugins/oauth2'
+		}))
+		.pipe(gulp.dest('src/pluginloader/htdocs'));
+});
+
+gulp.task('plugins', ['babel'], function () {
 	return gulp.src('src/pluginloader/build/plugins/plugins.js')
 		.pipe(requirejsOptimize({
 			//optimize: 'none',

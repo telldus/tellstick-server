@@ -36,6 +36,14 @@ class LoadedPlugin(object):
 		self.packages = self.manifest['packages'] if 'packages' in self.manifest else []
 		self.classes = []
 
+	def configuration(self, pluginClass, configurationName):
+		configuration = ConfigurationManager(self.context)
+		for cls in self.classes:
+			name = '%s.%s' % (cls.__module__, cls.__name__)
+			if pluginClass != name:
+				continue
+			return configuration.configObject(name, configurationName)
+
 	def infoObject(self):
 		configuration = ConfigurationManager(self.context)
 		configs = {}
@@ -160,6 +168,13 @@ class Loader(Plugin):
 		elif time.time() - os.path.getmtime('%s/plugins.yml' % Board.pluginPath()) >= 604800:
 			# The file is over 7 days old. Refresh
 			self.updatePluginsList()
+
+	def configurationForPlugin(self, pluginName, pluginClass, configuration):
+		for plugin in self.plugins:
+			if plugin.name != pluginName:
+				continue
+			return plugin.configuration(pluginClass, configuration)
+		return None
 
 	def importKey(self, acceptKeyId):
 		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
