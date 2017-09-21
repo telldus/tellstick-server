@@ -38,6 +38,7 @@ def loadClasses(cls):
 
 def watchdog():
 	def signalhandler(signum, frame):
+		del signum, frame
 		print("SIGTERM received")
 		raise SystemExit("SIGTERM received")
 	# Install signal handler
@@ -51,6 +52,7 @@ def watchdog():
 			while running:
 				try:
 					(pid, exitCode) = os.waitpid(clientPID, 0)
+					del pid
 					running = False
 				except (KeyboardInterrupt, SystemExit):
 					os.kill(clientPID, signal.SIGINT)
