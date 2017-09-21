@@ -113,13 +113,14 @@ if __name__ == "__main__":
 
 	pidfile = PIDFile()
 	params = {
-		'detach_process': True,
 		'pidfile': pidfile,
-		'uid': getpwnam('nobody').pw_uid,
-		'gid': getgrnam('nogroup').gr_gid,
 		'files_preserve': [pidfile],
 	}
-	if not daemonize:
+	if daemonize:
+		params['detach_process'] = True
+		params['uid'] = getpwnam('nobody').pw_uid
+		params['gid'] = getgrnam('nogroup').gr_gid
+	else:
 		params['detach_process'] = False
 		params['stdout'] = sys.stdout
 		params['stderr'] = sys.stderr
