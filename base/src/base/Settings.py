@@ -3,6 +3,7 @@
 import os
 import json
 import logging
+import shutil
 import time
 from threading import Timer
 from .Application import Application
@@ -56,7 +57,13 @@ class Settings(object):
 	def __writeTimeout():
 		Settings._writeTimer = None
 		Settings._lastWrite = time.time()
-		Settings._config.write()
+		with open('%s.1' % Settings._config.filename, 'wb') as fd:
+			Settings._config.write(fd)
+			fd.flush()
+		# Create backup
+		shutil.copy('%s.1' % Settings._config.filename, '%s.bak' % Settings._config.filename)
+		# Do not us shutils for rename. We must ensure an atomic operation here
+		os.rename('%s.1' % Settings._config.filename, Settings._config.filename)
 
 	def __writeToDisk(self):
 		if Settings._writeTimer is not None:
