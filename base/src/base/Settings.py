@@ -4,11 +4,10 @@ import os
 import json
 import logging
 import time
+from threading import Timer
 from .Application import Application
 from configobj import ConfigObj
-from threading import Timer
 from board import Board
-from six.moves.configparser import ConfigParser
 
 class Settings(object):
 	_config = None
@@ -16,7 +15,7 @@ class Settings(object):
 	_writeTimer = None
 
 	def __init__(self, section):
-		super(Settings,self).__init__()
+		super(Settings, self).__init__()
 		self.section = section
 
 		if Settings._config is None:
@@ -30,20 +29,20 @@ class Settings(object):
 			Settings._config[section] = {}
 
 	def get(self, name, default):
-		v = self[name]
-		if v is None:
+		value = self[name]
+		if value is None:
 			return default
-		if type(default) is dict or type(default) is list:
-			v = json.loads(v)
-		if type(default) == int:
-			v = int(v)
-		return v
+		if isinstance(default, dict) or isinstance(default, list):
+			value = json.loads(value)
+		if isinstance(default, int):
+			value = int(value)
+		return value
 
 	def __loadFile(self):
 		try:
 			Settings._config = ConfigObj(self.configPath + '/' + self.configFilename)
-		except:
-			logging.critical('Could not load settings file!')
+		except Exception as error:
+			logging.critical('Could not load settings file: %s', error)
 			# Start with empty one
 			Settings._config = ConfigObj()
 			Settings._config.filename = self.configPath + '/' + self.configFilename
@@ -53,7 +52,8 @@ class Settings(object):
 			Settings._writeTimer.cancel()
 			self.__writeTimeout()
 
-	def __writeTimeout(self):
+	@staticmethod
+	def __writeTimeout():
 		Settings._writeTimer = None
 		Settings._lastWrite = time.time()
 		Settings._config.write()
@@ -70,12 +70,12 @@ class Settings(object):
 	def __getitem__(self, name):
 		try:
 			value = Settings._config[self.section][name]
-		except:
+		except KeyError:
 			return None
 		return value
 
 	def __setitem__(self, name, value):
-		if type(value) is dict or type(value) is list:
+		if isinstance(value, dict) or isinstance(value, list):
 			value = json.dumps(value)
 		Settings._config[self.section][name] = value
 		self.__writeToDisk()
