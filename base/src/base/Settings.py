@@ -7,7 +7,7 @@ import shutil
 import time
 from threading import Timer
 from .Application import Application
-from configobj import ConfigObj
+from configobj import ConfigObj, ParseError
 from board import Board
 
 class Settings(object):
@@ -40,13 +40,27 @@ class Settings(object):
 		return value
 
 	def __loadFile(self):
+		path = self.configPath + '/' + self.configFilename
 		try:
-			Settings._config = ConfigObj(self.configPath + '/' + self.configFilename)
-		except Exception as error:
+			Settings._config = ConfigObj(path)
+			return
+		except ParseError as error:
 			logging.critical('Could not load settings file: %s', error)
-			# Start with empty one
-			Settings._config = ConfigObj()
-			Settings._config.filename = self.configPath + '/' + self.configFilename
+		# Loading failed. Try backup.
+		# Copy faulty config for later analysis
+		shutil.copy(path, '%s.err' % path)
+		try:
+			# Read backup
+			Settings._config = ConfigObj('%s.bak' % path)
+			Settings._config.filename = path
+			# Success, copy a backup of this file for later analysis
+			shutil.copy('%s.bak' % path, '%s.bak.err' % path)
+			return
+		except ParseError as error:
+			logging.critical('Could not load backup settings file: %s', error)
+		# Start with empty one
+		Settings._config = ConfigObj()
+		Settings._config.filename = path
 
 	def __shutdown(self):
 		if Settings._writeTimer is not None:
