@@ -1,0 +1,7 @@
+dnspython
+netifaces
+pyasn1
+pyasn1_modules
+# SleekXMPP 1.3.3 contains a bug regarding ssl verification.
+# See: https://github.com/fritzy/SleekXMPP/issues/461
+sleekxmpp=1.3.2
