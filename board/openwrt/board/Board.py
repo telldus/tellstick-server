@@ -28,7 +28,7 @@ class Board(object):
 
 	@staticmethod
 	def configDir():
-		return '/etc'
+		return '/etc/telldus'
 
 	@staticmethod
 	def firmwareVersion():
