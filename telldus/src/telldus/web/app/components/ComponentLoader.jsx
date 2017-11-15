@@ -8,6 +8,8 @@ import dialogpolyfill from 'dialog-polyfill';
 
 var requirejs = require('exports-loader?requirejs=requirejs&define!requirejs/require.js');
 
+import { FirmwareSettings } from './Firmware'
+
 // Sorry, the scripts seems to needs this in the global context... :(
 window.define = requirejs.define;
 
@@ -85,6 +87,7 @@ ComponentLoader.propTypes = {
 	name: React.PropTypes.string.isRequired,
 }
 ComponentLoader.builtins = {
+	'com.telldus.firmware': FirmwareSettings,
 }
 requirejs.define('ComponentLoader', ComponentLoader)
 
