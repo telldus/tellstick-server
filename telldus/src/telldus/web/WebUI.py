@@ -1,4 +1,5 @@
 from base import Plugin, implements
+from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
 from telldus.web import IWebReactHandler
 
@@ -10,6 +11,11 @@ class WebUI(Plugin):
 
 	def getReactComponents(self):
 		retval = {
+			'com.telldus.firmware': {
+				'title': 'Firmware',
+				'builtin': 'FirmwareSettings',
+				'tags': ['settings'],
+			},
 		}
 		return retval
 
@@ -18,7 +24,16 @@ class WebUI(Plugin):
 			return None
 
 		if path == 'info':
+			try:
+				with open('/etc/distribution') as fd:
+					distribution = fd.readline().strip()
+			except Exception as __error:
+				distribution = 'unknown'
 			return WebResponseJson({
+				'firmware': {
+					'version': Board.firmwareVersion(),
+					'distribution': distribution,
+				},
 			})
 
 		return None
