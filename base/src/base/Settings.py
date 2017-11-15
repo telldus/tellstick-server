@@ -21,8 +21,8 @@ class Settings(object):
 
 		if Settings._config is None:
 			self.configPath = Board.configDir()
-			if not os.path.exists(self.configPath):
-				os.makedirs(self.configPath)
+			if not os.path.exists('%s/telldus' % self.configPath):
+				os.makedirs('%s/telldus' % self.configPath)
 			self.configFilename = 'Telldus.conf'
 			self.__loadFile()
 			Application().registerShutdown(self.__shutdown)
@@ -41,6 +41,7 @@ class Settings(object):
 
 	def __loadFile(self):
 		path = self.configPath + '/' + self.configFilename
+		backuppath = self.configPath + '/telldus/' + self.configFilename
 		try:
 			Settings._config = ConfigObj(path)
 			return
@@ -48,13 +49,13 @@ class Settings(object):
 			logging.critical('Could not load settings file: %s', error)
 		# Loading failed. Try backup.
 		# Copy faulty config for later analysis
-		shutil.copy(path, '%s.err' % path)
+		shutil.copy(path, '%s.err' % backuppath)
 		try:
 			# Read backup
-			Settings._config = ConfigObj('%s.bak' % path)
+			Settings._config = ConfigObj('%s.bak' % backuppath)
 			Settings._config.filename = path
 			# Success, copy a backup of this file for later analysis
-			shutil.copy('%s.bak' % path, '%s.bak.err' % path)
+			shutil.copy('%s.bak' % backuppath, '%s.bak.err' % backuppath)
 			return
 		except ParseError as error:
 			logging.critical('Could not load backup settings file: %s', error)
@@ -71,13 +72,15 @@ class Settings(object):
 	def __writeTimeout():
 		Settings._writeTimer = None
 		Settings._lastWrite = time.time()
-		with open('%s.1' % Settings._config.filename, 'wb') as fd:
+		Settings._config.filename
+		backuppath = os.path.dirname(Settings._config.filename) + '/telldus/' + os.path.basename(Settings._config.filename)
+		with open('%s.1' % backuppath, 'wb') as fd:
 			Settings._config.write(fd)
 			fd.flush()
 		# Create backup
-		shutil.copy('%s.1' % Settings._config.filename, '%s.bak' % Settings._config.filename)
+		shutil.copy('%s.1' % backuppath, '%s.bak' % backuppath)
 		# Do not us shutils for rename. We must ensure an atomic operation here
-		os.rename('%s.1' % Settings._config.filename, Settings._config.filename)
+		os.rename('%s.1' % backuppath, Settings._config.filename)
 
 	def __writeToDisk(self):
 		if Settings._writeTimer is not None:
