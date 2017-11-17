@@ -42,6 +42,10 @@ class Settings(object):
 	def __loadFile(self):
 		path = self.configPath + '/' + self.configFilename
 		try:
+			# Check size of config. If size is 0 then consider is broken
+			statinfo = os.stat(path)
+			if statinfo.st_size == 0:
+				raise ParseError('Empty config file')
 			Settings._config = ConfigObj(path)
 			return
 		except ParseError as error:
