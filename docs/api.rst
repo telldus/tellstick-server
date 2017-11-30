@@ -11,3 +11,4 @@ to: http://[ipaddress]/api to list the functions.
 .. toctree::
 
   api/authentication
+  api/extending
