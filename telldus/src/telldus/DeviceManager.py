@@ -128,6 +128,23 @@ class DeviceManager(Plugin):
 			msg.append({'id': deviceId})
 			self.live.send(msg)
 
+	@mainthread
+	def removeDevicesByType(self, deviceType):
+		"""
+		.. versionadded:: 1.1.0
+
+		Remove all devices of a specific device type
+
+		Args:
+		    :deviceType: The type of devices to remove
+		"""
+		deviceIds = []
+		for device in self.devices:
+			if device.typeString() == deviceType:
+				deviceIds.append(device.id())
+		for deviceId in deviceIds:
+			self.removeDevice(deviceId)
+
 	def retrieveDevices(self, deviceType = None):
 		"""Retrieve a list of devices.
 
