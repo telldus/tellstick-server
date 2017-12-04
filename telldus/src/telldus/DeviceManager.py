@@ -1,24 +1,37 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import time
+from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
+from base import \
+	Settings, \
+	ObserverCollection, \
+	IInterface, \
+	ISignalObserver, \
+	Plugin, \
+	implements, \
+	mainthread, \
+	signal, \
+	slot
 from .Device import CachedDevice, DeviceAbortException
-import json, logging, time
-from tellduslive.base import TelldusLive, LiveMessage, LiveMessageToken, ITelldusLiveObserver
-from base import Application, Settings, ObserverCollection, IInterface, Plugin, implements, mainthread, signal
 
-__name__ = 'telldus'
+__name__ = 'telldus'  # pylint: disable=W0622
 
 class IDeviceChange(IInterface):
 	"""Implement this IInterface to recieve notifications on device changes"""
 
-	def deviceAdded(device):
+	def deviceAdded(device):  # pylint: disable=E0213
 		"""This method is called when a device is added"""
-	def deviceConfirmed(device):
-		"""This method is called when a device is confirmed on the network, not only loaded from storage (not applicable to all device types)"""
-	def deviceRemoved(deviceId):
+	def deviceConfirmed(device):  # pylint: disable=E0213
+		"""
+		This method is called when a device is confirmed on the network,
+		not only loaded from storage (not applicable to all device types)
+		"""
+	def deviceRemoved(deviceId):  # pylint: disable=E0213
 		"""This method is called when a device is removed"""
-	def sensorValueUpdated(device, valueType, value, scale):
+	def sensorValueUpdated(device, valueType, value, scale):  # pylint: disable=E0213
 		"""This method is called when a new sensor value is received from a sensor"""
-	def stateChanged(device, state, statevalue):
+	def stateChanged(device, state, statevalue):  # pylint: disable=E0213
 		"""Called when the state of a device changed"""
 
 class DeviceManager(Plugin):
@@ -31,8 +44,8 @@ class DeviceManager(Plugin):
 
 	def __init__(self):
 		self.devices = []
-		self.s = Settings('telldus.devicemanager')
-		self.nextId = self.s.get('nextId', 0)
+		self.settings = Settings('telldus.devicemanager')
+		self.nextId = self.settings.get('nextId', 0)
 		self.live = TelldusLive(self.context)
 		self.registered = False
 		self.__load()
@@ -47,7 +60,8 @@ class DeviceManager(Plugin):
 		"""
 		cachedDevice = None
 		for i, delDevice in enumerate(self.devices):
-			# Delete the cached device from loaded devices, since it is replaced by a confirmed/specialised one
+			# Delete the cached device from loaded devices, since it is replaced
+			# by a confirmed/specialised one
 			if delDevice.localId() == device.localId() and device.typeString() == delDevice.typeString() and not delDevice.confirmed():
 				cachedDevice = delDevice
 				del self.devices[i]
@@ -61,7 +75,7 @@ class DeviceManager(Plugin):
 		else:  # Transfer parameters from the loaded one
 			device.loadCached(cachedDevice)
 		self.save()
-		
+
 		if not cachedDevice:
 			self.__deviceAdded(device)
 			if self.live.registered and device.isDevice():
@@ -89,22 +103,25 @@ class DeviceManager(Plugin):
 		Returns:
 		  the device specified by `deviceId` or None of no device was found
 		"""
-		for d in self.devices:
-			if d.id() == deviceId:
-				return d
+		for device in self.devices:
+			if device.id() == deviceId:
+				return device
 		return None
 
 	def findByName(self, name):
-		for d in self.devices:
-			if d.name() == name:
-				return d
+		for device in self.devices:
+			if device.name() == name:
+				return device
 		return None
 
 	@mainthread
-	def finishedLoading(self, type):
-		""" Finished loading all devices of this type. If there are any unconfirmed, these should be deleted """
+	def finishedLoading(self, deviceType):
+		"""
+		Finished loading all devices of this type. If there are any unconfirmed,
+		these should be deleted
+		"""
 		for device in self.devices:
-			if device.typeString() == type and not device.confirmed():
+			if device.typeString() == deviceType and not device.confirmed():
 				self.removeDevice(device.id())
 
 	@mainthread
@@ -145,7 +162,7 @@ class DeviceManager(Plugin):
 		for deviceId in deviceIds:
 			self.removeDevice(deviceId)
 
-	def retrieveDevices(self, deviceType = None):
+	def retrieveDevices(self, deviceType=None):
 		"""Retrieve a list of devices.
 
 		Args:
@@ -154,26 +171,27 @@ class DeviceManager(Plugin):
 		Returns:
 		    Returns a list of devices
 		"""
-		l = []
-		for d in self.devices:
-			if deviceType is not None and d.typeString() != deviceType:
+		lst = []
+		for device in self.devices:
+			if deviceType is not None and device.typeString() != deviceType:
 				continue
-			l.append(d)
-		return l
+			lst.append(device)
+		return lst
 
 	@signal
 	def sensorValueUpdated(self, device, valueType, value, scale):
 		"""
 		Called every time a sensors value is updated.
 		"""
-		if device.isSensor() == False:
+		if device.isSensor() is False:
 			return
 		self.observers.sensorValueUpdated(device, valueType, value, scale)
 		if not self.live.registered or device.ignored():
 			# don't send if not connected to live or sensor is ignored
 			return
 		if valueType in device.lastUpdatedLive and (valueType in device.valueChangedTime and device.valueChangedTime[valueType] < device.lastUpdatedLive[valueType]) and device.lastUpdatedLive[valueType] > (int(time.time()) - 300):
-			# no values have changed since the last live-update, and the last time this sensor was sent to live was less than 5 minutes ago
+			# no values have changed since the last live-update, and the last
+			# time this sensor was sent to live was less than 5 minutes ago
 			return
 
 		msg = LiveMessage("SensorEvent")
@@ -195,10 +213,10 @@ class DeviceManager(Plugin):
 		# have already been updated in other words)
 		values = device.sensorValues()
 		valueList = []
-		for vt in values:
-			for value in values[vt]:
+		for valueType in values:
+			for value in values[valueType]:
 				valueList.append({
-					'type': vt,
+					'type': valueType,
 					'lastUp': str(value['lastUpdated']),
 					'value': str(value['value']),
 					'scale': value['scale']
@@ -207,8 +225,8 @@ class DeviceManager(Plugin):
 		device.lastUpdatedLive[valueType] = int(time.time())
 		self.live.send(msg)
 
-	def stateUpdated(self, device, ackId = None, origin = None):
-		if device.isDevice() == False:
+	def stateUpdated(self, device, ackId=None, origin=None):
+		if device.isDevice() is False:
 			return
 		extras = {}
 		if ackId:
@@ -232,7 +250,7 @@ class DeviceManager(Plugin):
 	def stateUpdatedFail(self, device, state, stateValue, reason, origin):
 		if not self.live.registered:
 			return
-		if device.isDevice() == False:
+		if device.isDevice() is False:
 			return
 		extras = {
 			'reason': reason,
@@ -255,10 +273,10 @@ class DeviceManager(Plugin):
 		args = msg.argument(0).toNative()
 		action = args['action']
 		value = args['value'] if 'value' in args else None
-		id = args['id']
+		deviceId = args['id']
 		device = None
 		for dev in self.devices:
-			if dev.id() == id:
+			if dev.id() == deviceId:
 				device = dev
 				break
 
@@ -292,7 +310,7 @@ class DeviceManager(Plugin):
 			for dev in self.devices:
 				if dev.id() != args['device']:
 					continue
-				if type(args['name']) is int:
+				if isinstance(args['name'], int):
 					dev.setName(str(args['name']))
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
@@ -324,26 +342,30 @@ class DeviceManager(Plugin):
 				self.__sendSensorChange(sensorId, updateType, value)
 				return
 		if updateType == 'updateignored' and len(self.devices) > 0:
-			# we don't have this sensor, do something! (can't send sensor change back (__sendSensorChange), because can't create message when sensor is unknown (could create special workaround, but only do that if it's still a problem in the future))
+			# we don't have this sensor, do something! (can't send sensor change
+			# back (__sendSensorChange), because can't create message when
+			# sensor is unknown (could create special workaround, but only do
+			# that if it's still a problem in the future))
 			logging.warning('Requested ignore change for non-existing sensor %s', str(sensorId))
-			self.__sendSensorReport()  # send an updated sensor report, so that this sensor is hopefully cleaned up
+			# send an updated sensor report, so that this sensor is hopefully
+			# cleaned up
+			self.__sendSensorReport()
 
-
-	def liveRegistered(self, msg):
+	def liveRegistered(self, __msg):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()
 
 	def __load(self):
-		self.store = self.s.get('devices', [])
+		self.store = self.settings.get('devices', [])
 		for dev in self.store:
 			if 'type' not in dev or 'localId' not in dev:
 				continue  # This should not be possible
-			d = CachedDevice(dev)
+			device = CachedDevice(dev)
 			# If we have loaded this device from cache 5 times in a row it's
 			# considered dead
-			if d.loadCount() < 5:
-				self.devices.append(d)
+			if device.loadCount() < 5:
+				self.devices.append(device)
 
 	@signal('deviceAdded')
 	def __deviceAdded(self, device):
@@ -361,73 +383,76 @@ class DeviceManager(Plugin):
 		self.observers.deviceRemoved(deviceId)
 
 	@signal('deviceStateChanged')
-	def __deviceStateChanged(self, device, state, stateValue):
+	def __deviceStateChanged(self, device, state, stateValue, origin):
 		"""
 		Called every time the state of a device is changed.
 		"""
+		del origin  # Remove pylint warning
 		self.observers.stateChanged(device, state, stateValue)
 
 	def save(self):
 		data = []
-		for d in self.devices:
-			(state, stateValue) = d.state()
+		for device in self.devices:
+			(state, stateValue) = device.state()
 			dev = {
-				"id": d.id(),
-				"loadCount": d.loadCount(),
-				"localId": d.localId(),
-				"type": d.typeString(),
-				"name": d.name(),
-				"params": d.params(),
-				"methods": d.methods(),
+				"id": device.id(),
+				"loadCount": device.loadCount(),
+				"localId": device.localId(),
+				"type": device.typeString(),
+				"name": device.name(),
+				"params": device.params(),
+				"methods": device.methods(),
 				"state": state,
 				"stateValue": stateValue,
-				"ignored": d.ignored(),
-				"isSensor": d.isSensor()
+				"ignored": device.ignored(),
+				"isSensor": device.isSensor()
 			}
-			if len(d.sensorValues()) > 0:
-				dev['sensorValues'] = d.sensorValues()
-			battery = d.battery()
+			if len(device.sensorValues()) > 0:
+				dev['sensorValues'] = device.sensorValues()
+			battery = device.battery()
 			if battery is not None:
 				dev['battery'] = battery
-			if hasattr(d, 'declaredDead') and d.declaredDead:
-				dev['declaredDead'] = d.declaredDead
+			if hasattr(device, 'declaredDead') and device.declaredDead:
+				dev['declaredDead'] = device.declaredDead
 			data.append(dev)
-		self.s['devices'] = data
-		self.s['nextId'] = self.nextId
+		self.settings['devices'] = data
+		self.settings['nextId'] = self.nextId
 
 	def __sendDeviceReport(self):
+		logging.warning("Send Devices Report")
 		if not self.live.registered:
 			return
-		l = []
-		for d in self.devices:
-			if not d.isDevice():
+		lst = []
+		for device in self.devices:
+			if not device.isDevice():
 				continue
-			(state, stateValue) = d.state()
-			device = {
-				'id': d.id(),
-				'name': d.name(),
-				'methods': d.methods(),
+			(state, stateValue) = device.state()
+			dev = {
+				'id': device.id(),
+				'name': device.name(),
+				'methods': device.methods(),
 				'state': state,
 				'stateValue': stateValue,
-				'protocol': d.protocol(),
-				'model': d.model(),
-				'transport': d.typeString(),
-				'ignored': d.ignored()
+				'protocol': device.protocol(),
+				'model': device.model(),
+				'transport': device.typeString(),
+				'ignored': device.ignored()
 			}
-			battery = d.battery()
+			battery = device.battery()
 			if battery is not None:
-				device['battery'] = battery
-			l.append(device)
+				dev['battery'] = battery
+			lst.append(dev)
 		msg = LiveMessage("DevicesReport")
-		msg.append(l)
+		logging.warning("DR %s", lst)
+		msg.append(lst)
 		self.live.send(msg)
 
 	def __sendSensorChange(self, sensorid, valueType, value):
 		msg = LiveMessage("SensorChange")
 		device = None
-		for d in self.devices:
-			if d.id() == sensorid:
-				device = d
+		for dev in self.devices:
+			if dev.id() == sensorid:
+				device = dev
 				break
 		if not device:
 			return
@@ -444,29 +469,29 @@ class DeviceManager(Plugin):
 	def __sendSensorReport(self):
 		if not self.live.registered:
 			return
-		l = []
-		for d in self.devices:
-			if d.isSensor() == False:
+		lst = []
+		for device in self.devices:
+			if device.isSensor() is False:
 				continue
 			sensorFrame = []
 			sensor = {
-				'name': d.name(),
-				'protocol': d.protocol(),
-				'model': d.model(),
-				'sensor_id': d.id(),
+				'name': device.name(),
+				'protocol': device.protocol(),
+				'model': device.model(),
+				'sensor_id': device.id(),
 			}
-			if d.params() and 'sensorId' in d.params():
-				sensor['channelId'] = d.params()['sensorId']
+			if device.params() and 'sensorId' in device.params():
+				sensor['channelId'] = device.params()['sensorId']
 
-			battery = d.battery()
+			battery = device.battery()
 			if battery is not None:
 				sensor['battery'] = battery
-			if hasattr(d, 'declaredDead') and d.declaredDead:
+			if hasattr(device, 'declaredDead') and device.declaredDead:
 				# Sensor shouldn't be removed for a while, but don't update it on server side
 				sensor['declaredDead'] = 1
 			sensorFrame.append(sensor)
 			valueList = []
-			values = d.sensorValues()
+			values = device.sensorValues()
 			for valueType in values:
 				for value in values[valueType]:
 					valueList.append({
@@ -475,11 +500,13 @@ class DeviceManager(Plugin):
 						'value': str(value['value']),
 						'scale': value['scale']
 					})
-					#d.lastUpdatedLive[valueType] = int(time.time())  # Telldus Live! does not aknowledge sensorreportupdates yet, so don't count this yet (wait for Cassandra only)
+					# Telldus Live! does not aknowledge sensorreportupdates yet,
+					# so don't count this yet (wait for Cassandra only)
+					# device.lastUpdatedLive[valueType] = int(time.time())
 			sensorFrame.append(valueList)
-			l.append(sensorFrame)
+			lst.append(sensorFrame)
 		msg = LiveMessage("SensorsReport")
-		msg.append(l)
+		msg.append(lst)
 		self.live.send(msg)
 
 	def sensorsUpdated(self):
