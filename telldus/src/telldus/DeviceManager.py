@@ -108,6 +108,14 @@ class DeviceManager(Plugin):
 				return device
 		return None
 
+	def deviceParamUpdated(self, device, param):
+		self.save()
+		if param == 'name':
+			if device.isDevice():
+				self.__sendDeviceReport()
+			if device.isSensor:
+				self.__sendSensorReport()
+
 	def findByName(self, name):
 		for device in self.devices:
 			if device.name() == name:
@@ -314,10 +322,6 @@ class DeviceManager(Plugin):
 					dev.setName(str(args['name']))
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
-				if dev.isDevice():
-					self.__sendDeviceReport()
-				if dev.isSensor:
-					self.__sendSensorReport()
 				return
 
 	@TelldusLive.handler('reload')

@@ -253,7 +253,7 @@ class Device(object):
 
 	def paramUpdated(self, param):
 		if self._manager:
-			self._manager.save()
+			self._manager.deviceParamUpdated(self, param)
 
 	def protocol(self):
 		return self.typeString()
