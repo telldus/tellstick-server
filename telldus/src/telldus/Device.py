@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import logging, time
+import logging
+import time
 
 class DeviceAbortException(Exception):
 	pass
 
+# pylint: disable=R0904,R0902,C0103
 class Device(object):
 	"""
 	A base class for a device. Any plugin adding devices must subclass this class.
 	"""
-	TURNON  = 1  #: Device flag for devices supporting the on method.
+	TURNON = 1  #: Device flag for devices supporting the on method.
 	TURNOFF = 2  #: Device flag for devices supporting the off method.
 	BELL = 4     #: Device flag for devices supporting the bell method.
 	TOGGLE = 8   #: Device flag for devices supporting the toggle method.
@@ -61,7 +63,7 @@ class Device(object):
 	BATTERY_OK = 253  # Battery status, if not percent value
 
 	def __init__(self):
-		super(Device,self).__init__()
+		super(Device, self).__init__()
 		self._id = 0
 		self._ignored = None
 		self._loadCount = 0
@@ -78,13 +80,15 @@ class Device(object):
 	def id(self):
 		return self._id
 
-	def battery(self):
+	def battery(self):  # pylint: disable=R0201
 		"""
 		Returns the current battery value
 		"""
 		return None
 
-	def command(self, action, value=None, origin=None, success=None, failure=None, callbackArgs=[], ignore=None):
+	# pylint: disable=R0913
+	def command(self, action, value=None, origin=None, success=None,
+	            failure=None, callbackArgs=None, ignore=None):
 		"""This method executes a method with the device. This method must not be
 		subclassed. Please subclass :func:`_command()` instead.
 
@@ -93,13 +97,15 @@ class Device(object):
 
 		Here below is the results of the :func:`Device.methods()` docstring.
 		"""
+		if callbackArgs is None:
+			callbackArgs = []
 		# Prevent loops from groups and similar
 		if ignore is None:
 			ignore = []
 		if self.id() in ignore:
 			return
 		ignore.append(self.id())
-		if type(action) == str or type(action) == unicode:
+		if isinstance(action, str) or isinstance(action, unicode):
 			method = Device.methodStrToInt(action)
 		else:
 			method = action
@@ -109,9 +115,9 @@ class Device(object):
 			else:
 				value = int(value)
 		elif method == Device.RGBW:
-			if type(value) == str:
+			if isinstance(value, str):
 				value = int(value, 16)
-			elif type(value) is not int:
+			elif not isinstance(value, int):
 				value = 0
 		elif method == Device.THERMOSTAT:
 			pass
@@ -144,7 +150,8 @@ class Device(object):
 			logging.exception(e)
 			triggerFail(0)
 
-	def _command(self, action, value, success, failure, **kwargs):
+	# pylint: disable=R0201,W0613
+	def _command(self, action, value, success, failure, **__kwargs):
 		"""Reimplement this method to execute an action to this device."""
 		failure(0)
 
@@ -160,7 +167,7 @@ class Device(object):
 		toCheck = list(self.containingDevices())
 		while len(toCheck):
 			d = toCheck.pop()
-			if type(d) is int:
+			if isinstance(d, int):
 				d = self._manager.device(d)
 			if d is None:
 				continue
@@ -174,6 +181,7 @@ class Device(object):
 			toCheck.extend(d.containingDevices())
 		return devices
 
+	# pylint: disable=W0212
 	def loadCached(self, olddevice):
 		self._id = olddevice._id
 		self._name = olddevice._name
@@ -266,8 +274,8 @@ class Device(object):
 		"""
 		return self._sensorValues
 
-	def setId(self, id):
-		self._id = id
+	def setId(self, newId):
+		self._id = newId
 
 	def setIgnored(self, ignored):
 		self._ignored = ignored
@@ -295,24 +303,30 @@ class Device(object):
 					self.valueChangedTime[valueType] = int(time.time())
 				else:
 					if sensorType['lastUpdated'] > int(time.time() - 1):
-						# same value and less than a second ago, most probably just the same value being resent, ignore
+						# Same value and less than a second ago, most probably
+						# just the same value being resent, ignore
 						return
 				sensorType['value'] = str(value)
 				sensorType['lastUpdated'] = int(time.time())
 				found = True
 				break
 		if not found:
-			self._sensorValues[valueType].append({'value': str(value), 'scale': scale, 'lastUpdated': int(time.time())})
+			self._sensorValues[valueType].append({
+				'value': str(value),
+				'scale': scale,
+				'lastUpdated': int(time.time())
+			})
 			self.valueChangedTime[valueType] = int(time.time())
 		if self._manager:
 			self._manager.sensorValueUpdated(self, valueType, value, scale)
 			self._manager.save()
 
-	def setState(self, state, stateValue = None, ack=None, origin=None):
+	def setState(self, state, stateValue=None, ack=None, origin=None):
 		if stateValue is None:
 			stateValue = ''
 		if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
-			# same state/statevalue and less than one second ago, most probably just the same value being resent, ignore
+			# Same state/statevalue and less than one second ago, most probably
+			# just the same value being resent, ignore
 			return
 		self.lastUpdated = time.time()
 		self._state = state
@@ -320,7 +334,7 @@ class Device(object):
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
-	def setStateFailed(self, state, stateValue = '', reason = 0, origin=None):
+	def setStateFailed(self, state, stateValue='', reason=0, origin=None):
 		if self._manager:
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
 
@@ -340,6 +354,7 @@ class Device(object):
 		"""
 		return ''
 
+	# pylint: disable=R0911
 	@staticmethod
 	def methodStrToInt(method):
 		"""Convenience method to convert method string to constants.
@@ -413,7 +428,7 @@ class Sensor(Device):
 	def name(self):
 		return self._name if self._name is not None else 'Sensor %i' % self._id
 
-class CachedDevice(Device):
+class CachedDevice(Device):  # pylint: disable=R0902
 	def __init__(self, settings):
 		super(CachedDevice, self).__init__()
 		self.paramsStorage = {}
@@ -475,8 +490,14 @@ class CachedDevice(Device):
 				if 'lastUpdated' in sensorValue:
 					lastUpdated = sensorValue['lastUpdated']
 				else:
-					lastUpdated = int(time.time())  # not in cache, perhaps first time lastUpdated is used (maybe this should be logged?)
-				self._sensorValues[valueType].append({'value': value, 'scale': scale, 'lastUpdated': lastUpdated})
+					# not in cache, perhaps first time lastUpdated is used
+					# (maybe this should be logged?)
+					lastUpdated = int(time.time())
+				self._sensorValues[valueType].append({
+					'value': value,
+					'scale': scale,
+					'lastUpdated': lastUpdated
+				})
 
 	def typeString(self):
 		return self.mimikType
