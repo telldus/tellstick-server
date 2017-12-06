@@ -3,6 +3,8 @@
 import logging
 import time
 
+from base import Application
+
 class DeviceAbortException(Exception):
 	pass
 
@@ -146,8 +148,8 @@ class Device(object):
 			return
 		try:
 			self._command(method, value, success=s, failure=triggerFail, ignore=ignore)
-		except Exception as e:
-			logging.exception(e)
+		except Exception as error:
+			Application.printException(error)
 			triggerFail(0)
 
 	# pylint: disable=R0201,W0613
