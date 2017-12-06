@@ -7,6 +7,7 @@ import thunkMiddleware from 'redux-thunk'
 import createLogger from 'redux-logger'
 
 import App, {Index, About} from './components/App';
+import Settings from './components/Settings';
 import ComponentLoader from './components/ComponentLoader';
 import {fetchComponents} from './actions/components'
 import appReducers from './reducers/index'
@@ -48,6 +49,7 @@ store.dispatch(fetchComponents()).then(() => {
 			<Route path="/" component={App} store={store}>
 				<IndexRoute component={Index} />
 				{routes}
+				<Route path='/telldus/settings' component={PageWrapper} pageComponent={Settings} store={store} />
 			</Route>
 		</Router>,
 		document.body.appendChild(document.createElement('div'))

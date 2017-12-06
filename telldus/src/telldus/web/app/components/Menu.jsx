@@ -17,6 +17,7 @@ class Menu extends React.Component {
 					{Object.keys(this.props.components).map(name => (
 						<Link to={`${this.props.components[name].path}`} activeClassName="is-active" key={name}>{this.props.components[name].title}</Link>
 					))}
+					<Link to="/telldus/settings" activeClassName="is-active">Settings</Link>
 				</Navigation>
 			</Provider>
 		);

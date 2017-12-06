@@ -37,6 +37,8 @@ class React(Plugin):
 		if plugin == 'telldus':
 			if path == 'reactComponents':
 				return WebResponseJson(self.components())
+			if path in ['settings']:
+				return WebResponseHtml('react.html')
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
 		components = self.components()
 		for name in components:
@@ -47,7 +49,7 @@ class React(Plugin):
 	def matchRequest(self, plugin, path):
 		if path == '' and plugin == '':
 			return True
-		if plugin == 'telldus' and path in ['reactComponents']:
+		if plugin == 'telldus' and path in ['reactComponents', 'settings']:
 			return True
 		# Check if we match a react route
 		fullPath = '/%s/%s' % (plugin, path) if path is not '' else '/%s' % plugin
