@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, Plugin, mainthread, ConfigurationManager
-from board import Board
-from web.base import Server
 import glob
 import logging
 import os
@@ -11,14 +8,19 @@ import sys
 import threading
 import time
 import traceback
-from six.moves.urllib.parse import urlencode
 import urllib2
-import yaml
 import zipfile
 import pkg_resources
-from .PluginParser import PluginParser
 import gnupg
 
+from six.moves.urllib.parse import urlencode
+import yaml
+
+from base import Application, Plugin, mainthread, ConfigurationManager
+from board import Board
+from web.base import Server
+
+from .PluginParser import PluginParser
 
 def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
@@ -103,7 +105,6 @@ class LoadedPlugin(object):
 		try:
 			if not self.verify():
 				return
-		# pylint: disable=broad-except
 		except Exception as exception:
 			logging.warning("Could not load plugin %s: %s", self.name, str(exception))
 			return
@@ -124,7 +125,6 @@ class LoadedPlugin(object):
 				try:
 					moduleClass = info.load()
 					self.classes.append(moduleClass)
-				# pylint: disable=broad-except
 				except Exception as exception:
 					_exc_type, _exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(entry))
@@ -140,7 +140,6 @@ class LoadedPlugin(object):
 						moduleClass(self.context)
 					else:
 						moduleClass()
-				# pylint: disable=broad-except
 				except Exception as exception:
 					_exc_type, _exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(entry))
@@ -201,7 +200,6 @@ class Loader(Plugin):
 				# Reload loaded keys
 				# pylint: disable=too-many-function-args
 				Loader(self.context).initializeKeychain()
-		# pylint: disable=broad-except
 		except Exception as exception:
 			os.unlink(filename)
 			return {'success': False, 'msg': str(exception)}
@@ -312,7 +310,6 @@ class Loader(Plugin):
 			logging.warning('Install plugin %s from %s', name, url)
 			try:
 				downloadFile()
-			# pylint: disable=broad-except
 			except Exception as exception:
 				server.webSocketSend('plugins', 'downloadFailed', {'msg': str(exception)})
 				return
@@ -344,8 +341,7 @@ class Loader(Plugin):
 		for filename in glob.glob('%s/**/manifest.yml' % Board.pluginPath()):
 			self.loadPlugin(filename)
 
-	# pylint: disable=unused-argument
-	def removeKey(self, key, fingerprint):
+	def removeKey(self, __key, fingerprint):
 		gpg = loadGPG()
 		gpg.delete_keys(fingerprint, True)
 		gpg.delete_keys(fingerprint)
