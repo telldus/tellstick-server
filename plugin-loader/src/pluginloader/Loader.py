@@ -77,6 +77,16 @@ class LoadedPlugin(object):
 			logging.error(str(func))
 
 	def remove(self):
+		for cls in self.classes:
+			plugin = self.context.components.get(cls)
+			if not plugin:
+				continue
+			if not hasattr(plugin, 'tearDown'):
+				continue
+			try:
+				plugin.tearDown()
+			except Exception as error:
+				Application.printException(error)
 		shutil.rmtree(self.path)
 
 	def saveConfiguration(self, configs):
