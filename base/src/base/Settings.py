@@ -79,6 +79,10 @@ class Settings(object):
 			Settings._config.write(fd)
 			fd.flush()
 		# Create backup
+		statinfo = os.stat('%s.1' % Settings._config.filename)
+		if statinfo.st_size == 0:
+			logging.critical('Would have saved an empty file. Abort!')
+			return
 		shutil.copy('%s.1' % Settings._config.filename, '%s.bak' % Settings._config.filename)
 		# Do not us shutils for rename. We must ensure an atomic operation here
 		os.rename('%s.1' % Settings._config.filename, Settings._config.filename)
