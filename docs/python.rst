@@ -12,7 +12,8 @@ https://github.com/telldus/tellstick-server
 
 After installation the tellstick server is installed without any plugins. For development the lua-plugin is a
 recommended plugin to install. Install it with::
-  ./tellstick.sh install lua
+
+./tellstick.sh install lua
 
 Telldus own plugins are open source and can be used as a base for new plugins. These can be found here:  
 https://github.com/telldus/tellstick-server-plugins
