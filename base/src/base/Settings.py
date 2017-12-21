@@ -42,9 +42,8 @@ class Settings(object):
 	def __loadFile(self):
 		path = self.configPath + '/' + self.configFilename
 		try:
-			# Check size of config. If size is 0 then consider is broken
-			statinfo = os.stat(path)
-			if statinfo.st_size == 0:
+			# Check existence and size of config. If size is 0 then consider is broken
+			if not os.path.isfile(path) or os.stat(path).st_size == 0:
 				raise ParseError('Empty config file')
 			Settings._config = ConfigObj(path)
 			return
@@ -52,9 +51,12 @@ class Settings(object):
 			logging.critical('Could not load settings file: %s', error)
 		# Loading failed. Try backup.
 		# Copy faulty config for later analysis
-		shutil.copy(path, '%s.err' % path)
+		if os.path.isfile(path):
+			shutil.copy(path, '%s.err' % path)
 		try:
 			# Read backup
+			if not os.path.isfile('%s.bak' % path):
+				raise ParseError('No config bak file')
 			Settings._config = ConfigObj('%s.bak' % path)
 			Settings._config.filename = path
 			# Success, copy a backup of this file for later analysis
