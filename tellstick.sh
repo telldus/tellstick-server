@@ -101,6 +101,9 @@ setup() {
 		PLUGINPATH="$BASEDIR/$plugin"
 		installPlugin $PLUGINPATH
 	done
+	# Setup git commit hooks
+	pip install -U -r requirements.txt
+	captainhook install
 }
 
 setupVirtualEnv() {
