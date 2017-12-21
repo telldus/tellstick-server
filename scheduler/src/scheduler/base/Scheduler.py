@@ -189,17 +189,21 @@ class Scheduler(Plugin):
 		except ValueError:
 			jobs = [] #something bad has been stored, just ignore it and continue?
 			print "WARNING: Could not fetch schedules from local storage"
-		self.timezone = self.s.get('tz', 'UTC') #TODO all these should probably be fetched elsewhere?
-		self.latitude = self.s.get('latitude', '55.699592')
-		self.longitude = self.s.get('longitude', '13.187836')
+
+		if not hasattr(self, 'timezone'):
+			self.timezone = self.s.get('tz', 'UTC') #TODO all these should probably be fetched elsewhere?
+		if not hasattr(self, 'latitude'):
+			self.latitude = self.s.get('latitude', '55.699592')
+		if not hasattr(self, 'longitude'):
+			self.longitude = self.s.get('longitude', '13.187836')
 		self.calculateJobs(jobs)
 
 	def liveRegistered(self, msg):
-		if 'latitude' in msg and msg['latitude'] != self.latitude:
+		if 'latitude' in msg:
 			self.latitude = msg['latitude']
-		if 'longitude' in msg and msg['longitude'] != self.longitude:
+		if 'longitude' in msg:
 			self.longitude = msg['longitude']
-		if 'tz' in msg and msg['tz'] != self.timezone:
+		if 'tz' in msg:
 			self.timezone = msg['tz']
 
 		self.requestJobsFromServer()
