@@ -26,6 +26,9 @@ class Scheduler(Plugin):
 		self.s = Settings('telldus.scheduler')
 		Application().registerShutdown(self.stop)
 		Application().registerMaintenanceJobHandler(self.addMaintenanceJobGeneric)
+		self.timezone = self.s.get('tz', 'UTC')
+		self.latitude = self.s.get('latitude', '55.699592')
+		self.longitude = self.s.get('longitude', '13.187836')
 		self.jobs = []
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
@@ -189,13 +192,6 @@ class Scheduler(Plugin):
 		except ValueError:
 			jobs = [] #something bad has been stored, just ignore it and continue?
 			print "WARNING: Could not fetch schedules from local storage"
-
-		if not hasattr(self, 'timezone'):
-			self.timezone = self.s.get('tz', 'UTC') #TODO all these should probably be fetched elsewhere?
-		if not hasattr(self, 'latitude'):
-			self.latitude = self.s.get('latitude', '55.699592')
-		if not hasattr(self, 'longitude'):
-			self.longitude = self.s.get('longitude', '13.187836')
 		self.calculateJobs(jobs)
 
 	def liveRegistered(self, msg):
