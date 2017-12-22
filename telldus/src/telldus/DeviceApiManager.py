@@ -181,8 +181,8 @@ class DeviceApiManager(Plugin):
 			for value in values:
 				sensorData.append({
 					'name': Device.sensorTypeIntToStr(sensorType),
-					'value': value['value'],
-					'scale': value['scale'],
+					'value': float(value['value']),
+					'scale': int(value['scale']),
 					#'lastUpdated': 1442561174.4156,  # TODO(micke): Implement this when we have timestamp per value
 					#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
 					#'maxTime': 1442561174.4155,
