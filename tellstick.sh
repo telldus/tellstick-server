@@ -103,7 +103,7 @@ setup() {
 	done
 	# Setup git commit hooks
 	pip install -U -r requirements.txt
-	captainhook install
+	captainhook install --use-virtualenv-python
 }
 
 setupVirtualEnv() {
