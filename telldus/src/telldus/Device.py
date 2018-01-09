@@ -326,7 +326,7 @@ class Device(object):
 	def setState(self, state, stateValue=None, ack=None, origin=None):
 		if stateValue is None:
 			stateValue = ''
-		if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
+		if self._state == state and self._stateValue == stateValue and self.lastUpdated and self.lastUpdated > int(time.time() - 1):
 			# Same state/statevalue and less than one second ago, most probably
 			# just the same value being resent, ignore
 			return
