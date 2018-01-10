@@ -60,6 +60,7 @@ class Device(object):
 	FAILED_STATUS_NO_REPLY = 2
 	FAILED_STATUS_TIMEDOUT = 3
 	FAILED_STATUS_NOT_CONFIRMED = 4
+	FAILED_STATUS_UNKNOWN = 5
 
 	BATTERY_LOW = 255  # Battery status, if not percent value
 	BATTERY_UNKNOWN = 254  # Battery status, if not percent value
