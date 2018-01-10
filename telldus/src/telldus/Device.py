@@ -23,7 +23,8 @@ class Device(object):
 	UP = 128     #: Device flag for devices supporting the up method.
 	DOWN = 256   #: Device flag for devices supporting the down method.
 	STOP = 512   #: Device flag for devices supporting the stop method.
-	RGBW = 1024  #: Device flag for devices supporting the rgbw method.
+	RGB = 1024   #: Device flag for devices supporting the rgb method.
+	RGBW = 1024  #: Device flag for devices supporting the rgb method, this is depricated, use RGB.
 	THERMOSTAT = 2048  #: Device flag for devices supporting thermostat methods.
 
 	UNKNOWN = 0                 #: Sensor type flag for an unknown type
@@ -116,7 +117,7 @@ class Device(object):
 				value = 0  # this is an error, but at least won't crash now
 			else:
 				value = int(value)
-		elif method == Device.RGBW:
+		elif method == Device.RGB:
 			if isinstance(value, str):
 				value = int(value, 16)
 			elif not isinstance(value, int):
@@ -380,8 +381,8 @@ class Device(object):
 			return Device.DOWN
 		if method == 'stop':
 			return Device.STOP
-		if method == 'rgbw':
-			return Device.RGBW
+		if method == 'rgb' or method == 'rgbw':
+			return Device.RGB
 		if method == 'thermostat':
 			return Device.THERMOSTAT
 		logging.warning('Did not understand device method %s', method)
