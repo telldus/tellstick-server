@@ -69,8 +69,8 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		# Get dir for output of files
 		self.packageDir = '%s/package' % os.getcwd()  # pylint: disable=W0201
 		self.name = self.distribution.metadata.name.replace(' ', '_')  # pylint: disable=W0201
-		files = []
-		packages = []
+		files = set()
+		packages = set()
 
 		# Find prebuilt packages
 		prebuiltPackages = {}
@@ -85,7 +85,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		# Download and package dependencies for the project
 		if os.path.exists('%s/requirements.txt' % os.getcwd()):
 			requirements = self.__downloadRequirements(prebuiltPackages)
-			packages.extend(requirements)
+			packages.update(requirements)
 
 		# Build the plugin as egg
 		cmdObj = self.distribution.get_command_obj('bdist_egg')
@@ -93,26 +93,26 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		cmdObj.exclude_source_files = True
 		self.run_command('bdist_egg')
 		for distfile in self.distribution.dist_files:
-			packages.append(distfile[2])
+			packages.add(distfile[2])
 
-		files.extend(packages)
+		files.update(packages)
 
 		# Write manifest.yml
 		manifest = self.__writeManifest(packages)
-		files.append(manifest)
+		files.add(manifest)
 
 		# Sign egg files
 		signatures = self.__signEggs(packages)
-		files.extend(signatures)
+		files.update(signatures)
 
 		# Export the public key
 		if not self.skip_public_key:
 			key = self.__exportPublicKey()
-			files.append(key)
+			files.add(key)
 
 		# Add icon
 		if self.distribution.icon is not None and os.path.exists(self.distribution.icon):
-			files.append(self.distribution.icon)
+			files.add(self.distribution.icon)
 
 		# Build the final plugin as a zip-file
 		self.__buildPackage(files)
