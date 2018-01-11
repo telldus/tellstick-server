@@ -97,6 +97,10 @@ class Plugin(object):
 		pass
 
 	def __getattr__(self, name):
+		if name == '_implements':
+			# If this is called it means there is no _implements setup
+			# Return empty array, else the below will cause an infinite loop
+			return []
 		for i in self._implements:
 			m = i.__dict__.get(name)
 			if m:
