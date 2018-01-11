@@ -93,6 +93,9 @@ class Plugin(object):
 
 	public = False
 
+	def tearDown(self):
+		pass
+
 	def __getattr__(self, name):
 		for i in self._implements:
 			m = i.__dict__.get(name)

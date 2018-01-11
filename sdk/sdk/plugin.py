@@ -26,6 +26,13 @@ class chdir(object):  # pylint: disable=C0103
 		os.chdir(self.oldDir)
 
 class telldus_plugin(Command):  # pylint: disable=C0103
+	# These are common dependencies used by plugins already available in the firmware.
+	# Skip including these
+	builtins = [
+		'netifaces',
+		'requests',
+		'six',
+	]
 	description = 'package a telldus plugin for distribution'
 
 	user_options = [
@@ -64,6 +71,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 			)
 		if isinstance(self.skip_dependencies, str):
 			self.skip_dependencies = self.skip_dependencies.split(',')  # pylint: disable=E1101,W0201
+		self.skip_dependencies.extend(telldus_plugin.builtins)
 
 	def run(self):
 		# Get dir for output of files
