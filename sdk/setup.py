@@ -6,7 +6,7 @@ setup(
 	name='sdk',
 	version='0.1',
 	packages=['sdk'],
-	entry_points = {
+	entry_points={
 		'console_scripts': [
 			'telldus = sdk.cli:main'
 		],
