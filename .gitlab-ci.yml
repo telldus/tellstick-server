@@ -1,0 +1,12 @@
+stages:
+  - test
+
+pylint:
+  image: python:2.7-alpine
+  stage: test
+  tags:
+    - docker
+  script:
+    - apk add -U git
+    - pip install pylint
+    - pylint --rcfile=.pylintrc $(git ls-tree --name-only --full-tree -r HEAD | grep '\.py' | sort | tr '\n' ' ') || RETCODE=1
