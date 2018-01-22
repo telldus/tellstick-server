@@ -62,7 +62,9 @@ class DeviceManager(Plugin):
 		for i, delDevice in enumerate(self.devices):
 			# Delete the cached device from loaded devices, since it is replaced
 			# by a confirmed/specialised one
-			if delDevice.localId() == device.localId() and device.typeString() == delDevice.typeString() and not delDevice.confirmed():
+			if delDevice.localId() == device.localId() \
+			   and device.typeString() == delDevice.typeString() \
+			   and not delDevice.confirmed():
 				cachedDevice = delDevice
 				del self.devices[i]
 				break
@@ -197,19 +199,24 @@ class DeviceManager(Plugin):
 		if not self.live.registered or device.ignored():
 			# don't send if not connected to live or sensor is ignored
 			return
-		if valueType in device.lastUpdatedLive and (valueType in device.valueChangedTime and device.valueChangedTime[valueType] < device.lastUpdatedLive[valueType]) and device.lastUpdatedLive[valueType] > (int(time.time()) - 300):
+		if valueType in device.lastUpdatedLive \
+		   and (valueType in device.valueChangedTime \
+		   and device.valueChangedTime[valueType] < device.lastUpdatedLive[valueType]) \
+		   and device.lastUpdatedLive[valueType] > (int(time.time()) - 300):
 			# no values have changed since the last live-update, and the last
 			# time this sensor was sent to live was less than 5 minutes ago
 			return
 
 		msg = LiveMessage("SensorEvent")
+		# pcc = packageCountChecked - already checked package count,
+		# just accept it server side directly
 		sensor = {
 			'name': device.name(),
 			'protocol': device.protocol(),
 			'model': device.model(),
 			'sensor_id': device.id(),
 			'pcc': 1,
-		}  # pcc = packageCountChecked - already checked package count, just accept it server side directly
+		}
 
 		battery = device.battery()
 		if battery is not None:
