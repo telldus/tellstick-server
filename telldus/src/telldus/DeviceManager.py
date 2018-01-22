@@ -251,7 +251,7 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
-		self.__deviceStateChanged(device, state, stateValue)
+		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
 		self.save()
 		if not self.live.registered:
 			return
@@ -275,7 +275,7 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Unknown'
 		(state, stateValue) = device.state()
-		self.__deviceStateChanged(device, state, stateValue)
+		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
 		msg = LiveMessage('DeviceFailEvent')
 		msg.append(device.id())
 		msg.append(state)
