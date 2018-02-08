@@ -235,6 +235,15 @@ class Device(object):
 	def manager(self):
 		return self._manager
 
+	def metadata(self, key=None, default=None):
+		"""
+		Returns a metadata value set by the user. If key is none then all values are returned as
+		a dictionary.
+		"""
+		if key is None:
+			return {}
+		return default
+
 	def methods(self):
 		"""
 		Return the methods this supports. This is an or-ed in of device method flags.

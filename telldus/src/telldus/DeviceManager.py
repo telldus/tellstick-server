@@ -351,6 +351,14 @@ class DeviceManager(Plugin):
 			)
 			data['parameters'] = parameters
 			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
+		if args.get('metadata', 0) == 1:
+			metadata = json.dumps(
+				device.metadata(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['metadata'] = metadata
+			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
 		reply.append(data)
 		self.live.send(reply)
 
@@ -466,6 +474,11 @@ class DeviceManager(Plugin):
 				separators=(',', ':'),
 				sort_keys=True
 			))
+			metadataHash = hashlib.sha1(json.dumps(
+				device.metadata(),
+				separators=(',', ':'),
+				sort_keys=True
+			))
 			dev = {
 				'id': device.id(),
 				'name': device.name(),
@@ -475,6 +488,7 @@ class DeviceManager(Plugin):
 				'protocol': device.protocol(),
 				'model': device.model(),
 				'parametersHash': parametersHash.hexdigest(),
+				'metadataHash': metadataHash.hexdigest(),
 				'transport': device.typeString(),
 				'ignored': device.ignored()
 			}
