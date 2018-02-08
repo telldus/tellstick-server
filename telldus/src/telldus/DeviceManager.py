@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
+import json
 import logging
 import time
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
@@ -331,6 +333,27 @@ class DeviceManager(Plugin):
 					dev.setName(args['name'].decode('UTF-8'))
 				return
 
+	@TelldusLive.handler('device-requestdata')
+	def __handleDeviceParametersRequest(self, msg):
+		args = msg.argument(0).toNative()
+		device = self.device(args.get('id', 0))
+		if not device:
+			return
+		reply = LiveMessage('device-datareport')
+		data = {
+			'id': args['id']
+		}
+		if args.get('parameters', 0) == 1:
+			parameters = json.dumps(
+				device.parameters(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['parameters'] = parameters
+			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
+		reply.append(data)
+		self.live.send(reply)
+
 	@TelldusLive.handler('reload')
 	def __handleSensorUpdate(self, msg):
 		reloadType = msg.argument(0).toNative()
@@ -438,6 +461,11 @@ class DeviceManager(Plugin):
 			if not device.isDevice():
 				continue
 			(state, stateValue) = device.state()
+			parametersHash = hashlib.sha1(json.dumps(
+				device.parameters(),
+				separators=(',', ':'),
+				sort_keys=True
+			))
 			dev = {
 				'id': device.id(),
 				'name': device.name(),
@@ -446,6 +474,7 @@ class DeviceManager(Plugin):
 				'stateValue': stateValue,
 				'protocol': device.protocol(),
 				'model': device.model(),
+				'parametersHash': parametersHash.hexdigest(),
 				'transport': device.typeString(),
 				'ignored': device.ignored()
 			}

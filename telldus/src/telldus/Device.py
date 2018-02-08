@@ -250,6 +250,13 @@ class Device(object):
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id
 
+	def parameters(self):
+		"""
+		Returns a static dictionary of paramters describing the device.
+		These should not containd the current state of the device, only descriptive parameters.
+		"""
+		return {}
+
 	def params(self):
 		return {}
 
