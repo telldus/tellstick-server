@@ -123,6 +123,9 @@ class Device(object):
 				value = int(value, 16)
 			elif not isinstance(value, int):
 				value = 0
+			if action == 'rgbw':
+				# For backwards compatibility, remove white component
+				value = value >> 8
 		elif method == Device.THERMOSTAT:
 			pass
 		else:
