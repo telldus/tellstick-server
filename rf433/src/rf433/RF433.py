@@ -178,6 +178,9 @@ class DeviceNode(RF433Node):
 			'protocolParams': self._protocolParams,
 		}
 
+	def parameters(self):
+		return self._protocolParams
+
 	def setParams(self, params):
 		self._protocol = params.setdefault('protocol', '')
 		self._model = params.setdefault('model', '')
