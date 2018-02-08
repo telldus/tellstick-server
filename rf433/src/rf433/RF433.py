@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, implements, Plugin, signal
-from telldus import DeviceManager, Device, DeviceAbortException
-from Protocol import Protocol
-from Adapter import Adapter
-from RF433Msg import RF433Msg
-from tellduslive.base import TelldusLive, ITelldusLiveObserver
-from board import Board
-import logging, time
+import logging
+import time
 from threading import Timer
+
+from base import Application, implements, Plugin, signal
+from board import Board
+from telldus import DeviceManager, Device
+from tellduslive.base import TelldusLive, ITelldusLiveObserver
+
+from .Protocol import Protocol
+from .Adapter import Adapter
+from .RF433Msg import RF433Msg
 
 class RF433Node(Device):
 	def __init__(self):
-		super(RF433Node,self).__init__()
+		super(RF433Node, self).__init__()
 		self._nodeId = 0
 
 	def localId(self):
@@ -20,17 +23,18 @@ class RF433Node(Device):
 
 	def setId(self, newId):
 		self._nodeId = newId
-		super(RF433Node,self).setId(newId)
+		super(RF433Node, self).setId(newId)
 
 	def setNodeId(self, nodeId):
 		self._nodeId = nodeId
 
-	def typeString(self):
+	@staticmethod
+	def typeString():
 		return '433'
 
 class SensorNode(RF433Node):
 	def __init__(self):
-		super(SensorNode,self).__init__()
+		super(SensorNode, self).__init__()
 		self._protocol = ''
 		self._model = ''
 		self._sensorId = 0
@@ -50,10 +54,12 @@ class SensorNode(RF433Node):
 			return False
 		return True
 
-	def isDevice(self):
+	@staticmethod
+	def isDevice():
 		return False
 
-	def isSensor(self):
+	@staticmethod
+	def isSensor():
 		return True
 
 	def isValid(self):
@@ -79,7 +85,9 @@ class SensorNode(RF433Node):
 
 	def name(self):
 		# empty name for new 433-sensors (becomes "No name" in Telldus Live!)
-		return self._name if self._name is not None and self._name != "Device " + str(self.localId()) else ''
+		if self._name is not None and self._name != 'Device ' + str(self.localId()):
+			return self._name
+		return ''
 
 	def params(self):
 		return {
@@ -100,7 +108,9 @@ class SensorNode(RF433Node):
 	def updateValues(self, data):
 		if self._packageCount == 6:
 			if self._manager:
-				self._manager.addDevice(self)  # add to manager only now, that equals no live updates before this, and no storage to file
+				# add to manager only now, that equals no live updates before this,
+				# and no storage to file
+				self._manager.addDevice(self)
 			self._packageCount = self._packageCount + 1
 		if self._packageCount < 6:
 			self._packageCount = self._packageCount + 1
@@ -112,13 +122,13 @@ class SensorNode(RF433Node):
 
 class DeviceNode(RF433Node):
 	def __init__(self, controller):
-		super(DeviceNode,self).__init__()
+		super(DeviceNode, self).__init__()
 		self.controller = controller
 		self._protocol = ''
 		self._model = ''
 		self._protocolParams = {}
 
-	def _command(self, action, value, success, failure, **kwargs):
+	def _command(self, action, value, success, failure, **__kwargs):
 		protocol = Protocol.protocolInstance(self._protocol)
 		if not protocol:
 			logging.warning("Unknown protocol %s", self._protocol)
@@ -132,9 +142,9 @@ class DeviceNode(RF433Node):
 			logging.error("Could not encode rf-data for %s:%s %s", self._protocol, self._model, action)
 			return
 
-		def s(params):
+		def _success(__params):
 			success()
-		def f():
+		def fail():
 			failure(Device.FAILED_STATUS_NO_REPLY)
 
 		prefixes = {}
@@ -143,12 +153,14 @@ class DeviceNode(RF433Node):
 		if 'R' in msg:
 			prefixes['R'] = msg['R']
 		if 'S' in msg:
-			self.controller.queue(RF433Msg('S', msg['S'], prefixes, success=s, failure=f))
+			self.controller.queue(RF433Msg('S', msg['S'], prefixes, success=_success, failure=fail))
 
-	def isDevice(self):
+	@staticmethod
+	def isDevice():
 		return True
 
-	def isSensor(self):
+	@staticmethod
+	def isSensor():
 		return False
 
 	def methods(self):
@@ -186,29 +198,29 @@ class RF433(Plugin):
 		self.rawEnabled = False
 		self.rawEnabledAt = 0
 		self.dev = Adapter(self, Board.rf433Port())
-		deviceNode = DeviceNode(self.dev)
 		self.deviceManager = DeviceManager(self.context)
 		self.registerSensorCleanup()
-		for d in self.deviceManager.retrieveDevices('433'):
-			p = d.params()
-			if 'type' not in p:
+		for dev in self.deviceManager.retrieveDevices('433'):
+			params = dev.params()
+			if 'type' not in params:
 				continue
-			if p['type'] == 'sensor':
+			if params['type'] == 'sensor':
 				device = SensorNode()
 				self.sensors.append(device)
-			elif p['type'] == 'device':
-				device = DeviceNode(self.dev)
+			elif params['type'] == 'device':
+				device = DeviceNode(self.dev)  # pylint: disable=R0204
 				self.devices.append(device)
 			else:
 				continue
-			device.setNodeId(d.id())
-			device.setParams(p)
-			if p['type'] == 'sensor':
-				device._packageCount = 7  # already loaded, keep it that way!
-				device._sensorValues = d._sensorValues
-				device.batteryLevel = d.batteryLevel
-				if hasattr(d, 'declaredDead'):
-					device.declaredDead = d.declaredDead
+			device.setNodeId(dev.id())
+			device.setParams(params)
+			if params['type'] == 'sensor':
+				# already loaded, keep it that way!
+				device._packageCount = 7  # pylint: disable=W0212
+				device._sensorValues = dev._sensorValues  # pylint: disable=W0212
+				device.batteryLevel = dev.batteryLevel
+				if hasattr(dev, 'declaredDead'):
+					device.declaredDead = dev.declaredDead
 
 			self.deviceManager.addDevice(device)
 
@@ -229,7 +241,6 @@ class RF433(Plugin):
 		self.deviceManager.addDevice(device)
 
 	def cleanupSensors(self):
-		numberOfSensorsBefore = len(self.sensors)
 		for i, sensor in enumerate(self.sensors):
 			if not sensor.isValid():
 				self.deviceManager.removeDevice(sensor.id())
@@ -294,14 +305,14 @@ class RF433(Plugin):
 			self.decodeSensor(msg)
 			return
 		msg = Protocol.decodeData(msg)
-		for m in msg:
-			self.decodeCommandData(m)
+		for cmdData in msg:
+			self.decodeCommandData(cmdData)
 			if self.rawEnabled:
 				if self.rawEnabledAt < (time.time() - 600):
 					# timeout, only allow scan for 10 minutes at a time
 					self.rawEnabled = False
 					continue
-				self.live.pushToWeb('client', 'rawData', m)
+				self.live.pushToWeb('client', 'rawData', cmdData)
 
 	def decodeCommandData(self, msg):
 		protocol = msg['protocol']
@@ -328,7 +339,7 @@ class RF433(Plugin):
 				convertedParameter = deviceParams[parameter]
 				try:
 					convertedParameter = str(convertedParameter)
-				except:
+				except Exception as __error:
 					pass
 				if msg[parameter] != convertedParameter:
 					thisDevice = False
@@ -353,36 +364,38 @@ class RF433(Plugin):
 		data = protocol.decodeData(msg)
 		if not data:
 			return
-		p = data['protocol']
-		m = data['model']
+		protocol = data['protocol']
+		model = data['model']
 		sensorId = data['id']
 		sensorData = data['values']
 		sensor = None
-		for s in self.sensors:
-			if s.compare(p, m, sensorId):
-				sensor = s
+		for lsensor in self.sensors:
+			if lsensor.compare(protocol, model, sensorId):
+				sensor = lsensor
 				break
 		if sensor is None:
 			sensor = SensorNode()
-			sensor.setParams({'protocol': p, 'model': m, 'sensorId': sensorId})
+			sensor.setParams({'protocol': protocol, 'model': model, 'sensorId': sensorId})
 			sensor.setManager(self.deviceManager)
 			self.sensors.append(sensor)
 		if 'battery' in data:
 			sensor.batteryLevel = data['battery']
 		sensor.updateValues(sensorData)
 
-	""" Register scheduled job to clean up sensors that have not been updated for a while"""
 	def registerSensorCleanup(self):
+		"""Register scheduled job to clean up sensors that have not been updated for a while"""
 		Application().registerScheduledTask(self.cleanupSensors, hours=12)  # every 12th hour
-		t = Timer(600, self.cleanupSensors)  # run a first time after 10 minutes
-		t.daemon = True
-		t.name='Sensor cleanup'
-		t.start()
+		tmr = Timer(600, self.cleanupSensors)  # run a first time after 10 minutes
+		tmr.daemon = True
+		tmr.name = 'Sensor cleanup'
+		tmr.start()
 
-	def __noVersion(self):
+	@staticmethod
+	def __noVersion():
 		logging.warning("Could not get firmware version for RF433, force upgrade")
 
-	def __noHWVersion(self):
+	@staticmethod
+	def __noHWVersion():
 		logging.warning("Could not get hw version for RF433")
 
 	def __hwVersion(self, version):
