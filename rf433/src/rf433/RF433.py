@@ -177,6 +177,9 @@ class DeviceNode(RF433Node):
 		protocol.setModel(self._model)
 		return protocol.methods()
 
+	def model(self):
+		return self._model
+
 	def params(self):
 		return {
 			'type': 'device',
@@ -187,6 +190,9 @@ class DeviceNode(RF433Node):
 
 	def parameters(self):
 		return self._protocolParams
+
+	def protocol(self):
+		return self._protocol
 
 	def setParams(self, params):
 		self._protocol = params.setdefault('protocol', '')
