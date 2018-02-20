@@ -6,12 +6,14 @@ class Protocol(object):
 	def __init__(self):
 		self.parameters = {}
 		self.protocol = ''
+		self.fullModel = ''
 		self.model = ''
 
 	def setParameters(self, parameters):
 		self.parameters = parameters
 
 	def setModel(self, model):
+		self.fullModel = model
 		index = model.find(':')
 		if (index >= 0):
 			self.model = model[0:index]
