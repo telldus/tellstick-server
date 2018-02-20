@@ -9,6 +9,13 @@ class Protocol(object):
 		self.fullModel = ''
 		self.model = ''
 
+	def deviceType(self):
+		if self.model in ['bell', 'selflearning-bell']:
+			return Device.TYPE_SPEAKER
+		if self.model == 'selflearning-dimmer':
+			return Device.TYPE_LIGHT
+		return Device.TYPE_SWITCH_OUTLET
+
 	def setParameters(self, parameters):
 		self.parameters = parameters
 

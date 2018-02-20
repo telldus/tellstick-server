@@ -4,6 +4,10 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolSilvanChip(Protocol):
+	def deviceType(self):
+		if self.fullModel == 'kp100:kingpin':
+			return Device.TYPE_PROJECTOR_SCREEN
+		return super(ProtocolSilvanChip, self).deviceType()
 
 	def methods(self):
 		if self.model == 'kp100':

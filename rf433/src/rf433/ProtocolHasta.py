@@ -4,6 +4,9 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolHasta(Protocol):
+	def deviceType(self):
+		return Device.TYPE_WINDOW_COVERING
+
 	def methods(self):
 		return (Device.UP | Device.DOWN | Device.STOP | Device.LEARN)
 

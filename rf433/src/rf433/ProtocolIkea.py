@@ -4,6 +4,11 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolIkea(Protocol):
+	def deviceType(self):
+		if self.model == 'selflearning':
+			return Device.TYPE_LIGHT
+		return super(ProtocolIkea, self).deviceType()
+
 	def methods(self):
 		if self.model == 'selflearning-switch':
 			return (Device.TURNON | Device.TURNOFF)

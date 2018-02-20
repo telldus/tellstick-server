@@ -4,6 +4,9 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolBrateck(Protocol):
+	def deviceType(self):
+		return Device.TYPE_PROJECTOR_SCREEN
+
 	def methods(self):
 		return (Device.UP | Device.DOWN | Device.STOP)
 

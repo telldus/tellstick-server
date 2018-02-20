@@ -4,6 +4,27 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolArctech(Protocol):
+	def deviceType(self):
+		models = {
+			'selflearning-switch:nexa-dusk': Device.TYPE_ON_OFF_SENSOR,
+			'selflearning-switch:nexa-magnet': Device.TYPE_DOOR_WINDOW,
+			'selflearning-switch:nexa-pir': Device.TYPE_MOTION,
+			'selflearning-switch:nexa-remote': Device.TYPE_REMOTE_CONTROL,
+			'selflearning-switch:proove-magnet': Device.TYPE_DOOR_WINDOW,
+			'selflearning-switch:proove-pir': Device.TYPE_MOTION,
+			'selflearning-switch:proove-remote': Device.TYPE_REMOTE_CONTROL,
+			'selflearning-switch:smartwares-dusk': Device.TYPE_ON_OFF_SENSOR,
+			'selflearning-switch:smartwares-magnet': Device.TYPE_DOOR_WINDOW,
+			'selflearning-switch:smartwares-pir': Device.TYPE_MOTION,
+			'selflearning-switch:smartwares-remote': Device.TYPE_REMOTE_CONTROL,
+			'selflearning-switch:telldus-magnet': Device.TYPE_DOOR_WINDOW,
+			'selflearning-switch:telldus-pir': Device.TYPE_MOTION,
+			'selflearning-switch:telldus-remote': Device.TYPE_REMOTE_CONTROL,
+		}
+		if self.fullModel in models:
+			return models[self.fullModel]
+		return super(ProtocolArctech, self).deviceType()
+
 	def methods(self):
 		if self.model == 'codeswitch':
 			return (Device.TURNON | Device.TURNOFF)

@@ -155,6 +155,13 @@ class DeviceNode(RF433Node):
 		if 'S' in msg:
 			self.controller.queue(RF433Msg('S', msg['S'], prefixes, success=_success, failure=fail))
 
+	def deviceType(self):
+		protocol = Protocol.protocolInstance(self._protocol)
+		if not protocol:
+			return Device.TYPE_SWITCH_OUTLET
+		protocol.setModel(self._model)
+		return protocol.deviceType()
+
 	@staticmethod
 	def isDevice():
 		return True
