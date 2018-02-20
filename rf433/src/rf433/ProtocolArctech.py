@@ -1,8 +1,7 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
 from telldus import Device
-import logging
+from .Protocol import Protocol
 
 class ProtocolArctech(Protocol):
 	def methods(self):
@@ -62,9 +61,10 @@ class ProtocolArctech(Protocol):
 			method = Device.TURNOFF
 		return self.stringSelflearningForCode(intHouse, intCode, method, level, group)
 
-	def codeSwitchTuple(self, intCode):
+	@staticmethod
+	def codeSwitchTuple(intCode):
 		strReturn = ''
-		for i in range(4):
+		for __i in range(4):
 			if intCode & 1:  # Convert 1
 				strReturn = strReturn + '$kk$'
 			else:  # Convert 0
@@ -72,16 +72,18 @@ class ProtocolArctech(Protocol):
 			intCode = intCode >> 1
 		return strReturn
 
-	def offCode(self):
+	@staticmethod
+	def offCode():
 		return '$k$k$kk$$kk$$k$k$k'
 
-	def stringSelflearningForCode(self, intHouse, intCode, method, level, group):
+	@staticmethod
+	def stringSelflearningForCode(intHouse, intCode, method, level, group):
 		retval = {}
-		SHORT = chr(24)
-		LONG = chr(127)
+		SHORT = chr(24)  # pylint: disable=C0103
+		LONG = chr(127)  # pylint: disable=C0103
 
-		ONE = SHORT + LONG + SHORT + SHORT
-		ZERO = SHORT + SHORT + SHORT + LONG
+		ONE = SHORT + LONG + SHORT + SHORT  # pylint: disable=C0103
+		ZERO = SHORT + SHORT + SHORT + LONG  # pylint: disable=C0103
 
 		code = SHORT + chr(255)
 
@@ -143,7 +145,7 @@ class ProtocolArctech(Protocol):
 
 		house = (value & 0xFFFFFFC0) >> 6
 		group = (value & 0x20) >> 5
-		methodCode = (value & 0x10) >> 4
+		# methodCode = (value & 0x10) >> 4
 		unit = (value & 0xF)
 		unit = unit+1
 

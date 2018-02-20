@@ -1,7 +1,7 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
 from telldus import Device
+from .Protocol import Protocol
 
 class ProtocolIkea(Protocol):
 	def methods(self):
@@ -31,7 +31,7 @@ class ProtocolIkea(Protocol):
 		for intUnit in strUnits.split(','):
 			if intUnit == '10':
 				intUnit = 0
-			intUnits = intUnits | ( 1<<(9-int(intUnit)) )
+			intUnits = intUnits | (1<<(9-int(intUnit)))
 
 		strReturn = 'TTTTTT' + chr(170)  # Startcode, always like this
 

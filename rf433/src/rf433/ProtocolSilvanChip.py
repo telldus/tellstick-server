@@ -1,7 +1,7 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
 from telldus import Device
+from .Protocol import Protocol
 
 class ProtocolSilvanChip(Protocol):
 
@@ -10,9 +10,11 @@ class ProtocolSilvanChip(Protocol):
 			return (Device.UP | Device.DOWN | Device.STOP | Device.LEARN)
 		return (Device.TURNON | Device.TURNOFF | Device.LEARN)
 
-	def stringForMethod(self, method, data=None):
+	def stringForMethod(self, method, __data=None):
 		if self.model == 'kp100':
-			preamble = chr(100)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(100)
+			preamble = chr(100)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+ \
+			           chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+ \
+			           chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(255)+chr(1)+chr(100)
 
 			one = chr(255)+chr(1)+chr(0x2E)+chr(0x2E)
 			zero = chr(0x2E)+chr(0xFF)+chr(0x1)+chr(0x2E)
@@ -48,15 +50,15 @@ class ProtocolSilvanChip(Protocol):
 				button |= 8
 			return self.getString(preamble, one, zero, button)
 
-		S = chr(100)
-		L = chr(255)
-		LONG = chr(255)+chr(1)+chr(200)
+		S = chr(100)  # pylint: disable=C0103
+		L = chr(255)  # pylint: disable=C0103
+		LONG = chr(255)+chr(1)+chr(200)  # pylint: disable=C0103
 
-		ONE = LONG + chr(100)
-		ZERO = chr(100) + LONG
+		ONE = LONG + chr(100)  # pylint: disable=C0103
+		ZERO = chr(100) + LONG  # pylint: disable=C0103
 		strReturn = ''
 
-		io = chr(1)
+		io = chr(1)  # pylint: disable=C0103
 
 		strReturn += S+L+io+L+io+L+io+L+io+L+io+L+io+L+io+L+io+L+io+L+io+L+io+L+io+S
 

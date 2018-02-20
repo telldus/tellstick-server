@@ -1,13 +1,13 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
 from telldus import Device
+from .Protocol import Protocol
 
 class ProtocolHasta(Protocol):
 	def methods(self):
 		return (Device.UP | Device.DOWN | Device.STOP | Device.LEARN)
 
-	def stringForMethod(self, method, data=None):
+	def stringForMethod(self, method, __data=None):
 		if self.model == 'selflearningv2':
 			return self.stringForMethodV2(method)
 		return self.stringForMethodV1(method)
@@ -18,7 +18,7 @@ class ProtocolHasta(Protocol):
 		repeat = 10
 
 		# Preample
-		strReturn  = chr(255) + chr(1) + chr(208)
+		strReturn = chr(255) + chr(1) + chr(208)
 		strReturn = strReturn + chr(160)
 
 		strReturn = strReturn + ProtocolHasta.convertByteV1(house&0xFF)
@@ -47,7 +47,7 @@ class ProtocolHasta(Protocol):
 	@staticmethod
 	def convertByteV1(byte):
 		retval = ''
-		for i in range(8):
+		for __i in range(8):
 			if byte & 1:
 				retval = retval + chr(32) + chr(17)
 			else:
@@ -98,7 +98,7 @@ class ProtocolHasta(Protocol):
 	@staticmethod
 	def convertByteV2(byte):
 		retval = ''
-		for i in range(8):
+		for __i in range(8):
 			if byte & 1:
 				retval = retval + chr(66) + chr(35)
 			else:

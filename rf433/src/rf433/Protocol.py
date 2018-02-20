@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from telldus import Device
+
 class Protocol(object):
 	def __init__(self):
 		self.parameters = {}
+		self.protocol = ''
+		self.model = ''
 
 	def setParameters(self, parameters):
 		self.parameters = parameters
@@ -14,26 +18,27 @@ class Protocol(object):
 		else:
 			self.model = model
 
-	def methods(self):
+	@staticmethod
+	def methods():
 		return 0
 
-	def stringParameter(self, name, defaultValue = ''):
+	def stringParameter(self, name, defaultValue=''):
 		if name in self.parameters:
 			return self.parameters[name]
 		return defaultValue
 
-	def intParameter(self, name, min, max):
+	def intParameter(self, name, minValue, maxValue):
 		value = self.stringParameter(name, None)
-		if value == None:
-			return min
+		if value is None:
+			return minValue
 		try:
 			value = int(value)
-		except:
-			return min
-		if value < min:
-			return min
-		if value > max:
-			return max
+		except Exception as __error:
+			return minValue
+		if value < minValue:
+			return minValue
+		if value > maxValue:
+			return maxValue
 		return value
 
 	def convertToRaw(self, name, value):
@@ -79,7 +84,8 @@ class Protocol(object):
 				retval.append(decoded)
 		return retval
 
-	def stringForMethod(self, method):
+	@staticmethod
+	def stringForMethod(__method, __level=None):
 		return None
 
 	@staticmethod
@@ -92,21 +98,21 @@ class Protocol(object):
 			if (model == 'selflearning-bell'):
 				return Device.BELL
 		if (protocol == 'comen'):
-				return Device.TURNON | Device.TURNOFF
+			return Device.TURNON | Device.TURNOFF
 		if (protocol == 'everflourish'):
-				return Device.TURNON | Device.TURNOFF
+			return Device.TURNON | Device.TURNOFF
 		if (protocol == 'sartano'):
-				return Device.TURNON | Device.TURNOFF
+			return Device.TURNON | Device.TURNOFF
 		if (protocol == 'waveman'):
-				return Device.TURNON | Device.TURNOFF
+			return Device.TURNON | Device.TURNOFF
 		if (protocol == 'x10'):
-				return Device.TURNON | Device.TURNOFF
+			return Device.TURNON | Device.TURNOFF
 		if (protocol == 'hasta'):
-				return Device.UP | Device.DOWN | Device.STOP
+			return Device.UP | Device.DOWN | Device.STOP
 		return 0
 
 	@staticmethod
-	def parametersForProtocol(protocol, model):
+	def parametersForProtocol(protocol, __model):
 		if (protocol == 'arctech' or protocol == 'waveman' or protocol == 'comen'):
 			return ['house', 'unit']
 		if (protocol == 'everflourish'):
@@ -161,21 +167,22 @@ class Protocol(object):
 			return ProtocolYidong()
 		return None
 
-from ProtocolArctech import *
-from ProtocolBrateck import *
-from ProtocolComen import *
-from ProtocolEverflourish import *
-from ProtocolFineoffset import *
-from ProtocolFuhaote import *
-from ProtocolHasta import *
-from ProtocolIkea import *
-from ProtocolKangtai import *
-from ProtocolMandolyn import *
-from ProtocolOregon import *
-from ProtocolRisingSun import *
-from ProtocolSartano import *
-from ProtocolSilvanChip import *
-from ProtocolUpm import *
-from ProtocolWaveman import *
-from ProtocolX10 import *
-from ProtocolYidong import *
+# pylint: disable=C0413
+from .ProtocolArctech import ProtocolArctech
+from .ProtocolBrateck import ProtocolBrateck
+from .ProtocolComen import ProtocolComen
+from .ProtocolEverflourish import ProtocolEverflourish
+from .ProtocolFineoffset import ProtocolFineoffset
+from .ProtocolFuhaote import ProtocolFuhaote
+from .ProtocolHasta import ProtocolHasta
+from .ProtocolIkea import ProtocolIkea
+from .ProtocolKangtai import ProtocolKangtai
+from .ProtocolMandolyn import ProtocolMandolyn
+from .ProtocolOregon import ProtocolOregon
+from .ProtocolRisingSun import ProtocolRisingSun
+from .ProtocolSartano import ProtocolSartano
+from .ProtocolSilvanChip import ProtocolSilvanChip
+from .ProtocolUpm import ProtocolUpm
+from .ProtocolWaveman import ProtocolWaveman
+from .ProtocolX10 import ProtocolX10
+from .ProtocolYidong import ProtocolYidong
