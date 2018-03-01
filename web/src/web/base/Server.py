@@ -1,12 +1,15 @@
-import cherrypy, json, mimetypes, os, threading
+import json
+import logging
+import mimetypes
+import os
+import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
-from ws4py.messaging import TextMessage
 from base import Application, implements, IInterface, ObserverCollection, Plugin
-from genshi.template import TemplateLoader, loader
+from genshi.template import TemplateLoader
 from pkg_resources import resource_filename, resource_exists, resource_stream, resource_isdir
-import logging, os
 
+# pylint: disable=E0213,E0211
 class IWebRequestHandler(IInterface):
 	"""Interface definition for handling web requests"""
 	def handleRequest(plugin, paths, params, request):
@@ -18,7 +21,10 @@ class IWebRequestHandler(IInterface):
 	def matchRequest(plugin, path):
 		"""Return true if we handle this request"""
 	def requireAuthentication(plugin, path):
-		"""Checks if a request require the user to log in first. Return False if the resource should be available to anyone."""
+		"""
+		Checks if a request require the user to log in first. Return False if the resource should
+		be available to anyone.
+		"""
 
 class IWebRequestAuthenticationHandler(IInterface):
 	"""Interface definition for authenticating web requests"""
@@ -48,17 +54,19 @@ class WebRequest(object):
 	def post(self, param, default=None):
 		return self.__request.body.params.get(param, default)
 
-	def session(self, key, default = None):
+	@staticmethod
+	def session(key, default=None):
 		return cherrypy.session.get(key, default)
 
-	def setSession(self, key, value):
+	@staticmethod
+	def setSession(key, value):
 		cherrypy.session[key] = value
 
 class WebSocketHandler(WebSocket):
 	pass
 
 class WebResponse(object):
-	def __init__(self, statusCode = 200):
+	def __init__(self, statusCode=200):
 		self.statusCode = statusCode
 		self.data = ''
 
@@ -66,24 +74,24 @@ class WebResponse(object):
 		pass
 
 class WebResponseHtml(WebResponse):
-	def __init__(self, filename, statusCode = 200):
-		super(WebResponseHtml,self).__init__(statusCode)
+	def __init__(self, filename, statusCode=200):
+		super(WebResponseHtml, self).__init__(statusCode)
 		self.filename = filename
 
-	def setDirs(self, plugin, dirs):
-		if type(dirs) is not list:
+	def setDirs(self, __plugin, dirs):
+		if not isinstance(dirs, list):
 			dirs = []
 		dirs.append(resource_filename('web', 'templates'))
-		for d in dirs:
-			p = os.path.join(d, self.filename)
-			if os.path.exists(p):
-				with open(p) as f:
-					self.data = f.read()
+		for directory in dirs:
+			path = os.path.join(directory, self.filename)
+			if os.path.exists(path):
+				with open(path) as fd:
+					self.data = fd.read()
 				return
 
 class WebResponseJson(WebResponse):
-	def __init__(self, data, pretty=True, statusCode = 200):
-		super(WebResponseJson,self).__init__(statusCode)
+	def __init__(self, data, pretty=True, statusCode=200):
+		super(WebResponseJson, self).__init__(statusCode)
 		if pretty:
 			self.data = json.dumps(data, sort_keys=True, indent=2, separators=(',', ': ')).encode('utf-8')
 		else:
@@ -94,9 +102,9 @@ class WebResponseJson(WebResponse):
 
 class WebResponseLocalFile(WebResponse):
 	def __init__(self, path):
-		super(WebResponseLocalFile,self).__init__()
+		super(WebResponseLocalFile, self).__init__()
 		self.data = open(path, 'r')
-		self.contentType, encoding = mimetypes.guess_type(path, strict=False)
+		self.contentType, __encoding = mimetypes.guess_type(path, strict=False)
 
 	def output(self, response):
 		response.headers['Content-Type'] = self.contentType
@@ -107,7 +115,7 @@ class WebResponseRedirect(object):
 
 class Server(Plugin):
 	def __init__(self):
-		super(Server,self).__init__()
+		super(Server, self).__init__()
 		mimetypes.init()
 		port = 80 if os.getuid() == 0 else 8080
 		cherrypy.config.update({
@@ -116,7 +124,7 @@ class Server(Plugin):
 			'tools.sessions.on': True,
 			'tools.sessions.timeout': 60
 		})
-		cherrypy.tree.mount(RequestHandler(self.context), '', config = {
+		cherrypy.tree.mount(RequestHandler(self.context), '', config={
 			'/ws': {
 				'tools.websocket.on': True,
 				'tools.websocket.handler_cls': WebSocketHandler
@@ -128,14 +136,16 @@ class Server(Plugin):
 		cherrypy.engine.start()
 		Application().registerShutdown(self.stop)
 
-	def webSocketSend(self, module, action, data):
+	@staticmethod
+	def webSocketSend(module, action, data):
 		cherrypy.engine.publish('websocket-broadcast', json.dumps({
 			'module': module,
 			'action': action,
 			'data': data,
 		}))
 
-	def stop(self):
+	@staticmethod
+	def stop():
 		cherrypy.engine.exit()
 
 class RequestHandler(object):
@@ -145,49 +155,55 @@ class RequestHandler(object):
 		self.templates = None
 		self.context = context
 
-	def loadTemplate(self, filename, dirs):
-		if type(dirs) is not list:
+	@staticmethod
+	def loadTemplate(filename, dirs):
+		if not isinstance(dirs, list):
 			dirs = []
 		dirs.append(resource_filename('web', 'templates'))
 		templates = TemplateLoader(dirs)
 		return templates.load(filename)
 
-	def handle(self, plugin, p, **params):
-		path = '/'.join(p)
+	def handle(self, plugin, path, **params):
+		path = '/'.join(path)
 		# First check for the file in htdocs
 		try:
-			if plugin != '' and resource_exists(plugin, 'htdocs/' + path) and resource_isdir(plugin, 'htdocs/' + path) is False:
-				mimetype, encoding = mimetypes.guess_type(path, strict=False)
+			if plugin != '' and \
+			   resource_exists(plugin, 'htdocs/' + path) and \
+			   resource_isdir(plugin, 'htdocs/' + path) is False:
+				mimetype, __encoding = mimetypes.guess_type(path, strict=False)
 				if mimetype is not None:
 					cherrypy.response.headers['Content-Type'] = mimetype
 				return resource_stream(plugin, 'htdocs/' + path)
-		except:
+		except Exception as __error:
 			pass
 		menu = []
-		templates = []
-		for o in self.observers:
-			arr = o.getMenuItems()
-			if type(arr) == list:
+		for observer in self.observers:
+			arr = observer.getMenuItems()
+			if isinstance(arr, list):
 				menu.extend(arr)
 		template = None
 		templateDirs = []
 		response = None
 		request = WebRequest(cherrypy.request)
-		for o in self.observers:
-			if not o.matchRequest(plugin, path):
+		for observer in self.observers:
+			if not observer.matchRequest(plugin, path):
 				continue
-			requireAuth = o.requireAuthentication(plugin, path)
+			requireAuth = observer.requireAuthentication(plugin, path)
 			if requireAuth != False:
-				ret = WebRequestHandler(self.context).isUrlAuthorized(request)
-			response = o.handleRequest(plugin, path, params, request=request)
-			templateDirs = o.getTemplatesDirs()
+				WebRequestHandler(self.context).isUrlAuthorized(request)
+			response = observer.handleRequest(plugin, path, params, request=request)
+			templateDirs = observer.getTemplatesDirs()
 			break
 		if response is None:
 			raise cherrypy.NotFound()
 		if isinstance(response, WebResponseRedirect):
 			if response.url[:4] == 'http':
 				raise cherrypy.HTTPRedirect(response.url)
-			raise cherrypy.HTTPRedirect('/%s%s%s' % (plugin, '' if response.url[0] == '/' else '/', response.url))
+			raise cherrypy.HTTPRedirect('/%s%s%s' % (
+				plugin,
+				'' if response.url[0] == '/' else '/',
+				response.url
+			))
 		elif isinstance(response, WebResponse):
 			if isinstance(response, WebResponseHtml):
 				response.setDirs(plugin, templateDirs)
@@ -202,7 +218,7 @@ class RequestHandler(object):
 		stream = tmpl.generate(title='TellStick ZNet', **data)
 		return stream.render('html', doctype='html')
 
-	def __call__(self, plugin = '', *args, **kwargs):
+	def __call__(self, plugin='', *args, **kwargs):
 		if plugin == 'ws':
 			# Ignore, this is for websocket
 			return
@@ -216,18 +232,19 @@ class WebRequestHandler(Plugin):
 	authObservers = ObserverCollection(IWebRequestAuthenticationHandler)
 	implements(IWebRequestHandler)
 
-	def getTemplatesDirs(self):
+	@staticmethod
+	def getTemplatesDirs():
 		return [resource_filename('web', 'templates')]
 
-	def handleRequest(self, plugin, path, params, request):
+	def handleRequest(self, plugin, path, __params, __request):
 		if plugin != 'web':
 			return None
 		if path == 'authFailed':
 			return 'authFailed.html', {}
 		if path == 'login':
 			providers = []
-			for o in self.authObservers:
-				provider = o.loginProvider()
+			for observer in self.authObservers:
+				provider = observer.loginProvider()
 				if provider is not None:
 					providers.append(provider)
 			if len(providers) == 1:
@@ -239,19 +256,24 @@ class WebRequestHandler(Plugin):
 	def isUrlAuthorized(self, request):
 		if len(self.authObservers) == 0:
 			raise cherrypy.HTTPRedirect('/web/authFailed?reason=noAuthHandlersConfigured')
-		for o in self.authObservers:
-			ret = o.isUrlAuthorized(request)
+		for observer in self.authObservers:
+			ret = observer.isUrlAuthorized(request)
 			if ret is True:
 				return True
-		request.setSession('returnTo', '%s?%s' % (cherrypy.request.path_info, cherrypy.request.query_string))
+		request.setSession('returnTo', '%s?%s' % (
+			cherrypy.request.path_info,
+			cherrypy.request.query_string
+		))
 		raise cherrypy.HTTPRedirect('/web/login')
 
-	def matchRequest(self, plugin, path):
+	@staticmethod
+	def matchRequest(plugin, path):
 		if plugin != 'web':
 			return False
 		if path in ['authFailed', 'login']:
 			return True
 		return False
 
-	def requireAuthentication(self, plugin, path):
+	@staticmethod
+	def requireAuthentication(plugin, __path):
 		return plugin != 'web'
