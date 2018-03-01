@@ -61,7 +61,7 @@ class DeviceManager(Plugin):
 		else:  # Transfer parameters from the loaded one
 			device.loadCached(cachedDevice)
 		self.save()
-		
+
 		if not cachedDevice:
 			self.__deviceAdded(device)
 			if self.live.registered and device.isDevice():
@@ -391,7 +391,7 @@ class DeviceManager(Plugin):
 				'name': d.name(),
 				'methods': d.methods(),
 				'state': state,
-				'stateValue': stateValue,
+				'stateValue': str(stateValue),
 				'protocol': d.protocol(),
 				'model': d.model(),
 				'transport': d.typeString(),
