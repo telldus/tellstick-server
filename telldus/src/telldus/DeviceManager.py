@@ -484,7 +484,7 @@ class DeviceManager(Plugin):
 				'name': device.name(),
 				'methods': device.methods(),
 				'state': state,
-				'stateValue': stateValue,
+				'stateValue': str(stateValue),
 				'protocol': device.protocol(),
 				'model': device.model(),
 				'parametersHash': parametersHash.hexdigest(),
