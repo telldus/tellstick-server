@@ -238,7 +238,7 @@ class WebRequestHandler(Plugin):
 	def getTemplatesDirs():
 		return [resource_filename('web', 'templates')]
 
-	def handleRequest(self, plugin, path, __params, __request):
+	def handleRequest(self, plugin, path, __params, **__kwargs):
 		if plugin != 'web':
 			return None
 		if path == 'authFailed':
