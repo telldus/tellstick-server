@@ -123,7 +123,6 @@ class Server(Plugin):
 			'server.socket_port': port,
 			'tools.sessions.on': True,
 			'tools.sessions.timeout': 60,
-			'tools.sessions.secure': True,
 			'tools.sessions.httponly': True,
 		})
 		cherrypy.tree.mount(RequestHandler(self.context), '', config={
