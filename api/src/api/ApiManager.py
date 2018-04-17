@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import base64
+import logging
+import os
+import time
+import uuid
+
 from base import IInterface, ObserverCollection, Plugin, Settings, implements
 from web.base import IWebRequestHandler, WebResponseJson
 from board import Board
@@ -7,8 +13,6 @@ from pkg_resources import resource_filename
 from jose import jwt, JWSError
 from pbkdf2 import PBKDF2, crypt
 from Crypto.Cipher import AES
-import base64, os, time, uuid
-import logging
 
 class IApiCallHandler(IInterface):
 	"""IInterface for plugin implementing API calls"""
@@ -22,21 +26,24 @@ class ApiManager(Plugin):
 		self.tokens = {}
 		self.tokenKey = None
 
-	def getTemplatesDirs(self):
+	@staticmethod
+	def getTemplatesDirs():
 		return [resource_filename('api', 'templates')]
 
-	def matchRequest(self, plugin, path):
+	@staticmethod
+	def matchRequest(plugin, __path):
 		if plugin != 'api':
 			return False
 		return True
 
-	def handleRequest(self, plugin, path, params, request, **kwargs):
+	def handleRequest(self, plugin, path, params, request, **__kwargs):
+		del plugin
 		if path == '':
 			methods = {}
-			for o in self.observers:
-				for module, actions in getattr(o, '_apicalls', {}).iteritems():
-					for action, fn in actions.iteritems():
-						methods.setdefault(module, {})[action] = {'doc': fn.__doc__}
+			for observer in self.observers:
+				for module, actions in getattr(observer, '_apicalls', {}).iteritems():
+					for action, func in actions.iteritems():
+						methods.setdefault(module, {})[action] = {'doc': func.__doc__}
 			return 'index.html', {'methods': methods}
 		if path == 'token':
 			if request.method() == 'PUT':
@@ -62,7 +69,7 @@ class ApiManager(Plugin):
 					'exp': int(time.time()+self.tokens[token]['ttl']),
 				}
 				body = {}
-				if self.tokens[token]['allowRenew'] == True:
+				if self.tokens[token]['allowRenew'] is True:
 					body['renew'] = True
 					body['ttl'] = self.tokens[token]['ttl']
 				accessToken = jwt.encode(body, self.__tokenKey(), algorithm='HS256', headers=claims)
@@ -90,12 +97,17 @@ class ApiManager(Plugin):
 		if token is None:
 			return WebResponseJson({'error': 'No token was found in the request'}, statusCode=401)
 		if not token.startswith('Bearer '):
-			return WebResponseJson({'error': 'The autorization token must be supplied as a bearer token'}, statusCode=401)
+			return WebResponseJson(
+				{
+					'error': 'The autorization token must be supplied as a bearer token'
+				},
+				statusCode=401
+			)
 		token = token[7:]
 		try:
 			body = jwt.decode(token, self.__tokenKey(), algorithms='HS256')
-		except JWSError as e:
-			return WebResponseJson({'error': str(e)}, statusCode=401)
+		except JWSError as error:
+			return WebResponseJson({'error': str(error)}, statusCode=401)
 		claims = jwt.get_unverified_headers(token)
 		if 'exp' not in claims or claims['exp'] < time.time():
 			return WebResponseJson({'error': 'The token has expired'}, statusCode=401)
@@ -126,22 +138,26 @@ class ApiManager(Plugin):
 			return None
 		module = paths[0]
 		action = paths[1]
-		for o in self.observers:
-			fn = getattr(o, '_apicalls', {}).get(module, {}).get(action, None)
-			if fn is None:
+		for observer in self.observers:
+			func = getattr(observer, '_apicalls', {}).get(module, {}).get(action, None)
+			if func is None:
 				continue
 			try:
 				params['app'] = aud
-				retval = fn(o, **params)
-			except Exception as e:
-				logging.exception(e)
-				return WebResponseJson({'error': str(e)})
-			if retval == True:
+				retval = func(observer, **params)
+			except Exception as error:
+				logging.exception(error)
+				return WebResponseJson({'error': str(error)})
+			if retval is True:
 				retval = {'status': 'success'}
 			return WebResponseJson(retval)
-		return WebResponseJson({'error': 'The method %s/%s does not exist' % (module, action)}, statusCode=404)
+		return WebResponseJson(
+			{'error': 'The method %s/%s does not exist' % (module, action)},
+			statusCode=404
+		)
 
-	def requireAuthentication(self, plugin, path):
+	@staticmethod
+	def requireAuthentication(plugin, path):
 		if plugin != 'api':
 			return
 		if path in ['', 'authorize']:
@@ -152,23 +168,23 @@ class ApiManager(Plugin):
 		if self.tokenKey is not None:
 			return self.tokenKey
 		password = Board.secret()
-		s = Settings('telldus.api')
-		tokenKey = s.get('tokenKey', '')
+		settings = Settings('telldus.api')
+		tokenKey = settings.get('tokenKey', '')
 		if tokenKey == '':
 			self.tokenKey = os.urandom(32)
 			# Store it
 			salt = os.urandom(16)
 			key = PBKDF2(password, salt).read(32)
 			pwhash = crypt(password)
-			s['salt'] = base64.b64encode(salt)
-			s['pw'] = pwhash
+			settings['salt'] = base64.b64encode(salt)
+			settings['pw'] = pwhash
 			# Encrypt token key
 			cipher = AES.new(key, AES.MODE_ECB, '')
-			s['tokenKey'] = base64.b64encode(cipher.encrypt(self.tokenKey))
+			settings['tokenKey'] = base64.b64encode(cipher.encrypt(self.tokenKey))
 		else:
 			# Decode it
-			salt = base64.b64decode(s.get('salt', ''))
-			pwhash = s.get('pw', '')
+			salt = base64.b64decode(settings.get('salt', ''))
+			pwhash = settings.get('pw', '')
 			if crypt(password, pwhash) != pwhash:
 				logging.warning('Could not decrypt token key, wrong password')
 				return None
@@ -180,11 +196,11 @@ class ApiManager(Plugin):
 
 	@staticmethod
 	def apicall(module, action):
-		def call(fn):
+		def call(func):
 			import sys
-			frame = sys._getframe(1)
-			frame.f_locals.setdefault('_apicalls', {}).setdefault(module, {})[action] = fn
-			return fn
+			frame = sys._getframe(1)  # pylint: disable=W0212
+			frame.f_locals.setdefault('_apicalls', {}).setdefault(module, {})[action] = func
+			return func
 		return call
 
-apicall = ApiManager.apicall
+apicall = ApiManager.apicall  # pylint: disable=C0103
