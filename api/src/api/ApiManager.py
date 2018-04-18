@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from jose import jwt, JWSError
+from jose import jwt, JWSError, JWTError
 from pkg_resources import resource_filename
 
 class IApiCallHandler(IInterface):
@@ -113,6 +113,8 @@ class ApiManager(Plugin):
 		try:
 			body = jwt.decode(token, self.__tokenKey(), algorithms='HS256')
 		except JWSError as error:
+			return WebResponseJson({'error': str(error)}, statusCode=401)
+		except JWTError as error:
 			return WebResponseJson({'error': str(error)}, statusCode=401)
 		claims = jwt.get_unverified_headers(token)
 		if 'exp' not in claims or claims['exp'] < time.time():
