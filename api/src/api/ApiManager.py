@@ -11,6 +11,7 @@ import uuid
 from base import IInterface, ObserverCollection, Plugin, Settings, implements
 from web.base import IWebRequestHandler, WebResponseJson
 from board import Board
+from tellduslive.base import ITelldusLiveObserver, TelldusLive
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -25,6 +26,7 @@ class IApiCallHandler(IInterface):
 
 class ApiManager(Plugin):
 	implements(IWebRequestHandler)
+	implements(ITelldusLiveObserver)
 
 	observers = ObserverCollection(IApiCallHandler)
 
@@ -171,6 +173,33 @@ class ApiManager(Plugin):
 		if path in ['', 'authorize']:
 			return True
 		return False
+
+	@TelldusLive.handler('requestlocalkey')
+	def __requestLocalKey(self, msg):
+		args = msg.argument(0).toNative()
+		publicKey = serialization.load_pem_public_key(
+			args.get('publicKey', ''),
+			backend=default_backend(),
+		)
+		ttl = int(time.time()+2629743)  # One month
+		accessToken = self.__generateToken({}, {
+			'aud': args.get('app', 'Unknown'),
+			'exp': ttl,
+		})
+		ciphertext = publicKey.encrypt(
+			str(accessToken),
+			padding.OAEP(
+				mgf=padding.MGF1(algorithm=hashes.SHA1()),
+				algorithm=hashes.SHA1(),
+				label=None
+			)
+		)
+		live = TelldusLive(self.context)
+		live.pushToWeb('api', 'localkey', {
+			'key': base64.b64encode(ciphertext),
+			'ttl': ttl,
+			'uuid': args.get('uuid', ''),
+		})
 
 	def __tokenKey(self):
 		if self.tokenKey is not None:
