@@ -15,10 +15,10 @@ from board import Board
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from jose import jwt, JWSError
 from pkg_resources import resource_filename
-from Crypto.Cipher import AES
 
 class IApiCallHandler(IInterface):
 	"""IInterface for plugin implementing API calls"""
@@ -177,6 +177,7 @@ class ApiManager(Plugin):
 		settings = Settings('telldus.api')
 		tokenKey = settings.get('tokenKey', '')
 		backend = default_backend()
+		blockSize = 16  # TODO: Get this programatically?
 		if tokenKey == '':
 			self.tokenKey = os.urandom(32)
 			# Store it
@@ -193,8 +194,11 @@ class ApiManager(Plugin):
 			settings['salt'] = base64.b64encode(salt)
 			settings['pw'] = pwhash
 			# Encrypt token key
-			cipher = AES.new(key, AES.MODE_ECB)
-			settings['tokenKey'] = base64.b64encode(cipher.encrypt(self.tokenKey))
+			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
+			encryptor = cipher.encryptor()
+			buf = bytearray(len(self.tokenKey)+blockSize-1)
+			lenEncrypted = encryptor.update_into(self.tokenKey, buf)
+			settings['tokenKey'] = base64.b64encode(bytes(buf[:lenEncrypted]) + encryptor.finalize())
 		else:
 			# Decode it
 			salt = base64.b64decode(settings.get('salt', ''))
@@ -211,8 +215,12 @@ class ApiManager(Plugin):
 			)
 			key = kdf.derive(password)
 			enc = base64.b64decode(tokenKey)
-			cipher = AES.new(key, AES.MODE_ECB)
-			self.tokenKey = cipher.decrypt(enc)
+			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
+			decryptor = cipher.decryptor()
+			buf = bytearray(len(enc)+blockSize-1)
+			lenDecrypted = decryptor.update_into(enc, buf)
+			self.tokenKey = bytes(buf[:lenDecrypted]) + decryptor.finalize()
+
 		return self.tokenKey
 
 	@staticmethod
