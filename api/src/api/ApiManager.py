@@ -78,7 +78,7 @@ class ApiManager(Plugin):
 				if self.tokens[token]['allowRenew'] is True:
 					body['renew'] = True
 					body['ttl'] = self.tokens[token]['ttl']
-				accessToken = jwt.encode(body, self.__tokenKey(), algorithm='HS256', headers=claims)
+				accessToken = self.__generateToken(body, claims)
 				resp = WebResponseJson({
 					'token': accessToken,
 					'expires': claims['exp'],
@@ -130,10 +130,10 @@ class ApiManager(Plugin):
 				return WebResponseJson({'error': 'No TTL was specified in the token'}, statusCode=401)
 			ttl = body['ttl']
 			exp = int(time.time()+ttl)
-			accessToken = jwt.encode({
+			accessToken = self.__generateToken({
 				'renew': True,
 				'ttl': ttl
-			}, self.__tokenKey(), algorithm='HS256', headers={
+			}, {
 				'aud': aud,
 				'exp': exp,
 			})
@@ -224,6 +224,9 @@ class ApiManager(Plugin):
 			self.tokenKey = bytes(buf[:lenDecrypted]) + decryptor.finalize()
 
 		return self.tokenKey
+
+	def __generateToken(self, body, claims):
+		return jwt.encode(body, self.__tokenKey(), algorithm='HS256', headers=claims)
 
 	@staticmethod
 	def apicall(module, action):
