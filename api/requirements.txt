@@ -1,2 +1,2 @@
-pbkdf2
+cryptography
 python-jose

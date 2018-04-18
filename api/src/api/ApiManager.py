@@ -3,15 +3,21 @@
 import base64
 import logging
 import os
+import random
+import struct
 import time
 import uuid
 
 from base import IInterface, ObserverCollection, Plugin, Settings, implements
 from web.base import IWebRequestHandler, WebResponseJson
 from board import Board
-from pkg_resources import resource_filename
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from jose import jwt, JWSError
-from pbkdf2 import PBKDF2, crypt
+from pkg_resources import resource_filename
 from Crypto.Cipher import AES
 
 class IApiCallHandler(IInterface):
@@ -170,27 +176,42 @@ class ApiManager(Plugin):
 		password = Board.secret()
 		settings = Settings('telldus.api')
 		tokenKey = settings.get('tokenKey', '')
+		backend = default_backend()
 		if tokenKey == '':
 			self.tokenKey = os.urandom(32)
 			# Store it
 			salt = os.urandom(16)
-			key = PBKDF2(password, salt).read(32)
-			pwhash = crypt(password)
+			kdf = PBKDF2HMAC(
+				algorithm=hashes.SHA1(),
+				length=32,
+				salt=salt,
+				iterations=1000,
+				backend=backend
+			)
+			key = kdf.derive(password)
+			pwhash = ApiManager.pbkdf2crypt(password)
 			settings['salt'] = base64.b64encode(salt)
 			settings['pw'] = pwhash
 			# Encrypt token key
-			cipher = AES.new(key, AES.MODE_ECB, '')
+			cipher = AES.new(key, AES.MODE_ECB)
 			settings['tokenKey'] = base64.b64encode(cipher.encrypt(self.tokenKey))
 		else:
 			# Decode it
 			salt = base64.b64decode(settings.get('salt', ''))
 			pwhash = settings.get('pw', '')
-			if crypt(password, pwhash) != pwhash:
+			if ApiManager.pbkdf2crypt(password, pwhash) != pwhash:
 				logging.warning('Could not decrypt token key, wrong password')
 				return None
-			key = PBKDF2(password, salt).read(32)
+			kdf = PBKDF2HMAC(
+				algorithm=hashes.SHA1(),
+				length=32,
+				salt=salt,
+				iterations=1000,
+				backend=backend
+			)
+			key = kdf.derive(password)
 			enc = base64.b64decode(tokenKey)
-			cipher = AES.new(key, AES.MODE_ECB, '')
+			cipher = AES.new(key, AES.MODE_ECB)
 			self.tokenKey = cipher.decrypt(enc)
 		return self.tokenKey
 
@@ -202,5 +223,22 @@ class ApiManager(Plugin):
 			frame.f_locals.setdefault('_apicalls', {}).setdefault(module, {})[action] = func
 			return func
 		return call
+
+	@staticmethod
+	def pbkdf2crypt(password, salt=None):
+		if salt is None:
+			binarysalt = b''.join([struct.pack("@H", random.randint(0, 0xffff)) for _i in range(3)])
+			salt = "$p5k2$$" + base64.b64encode(binarysalt, "./")
+		elif salt.startswith("$p5k2$"):
+			salt = "$p5k2$$" + salt.split("$")[3]
+		kdf = PBKDF2HMAC(
+			algorithm=hashes.SHA1(),
+			length=24,
+			salt=salt,
+			iterations=400,
+			backend=default_backend()
+		)
+		rawhash = kdf.derive(password)
+		return salt + "$" + base64.b64encode(rawhash, "./")
 
 apicall = ApiManager.apicall  # pylint: disable=C0103
