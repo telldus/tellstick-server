@@ -191,8 +191,8 @@ class ApiManager(Plugin):
 			ciphertext = publicKey.encrypt(
 				str(accessToken),
 				padding.OAEP(
-					mgf=padding.MGF1(algorithm=hashes.SHA1()),
-					algorithm=hashes.SHA1(),
+					mgf=padding.MGF1(algorithm=hashes.SHA256()),
+					algorithm=hashes.SHA256(),
 					label=None
 				)
 			)
