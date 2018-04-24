@@ -208,7 +208,6 @@ class ApiManager(Plugin):
 		settings = Settings('telldus.api')
 		tokenKey = settings.get('tokenKey', '')
 		backend = default_backend()
-		blockSize = 16  # TODO: Get this programatically?
 		if tokenKey == '':
 			self.tokenKey = os.urandom(32)
 			# Store it
@@ -227,9 +226,7 @@ class ApiManager(Plugin):
 			# Encrypt token key
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			encryptor = cipher.encryptor()
-			buf = bytearray(len(self.tokenKey)+blockSize-1)
-			lenEncrypted = encryptor.update_into(self.tokenKey, buf)
-			settings['tokenKey'] = base64.b64encode(bytes(buf[:lenEncrypted]) + encryptor.finalize())
+			settings['tokenKey'] = base64.b64encode(bytes(encryptor.update(self.tokenKey)))
 		else:
 			# Decode it
 			salt = base64.b64decode(settings.get('salt', ''))
@@ -248,9 +245,7 @@ class ApiManager(Plugin):
 			enc = base64.b64decode(tokenKey)
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			decryptor = cipher.decryptor()
-			buf = bytearray(len(enc)+blockSize-1)
-			lenDecrypted = decryptor.update_into(enc, buf)
-			self.tokenKey = bytes(buf[:lenDecrypted]) + decryptor.finalize()
+			self.tokenKey = bytes(decryptor.update(enc))
 
 		return self.tokenKey
 
