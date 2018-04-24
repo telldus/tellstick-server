@@ -177,24 +177,31 @@ class ApiManager(Plugin):
 	@TelldusLive.handler('requestlocalkey')
 	def __requestLocalKey(self, msg):
 		args = msg.argument(0).toNative()
-		publicKey = serialization.load_pem_public_key(
-			args.get('publicKey', ''),
-			backend=default_backend(),
-		)
-		ttl = int(time.time()+2629743)  # One month
-		accessToken = self.__generateToken({}, {
-			'aud': args.get('app', 'Unknown'),
-			'exp': ttl,
-		})
-		ciphertext = publicKey.encrypt(
-			str(accessToken),
-			padding.OAEP(
-				mgf=padding.MGF1(algorithm=hashes.SHA1()),
-				algorithm=hashes.SHA1(),
-				label=None
-			)
-		)
 		live = TelldusLive(self.context)
+		try:
+			publicKey = serialization.load_pem_public_key(
+				args.get('publicKey', ''),
+				backend=default_backend(),
+			)
+			ttl = int(time.time()+2629743)  # One month
+			accessToken = self.__generateToken({}, {
+				'aud': args.get('app', 'Unknown'),
+				'exp': ttl,
+			})
+			ciphertext = publicKey.encrypt(
+				str(accessToken),
+				padding.OAEP(
+					mgf=padding.MGF1(algorithm=hashes.SHA1()),
+					algorithm=hashes.SHA1(),
+					label=None
+				)
+			)
+		except Exception as error:
+			live.pushToWeb('api', 'localkey', {
+				'success': False,
+				'error': str(error)
+			})
+			return
 		live.pushToWeb('api', 'localkey', {
 			'key': base64.b64encode(ciphertext),
 			'ttl': ttl,
