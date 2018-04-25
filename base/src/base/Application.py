@@ -234,19 +234,23 @@ class Application(object):
 	def __nextTask(self):
 		self.__taskLock.acquire()
 		try:
-			# Check scheduled tasks first
-			ts = time.time()
-			for job in self.scheduledTasks:
-				if ts >= job['nextRuntime']:
-					if job['strictInterval']:
-						while job['nextRuntime'] < ts:
-							job['nextRuntime'] = job['nextRuntime'] + job['interval']
-					else:
-						job['nextRuntime'] = ts + job['interval']
-					return (job['fn'], job['args'], job['kwargs'])
-			while len(self.__tasks) == 0:
+			while True:
 				if (self.__isJoining == True):
 					break
+				# Check scheduled tasks first
+				ts = time.time()
+				for job in self.scheduledTasks:
+					if ts >= job['nextRuntime']:
+						if job['strictInterval']:
+							while job['nextRuntime'] < ts:
+								job['nextRuntime'] = job['nextRuntime'] + job['interval']
+						else:
+							job['nextRuntime'] = ts + job['interval']
+						return (job['fn'], job['args'], job['kwargs'])
+				if len(self.__tasks) > 0:
+					# There is a task. Return
+					break
+				# Wait for new task. If no new task, timeout after 60s to check scheduled tasks
 				self.__taskLock.wait(60)
 
 			if self.__tasks == []:
