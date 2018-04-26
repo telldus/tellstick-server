@@ -206,6 +206,7 @@ class ApiManager(Plugin):
 			'key': base64.b64encode(ciphertext),
 			'ttl': ttl,
 			'uuid': args.get('uuid', ''),
+			'client': live.uuid,
 		})
 
 	def __tokenKey(self):
