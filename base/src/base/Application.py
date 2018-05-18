@@ -70,6 +70,11 @@ class Application(object):
 		if run:
 			self.run()
 
+	@staticmethod
+	def defaultContext():
+		"""Returns the default context used by the application"""
+		return Application().pluginContext
+
 	def registerMaintenanceJobHandler(self, fn):
 		# (there can be only one...)
 		self.maintenanceJobHandler = fn
