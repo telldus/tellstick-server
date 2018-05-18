@@ -1,32 +1,39 @@
 #!/usr/bin/env python
 
+import fcntl
+import logging
+import socket
+import SocketServer
+import struct
+from threading import Thread
+
 from base import Application, implements, Plugin, IInterface, ISignalObserver, slot
 from board import Board
 from tellduslive.base import LiveMessage
 from rf433 import RF433, RF433Msg, Protocol
-from threading import Thread
 try:
 	from zwave.telldus import IZWObserver, TelldusZWave
 except ImportError:
 	class IZWObserver(IInterface):
 		pass
 	TelldusZWave = None
-import SocketServer
-import socket, fcntl, struct
-import logging
 
 class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 	def handle(self):
-		data = self.request[0].strip()
-		socket = self.request[1]
+		sock = self.request[1]
 		product = ''.join(x.capitalize() for x in Board.product().split('-'))
-		msg = '%s:%s:%s:%s' % (product, AutoDiscoveryHandler.getMacAddr(Board.networkInterface()), Board.secret(), Board.firmwareVersion())
-		socket.sendto(msg, self.client_address)
+		msg = '%s:%s:%s:%s' % (
+			product,
+			AutoDiscoveryHandler.getMacAddr(Board.networkInterface()),
+			Board.secret(),
+			Board.firmwareVersion()
+		)
+		sock.sendto(msg, self.client_address)
 
 	@staticmethod
 	def getMacAddr(ifname):
-		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
+		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		info = fcntl.ioctl(sock.fileno(), 0x8927, struct.pack('256s', ifname[:15]))
 		return ''.join(['%02X' % ord(char) for char in info[18:24]])
 
 class CommandHandler(SocketServer.BaseRequestHandler):
@@ -37,14 +44,15 @@ class CommandHandler(SocketServer.BaseRequestHandler):
 		data = self.request[0].strip()
 		self.socket = self.request[1]
 		if data == "B:reglistener":
-			server = Server(CommandHandler.context)
+			server = Server(CommandHandler.context)  # pylint: disable=E1121
 			server.reglistener(self.socket, self.client_address)
 
 		msg = LiveMessage.fromByteArray(data)
 		if msg.name() == 'send':
 			self.handleSend(msg.argument(0).toNative())
 
-	def handleSend(self, msg):
+	@staticmethod
+	def handleSend(msg):
 		protocol = Protocol.protocolInstance(msg['protocol'])
 		if not protocol:
 			logging.warning("Unknown protocol %s", msg['protocol'])
@@ -63,6 +71,7 @@ class Server(Plugin):
 
 	def __init__(self):
 		self.listener = None
+		self.clientAddress = None
 		CommandHandler.rf433 = RF433(self.context)
 		CommandHandler.context = self.context
 		if TelldusZWave is not None:
@@ -73,20 +82,20 @@ class Server(Plugin):
 		Thread(target=self.__autoDiscoveryStart).start()
 		Thread(target=self.__commandSocketStart).start()
 
-	def reglistener(self, socket, clientAddress):
-		self.listener = socket
+	def reglistener(self, sock, clientAddress):
+		self.listener = sock
 		self.clientAddress = clientAddress
 		self.sendVersion()
 
 	@slot('rf433RawData')
-	def rf433RawData(self, data, *args, **kwargs):
+	def rf433RawData(self, data, *__args, **__kwargs):
 		if 'data' in data:
 			data['data'] = int(data['data'], 16)
 		msg = LiveMessage("RawData")
 		msg.append(data)
 		try:
 			self.listener.sendto(msg.toByteArray(), self.clientAddress)
-		except:
+		except Exception as __error:
 			# for example if listener isn't set
 			pass
 
@@ -104,7 +113,7 @@ class Server(Plugin):
 		})
 		try:
 			self.listener.sendto(msg.toByteArray(), self.clientAddress)
-		except:
+		except Exception as __error:
 			# for example if listener isn't set
 			pass
 
