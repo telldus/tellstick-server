@@ -9,7 +9,7 @@ from threading import Thread
 
 from base import Application, implements, Plugin, IInterface, ISignalObserver, slot
 from board import Board
-from tellduslive.base import LiveMessage
+from tellduslive.base import LiveMessage, TelldusLive
 from rf433 import RF433, RF433Msg, Protocol
 try:
 	from zwave.telldus import IZWObserver, TelldusZWave
@@ -22,11 +22,13 @@ class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 	def handle(self):
 		sock = self.request[1]
 		product = ''.join(x.capitalize() for x in Board.product().split('-'))
-		msg = '%s:%s:%s:%s' % (
+		live = TelldusLive(Application.defaultContext())
+		msg = '%s:%s:%s:%s:%s' % (
 			product,
 			AutoDiscoveryHandler.getMacAddr(Board.networkInterface()),
 			Board.secret(),
-			Board.firmwareVersion()
+			Board.firmwareVersion(),
+			live.uuid,
 		)
 		sock.sendto(msg, self.client_address)
 
