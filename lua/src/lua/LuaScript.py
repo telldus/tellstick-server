@@ -139,6 +139,8 @@ class PythonObjectWrapper(object):
 
 	def __getattr__(self, attr):
 		method = getattr(self.obj, attr)
+		if not callable(method):
+			return method
 		def func(__self, *args, **kwargs):
 			return method(*args, **kwargs)
 		return func
