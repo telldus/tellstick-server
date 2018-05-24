@@ -1,19 +1,27 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import os
+from threading import Thread, Condition, Lock, Timer
+import types
+import weakref
+
 from base import Application
 from web.base import Server
 from lupa import LuaRuntime, lua_type
-from threading import Thread, Condition, Lock, Timer
-import os, types, weakref
 
 # Whitelist functions known to be safe.
-safeFunctions = {
+SAFE_FUNCTIONS = {
 	'_VERSION': [],
 	'assert': [],
 	'coroutine': ['create', 'resume', 'running', 'status', 'wrap', 'yield'],
 	'error': [],
 	'ipairs': [],
-	'math': ['abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', 'deg', 'exp', 'floor', 'fmod', 'frexp', 'huge', 'ldexp', 'log', 'log10', 'max', 'min', 'modf', 'pi', 'pow', 'rad', 'random', 'randomseed', 'sin', 'sinh', 'sqrt', 'tan', 'tanh'],
+	'math': [
+		'abs', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', 'deg', 'exp', 'floor',
+		'fmod', 'frexp', 'huge', 'ldexp', 'log', 'log10', 'max', 'min', 'modf', 'pi', 'pow',
+		'rad', 'random', 'randomseed', 'sin', 'sinh', 'sqrt', 'tan', 'tanh'
+	],
 	'next': [],
 	'os': ['clock', 'date', 'difftime', 'time'],
 	'pairs': [],
@@ -21,7 +29,10 @@ safeFunctions = {
 	'print': [],
 	'python': ['as_attrgetter', 'as_itemgetter', 'as_function', 'enumerate', 'iter', 'iterex'],
 	'select': [],
-	'string': ['byte', 'char', 'find', 'format', 'gmatch', 'gsub', 'len', 'lower', 'match', 'rep', 'reverse', 'sub', 'upper'],
+	'string': [
+		'byte', 'char', 'find', 'format', 'gmatch', 'gsub', 'len', 'lower', 'match', 'rep',
+		'reverse', 'sub', 'upper'
+	],
 	'table': ['concat', 'insert', 'maxn', 'remove', 'sort'],
 	'tonumber': [],
 	'tostring': [],
@@ -46,18 +57,19 @@ class List(object):
 		return list(args)
 
 	@staticmethod
-	def slice(collection, start = None, end = None, step = None):
+	def slice(collection, start=None, end=None, step=None):
 		"""Retrieve the start, stop and step indices from the slice object `list`.
 		Treats indices greater than length as errors.
 
 		This can be used for slicing python lists (e.g. l[0:10:2])."""
-		return collection[slice(start,end,step)]
+		return collection[slice(start, end, step)]
 
-def sleep(ms):
+#pylint: disable=W0613
+def sleep(milliseconds):
 	"""
 	Delay for a specified amount of time.
 
-	  :ms: The number of milliseconds to sleep.
+	  :milliseconds: The number of milliseconds to sleep.
 
 	"""
 	pass
@@ -72,41 +84,41 @@ class LuaThread(object):
 
 class SleepingLuaThread(LuaThread):
 	def __init__(self, ms):
-		super(SleepingLuaThread,self).__init__()
-		self.ms = ms
+		super(SleepingLuaThread, self).__init__()
+		self.milliseconds = ms
 		self.timer = None
 
 	def abort(self):
 		if self.timer:
 			self.timer.cancel()
 
-	def start(self, cb):
-		self.timer = Timer(self.ms/1000.0, cb)
+	def start(self, callback):
+		self.timer = Timer(self.milliseconds/1000.0, callback)
 		self.timer.start()
 
 class LuaFunctionWrapper(object):
 	def __init__(self, script, cb):
 		self.script = script
-		self.cb = cb
+		self.callback = cb
 		self.destructionHandlers = []
 
 	def __del__(self):
 		self.script.gcReferences()
 
 	def __call__(self, *args):
-		if self.cb is None:
+		if self.callback is None:
 			return
-		self.script.callFunc(self.cb, *args)
+		self.script.callFunc(self.callback, *args)
 
 	def abort(self):
 		self.script = None
-		self.cb = None
-		for cb, args, kwargs in self.destructionHandlers:
-			Application().queue(cb, *args, **kwargs)
+		self.callback = None
+		for callback, args, kwargs in self.destructionHandlers:
+			Application().queue(callback, *args, **kwargs)
 		self.destructionHandlers[:] = []
 
-	def registerDestructionHandler(self, cb, *args, **kwargs):
-		self.destructionHandlers.append((cb, args, kwargs,))
+	def registerDestructionHandler(self, callback, *args, **kwargs):
+		self.destructionHandlers.append((callback, args, kwargs,))
 
 class PythonObjectWrapper(object):
 	"""
@@ -124,9 +136,9 @@ class PythonObjectWrapper(object):
 
 	def __getattr__(self, attr):
 		method = getattr(self.obj, attr)
-		def fn(self, *args, **kwargs):
+		def func(__self, *args, **kwargs):
 			return method(*args, **kwargs)
-		return fn
+		return func
 
 	def __repr__(self):
 		return repr(self.obj)
@@ -135,7 +147,9 @@ class LuaScript(object):
 	CLOSED, LOADING, RUNNING, IDLE, ERROR, CLOSING = range(6)
 
 	def __init__(self, filename, context):
+		self.code = ''
 		self.filename = filename
+		self.lua = None
 		self.name = os.path.basename(filename)
 		self.context = context
 		self.runningLuaThread = None
@@ -178,16 +192,16 @@ class LuaScript(object):
 	def load(self):
 		self.reload()
 
-	def p(self, msg, *args):
+	def log(self, msg, *args):
 		try:
 			logMsg = msg % args
-		except:
+		except Exception as __error:
 			logMsg = msg
 		Server(self.context).webSocketSend('lua', 'log', logMsg)
 
 	def reload(self):
-		with open(self.filename, 'r') as f:
-			self.code = f.read()
+		with open(self.filename, 'r') as fd:
+			self.code = fd.read()
 		self.__setState(LuaScript.LOADING)
 		self.__notifyThread()
 
@@ -195,7 +209,7 @@ class LuaScript(object):
 		self.__setState(LuaScript.CLOSING)
 		self.__notifyThread()
 		self.__thread.join()
-		self.p("Script %s unloaded", self.name)
+		self.log("Script %s unloaded", self.name)
 
 	def state(self):
 		with self.__stateLock:
@@ -218,12 +232,12 @@ class LuaScript(object):
 					task = self.__queue.pop(0)
 				elif state in [LuaScript.LOADING, LuaScript.CLOSING]:
 					# Abort any threads that might be running
-					for t in self.runningLuaThreads:
-						t.abort()
+					for thread in self.runningLuaThreads:
+						thread.abort()
 					self.runningLuaThreads = []
-					for r in self.references:
-						if r() is not None:
-							r().abort()
+					for ref in self.references:
+						if ref() is not None:
+							ref().abort()
 					self.references[:] = []
 				else:
 					self.__threadLock.wait(300)
@@ -240,9 +254,9 @@ class LuaScript(object):
 				for i, arg in enumerate(args):
 					if type(arg) == dict:
 						args[i] = self.lua.table_from(arg)
-				if type(name) == str or type(name) == unicode:
-					fn = getattr(self.lua.globals(), name)
-					self.runningLuaThread = fn.coroutine(*args)
+				if isinstance(name, (str, unicode)):
+					func = getattr(self.lua.globals(), name)
+					self.runningLuaThread = func.coroutine(*args)
 				elif lua_type(name) == 'thread':
 					self.runningLuaThread = name
 				elif lua_type(name) == 'function':
@@ -254,8 +268,8 @@ class LuaScript(object):
 					self.runningLuaThread.send(None)
 				except StopIteration:
 					pass
-				except Exception as e:
-					self.p("Could not execute function %s: %s", name, e)
+				except Exception as error:
+					self.log("Could not execute function %s: %s", name, error)
 				self.runningLuaThread = None
 				self.__setState(LuaScript.IDLE)
 
@@ -263,9 +277,9 @@ class LuaScript(object):
 		self.lua = LuaRuntime(
 			unpack_returned_tuples=True,
 			register_eval=False,
-			attribute_handlers=(self.__getter,self.__setter)
+			attribute_handlers=(self.__getter, self.__setter)
 		)
-		setattr(self.lua.globals(), 'print', self.p)
+		setattr(self.lua.globals(), 'print', self.log)
 		# Remove potentially dangerous functions
 		self.__sandboxInterpreter()
 		# Install a sleep function as lua script since it need to be able to yield
@@ -281,39 +295,39 @@ class LuaScript(object):
 			self.__setState(LuaScript.IDLE)
 			# Allow script to initialize itself
 			self.call('onInit')
-			self.p("Script %s loaded", self.name)
-		except Exception as e:
+			self.log("Script %s loaded", self.name)
+		except Exception as error:
 			self.__setState(LuaScript.ERROR)
-			self.p("Could not load lua script %s: %s", self.name, e)
+			self.log("Could not load lua script %s: %s", self.name, error)
 
-	def __luaSleep(self, ms):
+	def __luaSleep(self, milliseconds):
 		if self.state() != LuaScript.RUNNING:
-			self.p("sleep() cannot be called while the script is loading")
+			self.log("sleep() cannot be called while the script is loading")
 			return False
-		co = self.runningLuaThread
-		t = SleepingLuaThread(ms)
+		coroutine = self.runningLuaThread
+		thread = SleepingLuaThread(milliseconds)
 		def resume():
-			if t in self.runningLuaThreads:
-				self.runningLuaThreads.remove(t)
-			if not bool(co):
+			if thread in self.runningLuaThreads:
+				self.runningLuaThreads.remove(thread)
+			if not bool(coroutine):
 				# Cannot call coroutine anymore
 				return
 			self.__threadLock.acquire()
 			try:
-				self.__queue.append((co, []))
+				self.__queue.append((coroutine, []))
 				self.__threadLock.notifyAll()
 			finally:
 				self.__threadLock.release()
-		t.start(resume)
-		self.runningLuaThreads.append(t)
+		thread.start(resume)
+		self.runningLuaThreads.append(thread)
 		return True
 
 	def __require(self, plugin):
 		obj = self.context.request(plugin)
 		if obj is None:
-			self.p("Plugin %s not found. Available plugins:", plugin)
+			self.log("Plugin %s not found. Available plugins:", plugin)
 			for key in self.context.pluginsList():
-				self.p(key)
+				self.log(key)
 		return PythonObjectWrapper(obj) if obj is not None else None
 
 	def __sandboxInterpreter(self):
@@ -321,12 +335,12 @@ class LuaScript(object):
 			if obj == '_G':
 				# Allow _G here to not start recursion
 				continue
-			if obj not in safeFunctions:
+			if obj not in SAFE_FUNCTIONS:
 				del self.lua.globals()[obj]
 				continue
 			if lua_type(self.lua.globals()[obj]) != 'table':
 				continue
-			funcs = safeFunctions[obj]
+			funcs = SAFE_FUNCTIONS[obj]
 			for func in self.lua.globals()[obj]:
 				if func not in funcs:
 					del self.lua.globals()[obj][func]
@@ -345,29 +359,32 @@ class LuaScript(object):
 		# returned directly but any access to functions returns a proxy method
 		# instead. A call to the proxy method send a call to the main thread, blocks
 		# and then wait for it to be executed.
-		if type(attrName) == int:
+		if isinstance(attrName, int):
 			# obj is probably a list
 			attribute = obj[attrName]
 		elif not hasattr(obj, attrName):
 			raise AttributeError('object has no attribute "%s"' % attrName)
 		else:
 			attribute = getattr(obj, attrName)
-		if type(attribute) in [int, str, unicode, float, types.NoneType]:
+		if isinstance(attribute, (int, str, unicode, float, types.NoneType)):
 			# Allow primitive attributes directly
 			return attribute
-		if type(attribute) == types.MethodType:
+		if isinstance(attribute, types.MethodType):
 			# Get the unbound method to support obj:method() calling convention in Lua
 			attribute = getattr(obj.__class__, attrName)
-		elif type(attribute) not in [types.FunctionType, types.BuiltinFunctionType]:
-			raise AttributeError('type "%s" is not allowed in Lua code. Trying to access attribute %s in object %s' % (type(attribute), attrName, obj))
+		elif not isinstance(attribute, (types.FunctionType, types.BuiltinFunctionType)):
+			raise AttributeError(
+				'type "%s" is not allowed in Lua code. Trying to access attribute %s in object %s' %
+				(type(attribute), attrName, obj)
+			)
 		condition = Condition()
 		retval = {}
 		def mainThreadCaller(args, kwargs):
 			# This is called from the main thread. Do the actual call here
 			try:
 				retval['return'] = attribute(*args, **kwargs)
-			except Exception, e:
-				retval['error'] = str(e)
+			except Exception as error:
+				retval['error'] = str(error)
 			condition.acquire()
 			try:
 				condition.notifyAll()
@@ -383,16 +400,16 @@ class LuaScript(object):
 				# First parameter is a lua table. Handle this as **kwargs call
 				kwargs = self.__wrapArgument(args[1])
 				del args[1]
-			for i, arg in enumerate(args):
+			for i, __arg in enumerate(args):
 				args[i] = self.__wrapArgument(args[i])
 			try:
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
 				if 'error' in retval:
-					self.p("Error during call: %s", retval['error'])
+					self.log("Error during call: %s", retval['error'])
 					raise AttributeError(retval['error'])
 				elif 'return' in retval:
-					if type(retval['return']) is dict:
+					if isinstance(retval['return'], dict):
 						# Wrap to lua table
 						return self.lua.table_from(retval['return'])
 					return retval['return']
@@ -401,15 +418,16 @@ class LuaScript(object):
 			raise AttributeError('The call to the function "%s" timed out' % attrName)
 		return proxyMethod
 
-	def __setter(self, obj, attrName, value):
+	@staticmethod
+	def __setter(obj, attrName, value):
 		# Set it in the main thread
 		Application().queue(setattr, obj, attrName, value)
 
 	def __wrapArgument(self, arg):
 		if lua_type(arg) == 'function':
-			t = LuaFunctionWrapper(self, arg)
-			self.references.append(weakref.ref(t))
-			return t
+			func = LuaFunctionWrapper(self, arg)
+			self.references.append(weakref.ref(func))
+			return func
 		elif lua_type(arg) == 'table':
 			table = dict(arg)
 			for key in table:
