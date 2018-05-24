@@ -104,11 +104,14 @@ class LuaFunctionWrapper(object):
 
 	def __del__(self):
 		self.script.gcReferences()
+		self.callback = None
+		self.script = None
 
 	def __call__(self, *args):
 		if self.callback is None:
 			return
 		self.script.callFunc(self.callback, *args)
+		self.callback = None
 
 	def abort(self):
 		self.script = None
