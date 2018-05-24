@@ -257,8 +257,7 @@ class LuaScript(object):
 				name, args = task
 				args = list(args)
 				for i, arg in enumerate(args):
-					if type(arg) == dict:
-						args[i] = self.lua.table_from(arg)
+					args[i] = self.__wrapPyToLua(arg)
 				if isinstance(name, (str, unicode)):
 					func = getattr(self.lua.globals(), name)
 					self.runningLuaThread = func.coroutine(*args)
@@ -414,10 +413,7 @@ class LuaScript(object):
 					self.log("Error during call: %s", retval['error'])
 					raise AttributeError(retval['error'])
 				elif 'return' in retval:
-					if isinstance(retval['return'], dict):
-						# Wrap to lua table
-						return self.lua.table_from(retval['return'])
-					return retval['return']
+					return self.__wrapPyToLua(retval['return'])
 			finally:
 				condition.release()
 			raise AttributeError('The call to the function "%s" timed out' % attrName)
@@ -440,3 +436,14 @@ class LuaScript(object):
 				table[key] = self.__wrapLuaToPy(table[key])
 			return table
 		return arg
+
+	def __wrapPyToLua(self, arg):
+		if isinstance(arg, dict):
+			# Wrap to lua table
+			return self.lua.table_from(arg)
+		elif arg in (True, False, None):
+			return arg
+		elif isinstance(arg, (int, float, long, str, unicode, list, tuple)):
+			# Return primitiva types directly
+			return arg
+		return PythonObjectWrapper(arg)
