@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import glob
+import os
+
+import cherrypy
 from api import IApiCallHandler, apicall
-from base import Application, Plugin, SignalManager, ISignalObserver, implements, slot, signal
+from base import Application, Plugin, SignalManager, ISignalObserver, implements, slot
 from board import Board
 from web.base import IWebRequestHandler, WebResponseJson
 from telldus.web import IWebReactHandler
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from LuaScript import LuaScript
-import glob, os
-import logging, cherrypy
+from lua.LuaScript import LuaScript
 
 class FileChangedHandler(FileSystemEventHandler):
 	def __init__(self, parent):
@@ -51,10 +53,10 @@ class Lua(Plugin):
 		"""
 		if not script.endswith('.lua'):
 			script = '%s.lua' % script
-		for s in self.scripts:
-			if s.name != script:
+		for scriptObj in self.scripts:
+			if scriptObj.name != script:
 				continue
-			if not s.call(function, kwargs):
+			if not scriptObj.call(function, kwargs):
 				raise Exception('Script %s does not define function "%s"' % (script, function))
 			return True
 		raise Exception('Script %s not found' % script)
@@ -77,7 +79,8 @@ class Lua(Plugin):
 				del self.scripts[i]
 				break
 
-	def getReactComponents(self):
+	@staticmethod
+	def getReactComponents():
 		return {
 			'lua': {
 				'title': 'Lua scripts (beta)',
@@ -86,14 +89,16 @@ class Lua(Plugin):
 			}
 		}
 
-	def matchRequest(self, plugin, path):
+	@staticmethod
+	def matchRequest(plugin, path):
 		if plugin != 'lua':
 			return False
 		if path in ['delete', 'new', 'save', 'script', 'scripts', 'signals']:
 			return True
 		return False
 
-	def handleRequest(self, plugin, path, params, **kwargs):
+	def handleRequest(self, plugin, path, params, **__kwargs):
+		del plugin
 		script = None
 		if path == 'save':
 			if 'script' not in cherrypy.request.body.params or 'code' not in cherrypy.request.body.params:
@@ -108,25 +113,25 @@ class Lua(Plugin):
 			if len(name) == 0:
 				return WebResponseJson({'error': 'Invalid script name'})
 			filename = '%s/%s.lua' % (Board.luaScriptPath(), name)
-			with open(filename, 'w') as f:
-				f.write('-- File: %s.lua\n\nfunction onInit()\n\tprint("Hello world")\nend' % name)
+			with open(filename, 'w') as fd:
+				fd.write('-- File: %s.lua\n\nfunction onInit()\n\tprint("Hello world")\nend' % name)
 			self.fileCreated(filename)
 			return WebResponseJson({'success': True, 'name': '%s.lua' % name})
 		elif path == 'delete':
 			if 'name' not in params:
 				return WebResponseJson({'error': 'Invalid script name'})
-			for s in self.scripts:
-				if s.name == params['name']:
-					os.remove(s.filename)
-					self.fileRemoved(s.filename)
+			for script in self.scripts:
+				if script.name == params['name']:
+					os.remove(script.filename)
+					self.fileRemoved(script.filename)
 					break
 			return WebResponseJson({'success': True})
 		elif path == 'script':
-			for s in self.scripts:
-				if s.name == params['name']:
+			for script in self.scripts:
+				if script.name == params['name']:
 					return WebResponseJson({
 						'name': params['name'],
-						'code': s.code,
+						'code': script.code,
 					})
 			return WebResponseJson({})
 		elif path == 'scripts':
@@ -143,22 +148,23 @@ class Lua(Plugin):
 		return None
 
 	def load(self):
-		for f in glob.glob('%s/*.lua' % Board.luaScriptPath()):
-			self.scripts.append(LuaScript(f, self.context))
-		for s in self.scripts:
-			s.load()
+		for filename in glob.glob('%s/*.lua' % Board.luaScriptPath()):
+			self.scripts.append(LuaScript(filename, self.context))
+		for script in self.scripts:
+			script.load()
 
 	def saveScript(self, scriptName, code):
 		for script in self.scripts:
 			if script.name != scriptName:
 				continue
-			with open(script.filename, 'w') as f:
-				f.write(code)
+			with open(script.filename, 'w') as fd:
+				fd.write(code)
 			# overlayfs does not support inofify for filechanges so we need to signal manually
 			script.reload()
 			break
 
-	def signals(self):
+	@staticmethod
+	def signals():
 		signals = [{
 			'name': 'on%s%s' % (x[0].upper(), x[1:]),
 			'doc': SignalManager.signals[x].doc(),
@@ -172,7 +178,7 @@ class Lua(Plugin):
 		return signals
 
 	@slot()
-	def slot(self, message, *args, **kwargs):
+	def onSignals(self, message, *args, **__kwargs):
 		name = 'on%s%s' % (message[0].upper(), message[1:])
 		for script in self.scripts:
 			script.call(name, *args)
