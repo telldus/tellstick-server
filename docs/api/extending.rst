@@ -2,7 +2,7 @@
 Extending
 =========
 
-It's possible to extend the API with new functions from :doc:`custom plugins </python>`.
+It's possible to extend the API with new functions from :doc:`custom plugins </python/intro>`.
 
 Prepare the plugin
 ##################
