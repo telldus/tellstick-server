@@ -257,7 +257,7 @@ class LuaScript(object):
 				name, args = task
 				args = list(args)
 				for i, arg in enumerate(args):
-					args[i] = self.__wrapPyToLua(arg)
+					args[i] = self.wrapPyToLua(arg)
 				if isinstance(name, (str, unicode)):
 					func = getattr(self.lua.globals(), name)
 					self.runningLuaThread = func.coroutine(*args)
@@ -402,10 +402,10 @@ class LuaScript(object):
 			args = list(args)
 			if len(args) >= 2 and lua_type(args[1]) == 'table':
 				# First parameter is a lua table. Handle this as **kwargs call
-				kwargs = self.__wrapLuaToPy(args[1])
+				kwargs = self.wrapLuaToPy(args[1])
 				del args[1]
 			for i, __arg in enumerate(args):
-				args[i] = self.__wrapLuaToPy(args[i])
+				args[i] = self.wrapLuaToPy(args[i])
 			try:
 				Application().queue(mainThreadCaller, args, kwargs)
 				condition.wait(20)  # Timeout to not let the script hang forever
@@ -413,7 +413,7 @@ class LuaScript(object):
 					self.log("Error during call: %s", retval['error'])
 					raise AttributeError(retval['error'])
 				elif 'return' in retval:
-					return self.__wrapPyToLua(retval['return'])
+					return self.wrapPyToLua(retval['return'])
 			finally:
 				condition.release()
 			raise AttributeError('The call to the function "%s" timed out' % attrName)
@@ -424,7 +424,7 @@ class LuaScript(object):
 		# Set it in the main thread
 		Application().queue(setattr, obj, attrName, value)
 
-	def __wrapLuaToPy(self, arg):
+	def wrapLuaToPy(self, arg):
 		if lua_type(arg) == 'function':
 			func = LuaFunctionWrapper(self, arg)
 			self.references.append(weakref.ref(func))
@@ -433,11 +433,11 @@ class LuaScript(object):
 			table = dict(arg)
 			for key in table:
 				# Recursive wrap
-				table[key] = self.__wrapLuaToPy(table[key])
+				table[key] = self.wrapLuaToPy(table[key])
 			return table
 		return arg
 
-	def __wrapPyToLua(self, arg):
+	def wrapPyToLua(self, arg):
 		if isinstance(arg, dict):
 			# Wrap to lua table
 			return self.lua.table_from(arg)
