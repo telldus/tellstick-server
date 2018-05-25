@@ -99,7 +99,6 @@ class Lua(Plugin):
 
 	def handleRequest(self, plugin, path, params, **__kwargs):
 		del plugin
-		script = None
 		if path == 'save':
 			if 'script' not in cherrypy.request.body.params or 'code' not in cherrypy.request.body.params:
 				return WebResponseJson({'error': 'Malformed request, parameter script or code missing'})
@@ -140,11 +139,6 @@ class Lua(Plugin):
 			} for script in sorted(self.scripts, key=lambda s: s.name.lower())])
 		elif path == 'signals':
 			return WebResponseJson(self.signals())
-		elif 'edit' in params:
-			for s in self.scripts:
-				if s.name == params['edit']:
-					script = s
-					break
 		return None
 
 	def load(self):
