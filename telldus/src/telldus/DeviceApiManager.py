@@ -42,6 +42,12 @@ class DeviceApiManager(Plugin):
 		Sends a command to a device.
 		"""
 		device = self.__retrieveDevice(id)
+		try:
+			# Try convering to number if it was sent as such
+			value = int(value)
+		except ValueError:
+			# Not a number, keep it as a string
+			pass
 		device.command(method, value, origin=app)
 		return True
 
