@@ -112,7 +112,7 @@ setupVirtualEnv() {
 		return
 	fi
 	echo "Create virtualenv"
-	virtualenv build/env
+	virtualenv --python=python2.7 build/env
 	source $BASEDIR/build/env/bin/activate
 	pip install -U pip
 }
