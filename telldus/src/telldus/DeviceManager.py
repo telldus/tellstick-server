@@ -345,7 +345,7 @@ class DeviceManager(Plugin):
 		}
 		if args.get('parameters', 0) == 1:
 			parameters = json.dumps(
-				device.parameters(),
+				device.allParameters(),
 				separators=(',', ':'),
 				sort_keys=True
 			)
@@ -470,7 +470,7 @@ class DeviceManager(Plugin):
 				continue
 			(state, stateValue) = device.state()
 			parametersHash = hashlib.sha1(json.dumps(
-				device.parameters(),
+				device.allParameters(),
 				separators=(',', ':'),
 				sort_keys=True
 			))

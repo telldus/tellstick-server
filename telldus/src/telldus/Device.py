@@ -27,6 +27,28 @@ class Device(object):
 	RGBW = 1024  #: Device flag for devices supporting the rgb method, this is depricated, use RGB.
 	THERMOSTAT = 2048  #: Device flag for devices supporting thermostat methods.
 
+	TYPE_UNKNOWN = '0000000-0001-1000-2005-ACCA54000000'
+	TYPE_ALARM_SENSOR = '0000001-0001-1000-2005-ACCA54000000'
+	TYPE_CONTAINER = '0000002-0001-1000-2005-ACCA54000000'
+	TYPE_CONTROLLER = '0000003-0001-1000-2005-ACCA54000000'
+	TYPE_DOOR_WINDOW = '0000004-0001-1000-2005-ACCA54000000'
+	TYPE_LIGHT = '0000005-0001-1000-2005-ACCA54000000'
+	TYPE_LOCK = '0000006-0001-1000-2005-ACCA54000000'
+	TYPE_MEDIA = '0000007-0001-1000-2005-ACCA54000000'
+	TYPE_METER = '0000008-0001-1000-2005-ACCA54000000'
+	TYPE_MOTION = '0000009-0001-1000-2005-ACCA54000000'
+	TYPE_ON_OFF_SENSOR = '000000A-0001-1000-2005-ACCA54000000'
+	TYPE_PERSON = '000000B-0001-1000-2005-ACCA54000000'
+	TYPE_REMOTE_CONTROL = '000000C-0001-1000-2005-ACCA54000000'
+	TYPE_SENSOR = '000000D-0001-1000-2005-ACCA54000000'
+	TYPE_SMOKE_SENSOR = '000000E-0001-1000-2005-ACCA54000000'
+	TYPE_SPEAKER = '000000F-0001-1000-2005-ACCA54000000'
+	TYPE_SWITCH_OUTLET = '0000010-0001-1000-2005-ACCA54000000'
+	TYPE_THERMOSTAT = '0000011-0001-1000-2005-ACCA54000000'
+	TYPE_VIRTUAL = '0000012-0001-1000-2005-ACCA54000000'
+	TYPE_WINDOW_COVERING = '0000013-0001-1000-2005-ACCA54000000'
+	TYPE_PROJECTOR_SCREEN = '0000014-0001-1000-2005-ACCA54000000'
+
 	UNKNOWN = 0                 #: Sensor type flag for an unknown type
 	TEMPERATURE = 1             #: Sensor type flag for temperature
 	HUMIDITY = 2                #: Sensor type flag for humidity
@@ -83,6 +105,14 @@ class Device(object):
 
 	def id(self):
 		return self._id
+
+	def allParameters(self):
+		"""
+		Similar as parameters() but this returnes more values such as the device type
+		"""
+		params = self.parameters()
+		params['devicetype'] = self.deviceType()
+		return params
 
 	def battery(self):  # pylint: disable=R0201
 		"""
@@ -167,6 +197,9 @@ class Device(object):
 
 	def containingDevices(self):
 		return []
+
+	def deviceType(self):
+		return Device.TYPE_UNKNOWN
 
 	def flattenContainingDevices(self):
 		devices = []
