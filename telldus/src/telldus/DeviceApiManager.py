@@ -44,7 +44,7 @@ class DeviceApiManager(Plugin):
 		device = self.__retrieveDevice(id)
 		try:
 			# Try convering to number if it was sent as such
-			value = int(value)
+			method = int(method)
 		except ValueError:
 			# Not a number, keep it as a string
 			pass
