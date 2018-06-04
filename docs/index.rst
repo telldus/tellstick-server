@@ -39,6 +39,13 @@ Lua codes works by signals from the server triggers the execution.
 
 .. toctree::
    :hidden:
+   :caption: Getting started
+   :maxdepth: 1
+
+   gettingstarted/installation
+
+.. toctree::
+   :hidden:
    :caption: Lua
    :maxdepth: 2
 
