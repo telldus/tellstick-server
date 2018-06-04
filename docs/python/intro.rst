@@ -7,7 +7,7 @@ Python plugins offers the most flexible way of extending the functionality of Te
 Installation Process
 ####################
 
-Tell stick server Installation
+TellStick server Installation
 ______________________________
 
 This is the software running on the late generation TellStick ZNet Lite and
