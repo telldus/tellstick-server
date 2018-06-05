@@ -4,10 +4,6 @@ Python plugins
 
 Python plugins offers the most flexible way of extending the functionality of TellStick. To get started a development environment should first be setup on a computer running Linux or macOS. Windows is not supported at the moment.
 
-
-Plugins
-*******
-
 Telldus own plugins are open source and can be used as a base for new plugins. These can be found here:
 https://github.com/telldus/tellstick-server-plugins
 
@@ -31,3 +27,12 @@ Plugin internals
 
   anatomy
   deploy
+
+Concepts
+########
+
+Read more about the concepts used for building plugins
+
+.. toctree::
+
+  observers
