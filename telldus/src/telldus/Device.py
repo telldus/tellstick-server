@@ -123,11 +123,12 @@ class Device(object):
 	# pylint: disable=R0913
 	def command(self, action, value=None, origin=None, success=None,
 	            failure=None, callbackArgs=None, ignore=None):
-		"""This method executes a method with the device. This method must not be
+		"""
+		This method executes a method with the device. This method must not be
 		subclassed. Please subclass :func:`_command()` instead.
 
-		  :param action: description
-		  :return: return description
+		:param action: description
+		:return: return description
 
 		Here below is the results of the :func:`Device.methods()` docstring.
 		"""
@@ -297,8 +298,8 @@ class Device(object):
 
 	def parameters(self):
 		"""
-		Returns a static dictionary of paramters describing the device.
-		These should not containd the current state of the device, only descriptive parameters.
+		:returns: a static dictionary of paramters describing the device.
+		  These should not containd the current state of the device, only descriptive parameters.
 		"""
 		return {}
 
@@ -314,8 +315,8 @@ class Device(object):
 
 	def sensorValue(self, valueType, scale):
 		"""
-		Returns a sensor value of a the specified valueType and scale. Returns None
-		is no such value exists
+		:returns: a sensor value of a the specified valueType and scale. Returns ``None``
+		  is no such value exists
 		"""
 		if valueType not in self._sensorValues:
 			return None
@@ -326,7 +327,7 @@ class Device(object):
 
 	def sensorValues(self):
 		"""
-		Returns a list of all sensor values this device has received.
+		:returns: a list of all sensor values this device has received.
 		"""
 		return self._sensorValues
 
@@ -399,10 +400,13 @@ class Device(object):
 
 	def state(self):
 		"""
-		Returns a tuple of the device state and state value
+		:returns: a tuple of the device state and state value
 
-		Example:
-		state, stateValue = device.state()
+		  Example:
+
+		  .. code-block:: python
+
+		     state, stateValue = device.state()
 		"""
 		return (self._state, self._stateValue)
 
