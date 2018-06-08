@@ -18,4 +18,19 @@ Classes in the base module are only accessible from Python applications.
   :show-inheritance:
   :members:
 
-.. automethod:: base.SignalManager.slot
+.. py:decorator:: base.signal
+
+  This is a decorator for sending signals. Decorate any of your Plugins methods with this
+  decorator and whenever the method is called the signal will be fired.
+
+  Args:
+    :name: The signal name. This can be omitted and then the function name will be used as the
+      name of the signal.
+
+.. py:decorator:: base.slot(message = '')
+
+  This is a decorator for receiveing signals. The class must implement
+  :class:`base.ISignalObserver`
+
+  Args:
+    :message: This is the signal name to receive

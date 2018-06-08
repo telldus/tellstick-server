@@ -58,6 +58,7 @@ Lua codes works by signals from the server triggers the execution.
    :maxdepth: 2
 
    python/intro
+   python/concepts
    python/sensor
    python/reference
 
