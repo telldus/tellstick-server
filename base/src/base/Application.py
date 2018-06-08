@@ -13,10 +13,6 @@ import sys
 from .Plugin import Plugin, PluginContext
 
 class mainthread(object):
-	""".. py:decorator:: mainthread
-
-	This decorator forces a method to be run in the main thread regardless of
-	which thread calls the method."""
 	def __init__(self, f):
 		self.__f = f
 

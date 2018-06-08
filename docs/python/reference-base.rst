@@ -11,8 +11,10 @@ Classes in the base module are only accessible from Python applications.
 
   .. automethod:: base.Application.registerScheduledTask(fn, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False, strictInterval=False, args=None, kwargs=None)
 
-.. autoclass:: base.mainthread
-  :members:
+.. py:decorator:: base.mainthread
+
+  This decorator forces a method to be run in the main thread regardless of
+  which thread calls the method.
 
 .. autoclass:: base.ISignalObserver
   :show-inheritance:
