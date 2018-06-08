@@ -59,7 +59,7 @@ Lua codes works by signals from the server triggers the execution.
 
    python/intro
    python/concepts
-   python/sensor
+   python/examples
    python/reference
 
 .. toctree::

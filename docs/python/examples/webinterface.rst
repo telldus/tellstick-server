@@ -1,14 +1,18 @@
+=============
+Web interface
+=============
 
-Hello world plugin
-##################
+This example shows how a plugin can extend the local webinterface with its own page in the menu.
+
+Base files
+==========
 
 Before making any plugin we have to create a setup file for the plugin.
-For more about `setup.py <http://tellstick-server.readthedocs.io/en/latest/python/anatomy.html>`_.
+For more about :doc:`setup.py <../anatomy>`.
 
-Add following code in setup.py :
+Add following code in setup.py:
 
 ::
-
 
   try:
     from setuptools import setup
@@ -47,7 +51,7 @@ and implements it into the plugin.
 ::
 
 
-  from base import Plugin, implements 
+  from base import Plugin, implements
   from telldus.web import IWebReactHandler
 
   class Welcome(Plugin):
@@ -67,16 +71,16 @@ Here, the function ``getReactComponents()`` Return a list of components this plu
 
 
 
-Hello world plugin UI
-#####################
+HTML interface
+==============
 
 
 Run ``npm init`` command in the root folder, It will ask for the package details and fill it out.
 
 It will create a package.json file in your root folder.
 
-Cofigur package.json
-====================
+Configure package.json
+######################
 
 Make following modifications in the package.json file.
 
@@ -108,7 +112,7 @@ That are major dependencies to run and display UI.
 
 
 Create gulpfile
-===============
+###############
 
 Now create gulpfile.js in the root folder.
 
@@ -156,7 +160,7 @@ Add following task in gulpfile:
     gulp.watch('src/welcome/app/**/*.jsx', ['default']);
   });
 
-Here, 
+Here,
 gulp task ``jsx`` will copy all file from the specified path and convert it and paste it into the destination path.
 
 gulp task ``js`` and ``script`` will do same as ``jsx``.
