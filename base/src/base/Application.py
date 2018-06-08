@@ -26,7 +26,13 @@ class mainthread(object):
 				Application().queue(self.__f, obj, *args, **kwargs)
 			return None
 		__call__.__name__ = self.__f.__name__
-		__call__.__doc__ = "%s\n\n.. note::\n    Calls to this method are threadsafe.\n" % self.__f.__doc__
+		# Get the number of whitespaces in the beginning
+		indentCount = len(self.__f.__doc__) - len(self.__f.__doc__.lstrip())
+		indent = self.__f.__doc__[:indentCount].replace("\n", "")
+
+		__call__.__doc__ = "%s\n\n%s.. note::\n%s    Calls to this method are threadsafe.\n" % (
+			self.__f.__doc__, indent, indent
+		)
 		return __call__
 
 class Application(object):
