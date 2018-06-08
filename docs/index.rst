@@ -58,6 +58,7 @@ Lua codes works by signals from the server triggers the execution.
    :maxdepth: 2
 
    python/intro
+   python/sensor
    python/reference
 
 .. toctree::
