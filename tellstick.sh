@@ -16,7 +16,23 @@ buildDocs() {
 		echo "Install Sphinx"
 		pip install -U -r docs/requirements.txt
 	fi
-	sphinx-build -b html -d build/doctrees   docs build/html
+	COMMAND=sphinx-build
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			-w|--watch)
+			AUTOBUILD=`which sphinx-autobuild`
+			if [ "$AUTOBUILD" == "" ]; then
+				pip install sphinx-autobuild
+			fi
+			COMMAND="sphinx-autobuild -B -z api -z base -z board -z developer -z live -z log -z sdk -z telldus -z web"
+			shift
+			;;
+			*)
+			shift
+			;;
+		esac
+	done
+	$COMMAND -E -b html -d build/doctrees  docs build/html
 }
 
 buildPlugin() {
@@ -69,7 +85,9 @@ printHelp() {
 	echo -e "Usage: $0 command [arguments]"
 	echo
 	echo -e "Command chould be one of:"
-	echo -e "  build-docs:\tBuilds the documentation to build/html"
+	echo -e "  build-docs:\tBuilds the documentation to build/html. Usage:"
+	echo -e "  \t\t  $0 build-docs [--watch]"
+	echo -e "  \t\t  If --watch is supplied the files will be monitored and rebuilt when changed."
 	echo -e "  build-plugin:\tBuild a distributable plugin from a plugin dir. Usage:"
 	echo -e "  \t\t  $0 build-plugin [path-to-plugin]"
 	echo -e "  \t\t  where [path-to-plugin] should be the path to the plungins root folder"
@@ -122,8 +140,9 @@ setupVirtualEnv
 
 case $1 in
 	build-docs)
+		shift
 		echo "Building docs"
-		buildDocs
+		buildDocs "$@"
 	;;
 	build-plugin)
 		shift
