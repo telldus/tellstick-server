@@ -1,18 +1,14 @@
+==========================
+Configurations for plugins
+==========================
 
-Configuration for plugin
-########################
+If your plugin needs user set configuration values it can add this by using configurations.
 
-Configuration plugin is the way where we define static data that used several times and anywhere in the project.
-
-First, create `setup.py <http://tellstick-server.readthedocs.io/en/latest/python/anatomy.html>`_ file.
-
-Create a plugin file and import ``configuration`` package from ``base`` to create configuration.
+Wrap your pluginclass with the :py:func:`@configuration <base.configuration>` decorator.
 
 ::
 
   from base import configuration, ConfigurationString, Plugin, ConfigurationList
-
-  __name__ = 'configuration'
 
   @configuration(
     companyName = ConfigurationString(
@@ -41,8 +37,9 @@ Create a plugin file and import ``configuration`` package from ``base`` to creat
   )
   class Config(Plugin):
     def companyInfo(self):
+        # access the companyName information from the configuration
         return {
-            'companyName' : self.config('companyName'), #access the companyName information from the configuration
+            'companyName' : self.config('companyName'),
             'contacts' : self.config('contacts'),
             'username' : self.config('username'),
             'password' : self.config('password'),
@@ -61,7 +58,7 @@ The configuration has following classes:
 ``ConfigurationDict`` : this function use to store configuration value as a dictionary.
 
 
-Call configuration to get company information using lua script : 
+Call configuration to get company information using lua script :
 
 ::
 

@@ -16,6 +16,11 @@ Classes in the base module are only accessible from Python applications.
   This decorator forces a method to be run in the main thread regardless of
   which thread calls the method.
 
+.. py:decorator:: base.configuration
+
+  This decorator should be applied on the Plugin class to add configuration values. Configuration
+  values will be exposed automatically to the user.
+
 .. autoclass:: base.ISignalObserver
   :show-inheritance:
   :members:
