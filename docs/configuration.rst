@@ -10,7 +10,7 @@ Create a plugin file and import ``configuration`` package from ``base`` to creat
 
 ::
 
-  from base import configuration, ConfigurationString, Plugin, ConfigurationList
+  from base import configuration, ConfigurationString, Plugin, ConfigurationList, ConfigurationManager
 
   __name__ = 'configuration'
 
@@ -40,15 +40,26 @@ Create a plugin file and import ``configuration`` package from ``base`` to creat
     )
   )
   class Config(Plugin):
-    def companyInfo(self):
+
+    def getCompanyInfo(self):
         return {
-            'companyName' : self.config('companyName'), #access the companyName information from the configuration
+            'companyName' : self.config('companyName'),
             'contacts' : self.config('contacts'),
             'username' : self.config('username'),
             'password' : self.config('password'),
         }
 
-Here, the configuration store company information and return it when it called.
+    def setCompanyInfo(self, companyName, contacts, username, password):
+        self.setValue('companyName', companyName)
+        self.setValue('contacts', contacts)
+        self.setValue('username', username)
+        self.setValue('password', password)
+
+
+Here, ``getCompanyInfo`` function is used to get the information of the company from the configuration.
+
+And the ``setCompanyInfo`` function is used to set the configuration value of the company.
+
 
 The configuration has following classes:
 
