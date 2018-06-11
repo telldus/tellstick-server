@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from .Plugin import Plugin, PluginMeta
-from .Settings import Settings
 import logging
 
-class configuration(object):
+from .Plugin import Plugin, PluginMeta
+from .Settings import Settings
+
+class configuration(object):  # pylint: disable=C0103
 	""".. py:decorator:: configuration
 
 	This decorator specifies the configurations for a plugin."""
@@ -49,22 +50,24 @@ class ConfigurationDict(ConfigurationValue):
 	"""
 	Configuration class used to store dictionaries
 	"""
-	def __init__(self, defaultValue={}, **kwargs):
-		super(ConfigurationDict,self).__init__('dict', defaultValue, **kwargs)
+	def __init__(self, defaultValue=None, **kwargs):
+		defaultValue = defaultValue or {}
+		super(ConfigurationDict, self).__init__('dict', defaultValue, **kwargs)
 
 class ConfigurationList(ConfigurationValue):
 	"""
 	Configuration class used to store lists
 	"""
-	def __init__(self, defaultValue=[], **kwargs):
-		super(ConfigurationList,self).__init__('list', defaultValue, **kwargs)
+	def __init__(self, defaultValue=None, **kwargs):
+		defaultValue = defaultValue or []
+		super(ConfigurationList, self).__init__('list', defaultValue, **kwargs)
 
 class ConfigurationNumber(ConfigurationValue):
 	"""
 	Configuration class used to store numbers
 	"""
 	def __init__(self, defaultValue=0, **kwargs):
-		super(ConfigurationNumber,self).__init__('number', defaultValue, **kwargs)
+		super(ConfigurationNumber, self).__init__('number', defaultValue, **kwargs)
 
 class ConfigurationString(ConfigurationValue):
 	"""
@@ -73,10 +76,10 @@ class ConfigurationString(ConfigurationValue):
 	def __init__(self, defaultValue='', minLength=0, maxLength=0, **kwargs):
 		self.minLength = minLength
 		self.maxLength = maxLength
-		super(ConfigurationString,self).__init__('string', defaultValue, **kwargs)
+		super(ConfigurationString, self).__init__('string', defaultValue, **kwargs)
 
 	def serialize(self):
-		retval = super(ConfigurationString,self).serialize()
+		retval = super(ConfigurationString, self).serialize()
 		retval['minLength'] = self.minLength
 		retval['maxLength'] = self.maxLength
 		return retval
@@ -88,36 +91,38 @@ class ConfigurationManager(Plugin):
 		cfgObj = {}
 		for key in cls.configuration:
 			config = cls.configuration[key].serialize()
-			if config['hidden'] == True:
+			if config['hidden'] is True:
 				continue
 			if config['title'] == '':
 				config['title'] = key
-			if config['readable'] == True:
+			if config['readable'] is True:
 				config['value'] = self.__getValue(cls, key)
 			cfgObj[key] = config
 		return cfgObj
 
 	def setValue(self, callee, key, value):
-		s = Settings(ConfigurationManager.nameForObject(callee))
-		s[key] = value
+		settings = Settings(ConfigurationManager.nameForObject(callee))
+		settings[key] = value
 		if hasattr(callee, 'configWasUpdated'):
 			callee(self.context).configWasUpdated(key, value)
 
 	def value(self, callee, key):
 		return self.__getValue(callee.__class__, key)
 
-	def __getValue(self, cls, key):
-		name = ConfigurationManager.nameForClass(cls)
+	@staticmethod
+	def __getValue(__class__, key):
+		name = ConfigurationManager.nameForClass(__class__)
 		# Find out the default value, used to parse the value correctly
-		if key not in cls.configuration:
-			logging.warning("%s not in %s", key, cls.configuration)
+		if key not in __class__.configuration:
+			logging.warning("%s not in %s", key, __class__.configuration)
 			return None
-		s = Settings(name)
-		value = s.get(key, cls.configuration[key].defaultValue)
+		settings = Settings(name)
+		value = settings.get(key, __class__.configuration[key].defaultValue)
 		if value is not None:
 			return value
 
-	def __requestConfigurationObject(self, obj, name):
+	@staticmethod
+	def __requestConfigurationObject(obj, name):
 		cfg = obj.getConfiguration()
 		if name not in cfg:
 			return None
@@ -132,7 +137,7 @@ class ConfigurationManager(Plugin):
 		raise Exception('Object is not a subclass of Plugin')
 
 	@staticmethod
-	def nameForClass(cls):
+	def nameForClass(cls):  # pylint: disable=W0211
 		return '%s.%s' % (cls.__module__, cls.__name__)
 
 	@staticmethod
