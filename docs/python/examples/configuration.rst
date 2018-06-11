@@ -49,13 +49,13 @@ Here, the configuration store company information and return it when it called.
 
 The configuration has following classes:
 
-``ConfigurationString`` : this function use to store configuration value as a string.
+:py:class:`base.ConfigurationString`: this function use to store configuration value as a string.
 
-``ConfigurationNumber`` : this function use to store configuration value as a number.
+:py:class:`base.ConfigurationNumber`: this function use to store configuration value as a number.
 
-``ConfigurationList`` : this function use to store configuration value as a list.
+:py:class:`base.ConfigurationList`: this function use to store configuration value as a list.
 
-``ConfigurationDict`` : this function use to store configuration value as a dictionary.
+:py:class:`base.ConfigurationDict`: this function use to store configuration value as a dictionary.
 
 
 Call configuration to get company information using lua script :

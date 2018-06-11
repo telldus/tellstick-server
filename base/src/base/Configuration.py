@@ -22,6 +22,10 @@ class configuration(object):
 		return cls
 
 class ConfigurationValue(object):
+	"""
+	Base class for configuration values. Do not use this class directly but use one of the
+	subclasses instead.
+	"""
 	def __init__(self, valueType, defaultValue, writable=True, readable=True, hidden=False, **kwargs):
 		self.valueType = valueType
 		self.defaultValue = defaultValue
@@ -42,18 +46,30 @@ class ConfigurationValue(object):
 		}
 
 class ConfigurationDict(ConfigurationValue):
+	"""
+	Configuration class used to store dictionaries
+	"""
 	def __init__(self, defaultValue={}, **kwargs):
 		super(ConfigurationDict,self).__init__('dict', defaultValue, **kwargs)
 
 class ConfigurationList(ConfigurationValue):
+	"""
+	Configuration class used to store lists
+	"""
 	def __init__(self, defaultValue=[], **kwargs):
 		super(ConfigurationList,self).__init__('list', defaultValue, **kwargs)
 
 class ConfigurationNumber(ConfigurationValue):
+	"""
+	Configuration class used to store numbers
+	"""
 	def __init__(self, defaultValue=0, **kwargs):
 		super(ConfigurationNumber,self).__init__('number', defaultValue, **kwargs)
 
 class ConfigurationString(ConfigurationValue):
+	"""
+	Configuration class used to store strings
+	"""
 	def __init__(self, defaultValue='', minLength=0, maxLength=0, **kwargs):
 		self.minLength = minLength
 		self.maxLength = maxLength
