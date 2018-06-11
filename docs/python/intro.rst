@@ -1,6 +1,6 @@
-
+==============
 Python plugins
---------------
+==============
 
 Python plugins offers the most flexible way of extending the functionality of TellStick. To get started a development environment should first be setup on a computer running Linux or macOS. Windows is not supported at the moment.
 
@@ -21,18 +21,9 @@ restart itself whenever a file has changed. To install it use the tellstick comm
 
 Replace `[path-to-plugin]` with the path to the plugin root folder.
 
-Plugin internals
-################
+
 .. toctree::
+  :hidden:
 
   anatomy
   deploy
-
-Concepts
-########
-
-Read more about the concepts used for building plugins
-
-.. toctree::
-
-  observers

@@ -54,11 +54,13 @@ class DeviceManager(Plugin):
 
 	@mainthread
 	def addDevice(self, device):
-		"""Call this function to register a new device to the device manager.
+		"""
+		Call this function to register a new device to the device manager.
 
 		.. note::
-		    The :func:`localId` function in the device must return a unique id for
-		    the transport type returned by :func:`typeString`
+		    The :func:`Device.localId() <telldus.Device.localId>` function in the device must return
+		    a unique id for the transport type returned by
+		    :func:`Device.typeString() <telldus.Device.localId>`
 		"""
 		cachedDevice = None
 		for i, delDevice in enumerate(self.devices):
@@ -104,8 +106,8 @@ class DeviceManager(Plugin):
 	def device(self, deviceId):
 		"""Retrieves a device.
 
-		Returns:
-		  the device specified by `deviceId` or None of no device was found
+		:param int deviceId: The id of the device to be returned.
+		:returns: the device specified by `deviceId` or None of no device was found
 		"""
 		for device in self.devices:
 			if device.id() == deviceId:
@@ -138,7 +140,8 @@ class DeviceManager(Plugin):
 
 	@mainthread
 	def removeDevice(self, deviceId):
-		"""Removes a device.
+		"""
+		Removes a device.
 
 		.. warning::
 		    This function may only be called by the module supplying the device
@@ -164,8 +167,7 @@ class DeviceManager(Plugin):
 
 		Remove all devices of a specific device type
 
-		Args:
-		    :deviceType: The type of devices to remove
+		:param str deviceType: The type of devices to remove
 		"""
 		deviceIds = []
 		for device in self.devices:
@@ -177,11 +179,9 @@ class DeviceManager(Plugin):
 	def retrieveDevices(self, deviceType=None):
 		"""Retrieve a list of devices.
 
-		Args:
-		    :deviceType: If this parameter is set only devices with this type is returned
-
-		Returns:
-		    Returns a list of devices
+		:param deviceType: If this parameter is set only devices with this type is returned
+		:type deviceType: str or None
+		:returns: a list of devices
 		"""
 		lst = []
 		for device in self.devices:

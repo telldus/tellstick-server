@@ -1,9 +1,11 @@
+=========================
 Sensor plugin development
 =========================
 
+This example shows how to extend the server with a new type of sensor.
 
 Prepare the Sensor
-##################
+==================
 
 In order to create the sensor, you have to import ``Sensor`` class form the ``telldus`` package
 and extend it in your TemperatureSensor class
@@ -22,7 +24,7 @@ and extend it in your TemperatureSensor class
     ...
 
 Export functions
-################
+================
 
 All sensors exported must subclass Sensor
 
@@ -46,7 +48,7 @@ Minimal function to reimplement is :
 
 
 Add Sensor
-##########
+==========
 
 To add a sensor into plugin ``Temperature``:
 
@@ -72,7 +74,7 @@ To add a sensor into plugin ``Temperature``:
 
 
 A complete example for Temperature sensor
-#########################################
+=========================================
 
 .. code::
 

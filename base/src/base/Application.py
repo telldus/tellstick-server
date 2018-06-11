@@ -13,10 +13,6 @@ import sys
 from .Plugin import Plugin, PluginContext
 
 class mainthread(object):
-	""".. py:decorator:: mainthread
-
-	This decorator forces a method to be run in the main thread regardless of
-	which thread calls the method."""
 	def __init__(self, f):
 		self.__f = f
 
@@ -30,7 +26,13 @@ class mainthread(object):
 				Application().queue(self.__f, obj, *args, **kwargs)
 			return None
 		__call__.__name__ = self.__f.__name__
-		__call__.__doc__ = "%s\n\n.. note::\n    Calls to this method are threadsafe.\n" % self.__f.__doc__
+		# Get the number of whitespaces in the beginning
+		indentCount = len(self.__f.__doc__) - len(self.__f.__doc__.lstrip())
+		indent = self.__f.__doc__[:indentCount].replace("\n", "")
+
+		__call__.__doc__ = "%s\n\n%s.. note::\n%s    Calls to this method are threadsafe.\n" % (
+			self.__f.__doc__, indent, indent
+		)
 		return __call__
 
 class Application(object):
@@ -72,7 +74,7 @@ class Application(object):
 
 	@staticmethod
 	def defaultContext():
-		"""Returns the default context used by the application"""
+		""":returns: the default context used by the application"""
 		return Application().pluginContext
 
 	def registerMaintenanceJobHandler(self, fn):
@@ -93,20 +95,20 @@ class Application(object):
 		Register a semi regular scheduled task to run at a predefined interval.
 		All calls will be made by the main thread.
 
-		  :fn: The function to be called.
-		  :seconds: The interval in seconds. Optional.
-		  :minutes: The interval in minutes. Optional.
-		  :hours: The interval in hours. Optional.
-		  :days: The interval in days. Optional.
-		  :runAtOnce: If the function should be called right away or wait one interval?
-		  :strictInterval: Set this to True if the interval should be strict. That means if the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55 seconds.
-		  :args: Any args to be supplied to the function. Supplied as \*args.
-		  :kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
+		:param func fn: The function to be called.
+
+		:param integer seconds: The interval in seconds. Optional.
+		:param integer minutes: The interval in minutes. Optional.
+		:param integer hours: The interval in hours. Optional.
+		:param integer days: The interval in days. Optional.
+		:param bool runAtOnce: If the function should be called right away or wait one interval?
+		:param bool strictInterval: Set this to True if the interval should be strict. That means if the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55 seconds.
+		:param list args: Any args to be supplied to the function. Supplied as \*args.
+		:param dict kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
 
 		.. note::
 		    The interval in which this task is run is not exact and can be delayed
 		    one minute depending on the server load.
-
 		"""
 		seconds = seconds + (minutes*60) + (hours*3600) + (days*86400)
 		nextRuntime = int(time.time())
@@ -126,8 +128,12 @@ class Application(object):
 		})
 
 	def registerShutdown(self, fn):
-		"""Register shutdown method. The method fn will be called the the server
-		shuts down. Use this to clean up resources on shutdown."""
+		"""
+		Register shutdown method. The method fn will be called the the server
+		shuts down. Use this to clean up resources on shutdown.
+
+		:param func fn: A function callback to call when the server shuts down
+		"""
 		self.shutdown.append(fn)
 
 	def run(self, startup=None):
@@ -159,13 +165,22 @@ class Application(object):
 				logging.error(e)
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
+			logging.warning("Running shutdown handler %s", fn)
 			fn()
+			logging.warning("Done")
+		logging.warning("Run sys.exit")
+		return self.exitCode
 		return sys.exit(self.exitCode)
 
 	def queue(self, fn, *args, **kwargs):
-		"""Queue a function to be executed later. All tasks in this queue will be
+		"""
+		Queue a function to be executed later. All tasks in this queue will be
 		run by the main thread. This is a thread safe function and can safely be
-		used to syncronize with the main thread"""
+		used to syncronize with the main thread
+
+		:returns: True if the task was queued
+		:returns: False if the server is shutting down
+		"""
 		if self.__isJoining == True:
 			return False
 		self.__taskLock.acquire()
@@ -203,7 +218,10 @@ class Application(object):
 	@staticmethod
 	def signal(msg, *args, **kwargs):
 		"""Send a global signal to registered slots.
-		It is not recommended to call this method directly but instead use the signal decorator
+		It is not recommended to call this method directly but instead use the signal decorator.
+		Any extra parameters supplied will be forwarded to the slot.
+
+		:param str msg: The signal name
 		"""
 		signalManager = SignalManager(Application._instance.pluginContext)
 		signalManager.sendSignal(msg, *args, **kwargs)
