@@ -27,11 +27,12 @@ class mainthread(object):
 			return None
 		__call__.__name__ = self.__f.__name__
 		# Get the number of whitespaces in the beginning
-		indentCount = len(self.__f.__doc__) - len(self.__f.__doc__.lstrip())
-		indent = self.__f.__doc__[:indentCount].replace("\n", "")
+		docs = self.__f.__doc__ or ''
+		indentCount = len(docs) - len(docs.lstrip())
+		indent = docs[:indentCount].replace("\n", "")
 
 		__call__.__doc__ = "%s\n\n%s.. note::\n%s    Calls to this method are threadsafe.\n" % (
-			self.__f.__doc__, indent, indent
+			docs, indent, indent
 		)
 		return __call__
 
