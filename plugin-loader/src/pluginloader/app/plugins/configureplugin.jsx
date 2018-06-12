@@ -9,8 +9,21 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 			}
 		}
 		handleChange(value) {
-			this.setState({value: value});
-			this.props.onChange(value)
+		
+			if(this.props.maxLength!=0 || this.props.minLength!=0){
+				if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
+					this.setState({value: value});
+					this.props.onChange(value)
+				}else{
+					alert(this.props.title + " must be in range " + this.props.minLength + " to " + this.props.maxLength)
+				}
+			}else{
+
+				this.setState({value: value});
+				this.props.onChange(value)
+
+			}
+
 		}
 		render() {
 			return (
