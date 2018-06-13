@@ -66,8 +66,16 @@ class ConfigurationNumber(ConfigurationValue):
 	"""
 	Configuration class used to store numbers
 	"""
-	def __init__(self, defaultValue=0, **kwargs):
+	def __init__(self, defaultValue=0, minLength=0, maxLength=0, **kwargs):
+		self.minLength = minLength
+		self.maxLength = maxLength
 		super(ConfigurationNumber, self).__init__('number', defaultValue, **kwargs)
+
+	def serialize(self):
+		retval = super(ConfigurationNumber, self).serialize()
+		retval['minLength'] = self.minLength
+		retval['maxLength'] = self.maxLength
+		return retval
 
 class ConfigurationString(ConfigurationValue):
 	"""
