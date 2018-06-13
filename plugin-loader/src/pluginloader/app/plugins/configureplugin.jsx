@@ -11,7 +11,10 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 		handleChange(value) {
 
 			if((this.props.maxLength!=0 || this.props.minLength!=0) && this.props.maxLength){
-				if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
+				if(this.props.maxLength==this.props.minLength && value.length<=this.props.maxLength ){
+					this.setState({value: value});
+					this.props.onChange(value)
+				}else if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
 					this.setState({value: value});
 					this.props.onChange(value)
 				}else{
