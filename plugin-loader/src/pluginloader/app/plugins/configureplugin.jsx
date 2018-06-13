@@ -9,22 +9,20 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 			}
 		}
 		handleChange(value) {
-
 			if((this.props.maxLength!=0 || this.props.minLength!=0) && this.props.maxLength){
-				if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
+				if(this.props.maxLength==this.props.minLength && value.length<=this.props.maxLength ){
+					this.setState({value: value});
+					this.props.onChange(value)
+				}else if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
 					this.setState({value: value});
 					this.props.onChange(value)
 				}else{
 					alert(this.props.title + " must be in range " + this.props.minLength + " to " + this.props.maxLength)
 				}
 			}else{
-
 				this.setState({value: value});
 				this.props.onChange(value)
-
 			}
-			console.log(this.props)
-
 		}
 		render() {
 			if(this.props.type == 'string')
@@ -49,8 +47,6 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 					/>
 				);
 			}
-			
-
 		}
 	}
 	class ConfigInput extends React.Component {
