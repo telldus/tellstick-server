@@ -9,8 +9,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 			}
 		}
 		handleChange(value) {
-		
-			if(this.props.maxLength!=0 || this.props.minLength!=0){
+
+			if((this.props.maxLength!=0 || this.props.minLength!=0) && this.props.maxLength){
 				if(value.length<=this.props.maxLength && value.length>=this.props.minLength){
 					this.setState({value: value});
 					this.props.onChange(value)
@@ -23,17 +23,33 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 				this.props.onChange(value)
 
 			}
+			console.log(this.props)
 
 		}
 		render() {
-			return (
-				<ReactMDL.Textfield
-					floatingLabel
-					onChange={e => this.handleChange(e.target.value)}
-					label={this.props.title}
-					value={this.state.value}
-				/>
-			);
+			if(this.props.type == 'string')
+			{
+				return (
+					<ReactMDL.Textfield
+						floatingLabel
+						onChange={e => this.handleChange(e.target.value)}
+						label={this.props.title}
+						value={this.state.value}
+					/>
+				);
+			}else if(this.props.type == 'number'){
+				return (
+					<ReactMDL.Textfield
+						floatingLabel
+						pattern="-?[0-9]*(\.[0-9]+)?"
+    					error="Please enter only number"
+						onChange={e => this.handleChange(e.target.value)}
+						label={this.props.title}
+						value={this.state.value}
+					/>
+				);
+			}
+			
 
 		}
 	}
