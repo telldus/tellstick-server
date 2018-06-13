@@ -655,6 +655,37 @@ class Sensor(Device):
 	def name(self):
 		return self._name if self._name is not None else 'Sensor %i' % self._id
 
+class Thermostat(Device):
+	"""
+	.. versionadded:: 1.2
+
+	A convenience class for thermostats.
+	"""
+	MODE_AUTO = 'auto'
+	"""Mode constant auto switching between heating and cooling."""
+	MODE_AWAY = 'away'
+	"""Mode constant for away mode, e.g. preventing water from freezing in forced water systems."""
+	MODE_COOL = 'cool'
+	"""Mode constant for cooling."""
+	MODE_DRY = 'dry'
+	"""Mode constant for dehumidification."""
+	MODE_ECO_COOL = 'eco-cool'
+	"""Mode constant for energy saving cooling."""
+	MODE_ECO_HEAT = 'eco-heat'
+	"""Mode constant for energy saving heating."""
+	MODE_FAN = 'fan'
+	"""Mode constant for fan only."""
+	MODE_HEAT = 'heat'
+	"""Mode constant for heating."""
+	MODE_MAX = 'max'
+	"""Mode constant for continuously heating or cooling."""
+
+	def deviceType(self):
+		return Device.TYPE_THERMOSTAT
+
+	def isSensor(self):
+		return True
+
 class CachedDevice(Device):  # pylint: disable=R0902
 	def __init__(self, settings):
 		super(CachedDevice, self).__init__()
