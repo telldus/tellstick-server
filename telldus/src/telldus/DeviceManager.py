@@ -103,6 +103,7 @@ class DeviceManager(Plugin):
 					'methods': device.methods(),
 					'state': state,
 					'stateValue': stateValue,
+					'stateValues': device.stateValues(),
 					'protocol': device.protocol(),
 					'model': device.model(),
 					'parameters': parameters,
@@ -281,7 +282,9 @@ class DeviceManager(Plugin):
 	def stateUpdated(self, device, ackId=None, origin=None):
 		if device.isDevice() is False:
 			return
-		extras = {}
+		extras = {
+			'stateValues': device.stateValues()
+		}
 		if ackId:
 			extras['ACK'] = ackId
 		if origin:
@@ -478,7 +481,8 @@ class DeviceManager(Plugin):
 	def save(self):
 		data = []
 		for device in self.devices:
-			(state, stateValue) = device.state()
+			(state, __stateValue) = device.state()
+			stateValues = device.stateValues()
 			dev = {
 				"id": device.id(),
 				"loadCount": device.loadCount(),
@@ -488,7 +492,7 @@ class DeviceManager(Plugin):
 				"params": device.params(),
 				"methods": device.methods(),
 				"state": state,
-				"stateValue": stateValue,
+				"stateValues": stateValues,
 				"ignored": device.ignored(),
 				"isSensor": device.isSensor()
 			}
@@ -528,6 +532,7 @@ class DeviceManager(Plugin):
 				'methods': device.methods(),
 				'state': state,
 				'stateValue': str(stateValue),
+				'stateValues': device.stateValues(),
 				'protocol': device.protocol(),
 				'model': device.model(),
 				'parametersHash': parametersHash.hexdigest(),

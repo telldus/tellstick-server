@@ -117,7 +117,7 @@ class Device(object):
 		self._name = None
 		self._manager = None
 		self._state = Device.TURNOFF
-		self._stateValue = ''
+		self._stateValues = {}
 		self._sensorValues = {}
 		self._confirmed = True
 		self.valueChangedTime = {}
@@ -260,9 +260,9 @@ class Device(object):
 		self._name = olddevice._name
 		self._loadCount = 0
 		self.setParams(olddevice.params())
-		(state, stateValue) = olddevice.state()
+		(state, __stateValue) = olddevice.state()
 		self._state = state
-		self._stateValue = stateValue
+		self._stateValues = olddevice.stateValues()
 		self._ignored = olddevice._ignored
 		self._sensorValues = olddevice._sensorValues
 
@@ -460,7 +460,7 @@ class Device(object):
 		"""
 		if stateValue is None:
 			stateValue = ''
-		if self._state == state and self._stateValue == stateValue:
+		if self._state == state and self._stateValues.get(state, None) == stateValue:
 			if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
 				# Same state/statevalue and less than one second ago, most probably
 				# just the same value being resent, ignore
@@ -470,11 +470,13 @@ class Device(object):
 				return
 		self.lastUpdated = time.time()
 		self._state = state
-		self._stateValue = stateValue
+		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT) \
+		   and stateValue is not None and stateValue is not '':
+			self._stateValues[str(state)] = stateValue
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
-	def setStateFailed(self, state, stateValue='', reason=0, origin=None):
+	def setStateFailed(self, state, stateValue=None, reason=0, origin=None):
 		if self._manager:
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
 
@@ -488,7 +490,27 @@ class Device(object):
 
 		     state, stateValue = device.state()
 		"""
-		return (self._state, self._stateValue)
+		return (self._state, self.stateValue())
+
+	def stateValue(self, state=None):
+		"""
+		.. versionadded:: 1.2
+
+		:returns: The statevalue for the specified state.
+		:param state: The state to request the value for. If no state is specified the current state
+		              is used
+		:type state: int or None
+		"""
+		state = state or self._state
+		return self._stateValues.get(str(state), '')
+
+	def stateValues(self):
+		"""
+		.. versionadded:: 1.2
+
+		:returns: a dict of all state values for the device
+		"""
+		return self._stateValues
 
 	def typeString(self):
 		"""
@@ -599,8 +621,10 @@ class CachedDevice(Device):  # pylint: disable=R0902
 			self.storedmethods = settings['methods']
 		if 'state' in settings:
 			self._state = settings['state']
-		if 'stateValue' in settings:
-			self._stateValue = settings['stateValue']
+		if 'stateValues' in settings:
+			self._stateValues = settings['stateValues']
+		if 'stateValue' in settings and settings['stateValue'] is not None:
+			self._stateValues[str(self._state)] = settings['stateValue']
 		if 'battery' in settings:
 			self.batteryLevel = settings['battery']
 		if 'ignored' in settings:
