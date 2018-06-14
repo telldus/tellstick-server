@@ -8,9 +8,18 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 				value: this.props.value
 			}
 		}
-		handleChange(value) {
-			this.setState({value: value});
-			this.props.onChange(value)
+		handleChange(e) {
+			errorFlag = true;
+			patternRegExp = new RegExp("^" + e.pattern + "$");
+			if(!patternRegExp.test(e.value))
+				errorFlag = false;
+			if(errorFlag)
+			{
+				this.setState({value: e.value});
+				this.props.onChange(e.value)
+			}
+			else
+				alert("Please enter valid data.");
 		}
 		render() {
 			if(this.props.type == 'string')
@@ -23,7 +32,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 				return (
 					<ReactMDL.Textfield
 						floatingLabel
-						onChange = {e => this.handleChange(e.target.value)}
+						onChange = {e => this.handleChange(e.target)}
 						pattern = {patternStr}
 						error = {this.props.title + " must be in range " + this.props.minLength + " to " + this.props.maxLength}
 						label = {this.props.title}
@@ -47,7 +56,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 						floatingLabel
 						pattern = {patternStr}
     					error = {errorStr}
-						onChange = {e => this.handleChange(e.target.value)}
+						onChange = {e => this.handleChange(e.target)}
 						label = {this.props.title}
 						value = {this.state.value}
 					/>
