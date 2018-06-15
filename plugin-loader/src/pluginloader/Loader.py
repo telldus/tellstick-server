@@ -204,7 +204,14 @@ class Loader(Plugin):
 				fingerprint = key['fingerprint']
 				keyid = key['keyid']
 				if keyid != acceptKeyId:
-					return {'name': name, 'fingerprint': fingerprint, 'keyid': keyid}
+					return {
+						'success': False,
+						'key': {
+							'name': name,
+							'fingerprint': fingerprint,
+							'keyid': keyid,
+						}
+					}
 				gpg.import_keys(open(keyFile).read())
 				os.unlink(keyFile)
 				# Reload loaded keys
@@ -247,7 +254,7 @@ class Loader(Plugin):
 					os.unlink(packageFilename)
 				if result.pubkey_fingerprint is None and result.username is None:
 					# No public key for this plugin
-					return {'success': False, 'key': self.importKey(None)}
+					return self.importKey(None)
 				raise ImportError(
 					'Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.'
 				)
