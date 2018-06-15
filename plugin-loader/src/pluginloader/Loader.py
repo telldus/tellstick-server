@@ -187,7 +187,7 @@ class Loader(Plugin):
 		return None
 
 	def importKey(self, acceptKeyId):
-		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
+		# return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
 		filename = '%s/staging.zip' % Board.pluginPath()
 		if not os.path.exists(filename):
 			return {'success': False, 'msg': 'No plugin uploaded'}
@@ -212,7 +212,7 @@ class Loader(Plugin):
 				Loader(self.context).initializeKeychain()
 		except Exception as exception:
 			os.unlink(filename)
-			return {'success': False, 'msg': str(exception)}
+			return "multiKeyError", {'success': False, 'msg': str(exception)}
 		return {'success': True}
 
 	def importPlugin(self, filename):
@@ -247,7 +247,11 @@ class Loader(Plugin):
 					os.unlink(packageFilename)
 				if result.pubkey_fingerprint is None and result.username is None:
 					# No public key for this plugin
-					return {'success': False, 'key': self.importKey(None)}
+					keyStatus = self.importKey(None)
+					if isinstance(keyStatus, tuple):
+						return keyStatus[1]
+					else:
+						return {'success': False, 'key': keyStatus[1]}
 				raise ImportError(
 					'Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.'
 				)
