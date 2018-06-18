@@ -304,6 +304,10 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
+		if isinstance(stateValue, dict):
+			stateValue = json.dumps(stateValue)
+		else:
+			stateValue = str(stateValue)
 		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
 		self.save()
 		if not self.live.registered:
@@ -527,6 +531,10 @@ class DeviceManager(Plugin):
 			if not device.isDevice():
 				continue
 			(state, stateValue) = device.state()
+			if isinstance(stateValue, dict):
+				stateValue = json.dumps(stateValue)
+			else:
+				stateValue = str(stateValue)
 			parametersHash = hashlib.sha1(json.dumps(
 				device.allParameters(),
 				separators=(',', ':'),
@@ -542,7 +550,7 @@ class DeviceManager(Plugin):
 				'name': device.name(),
 				'methods': device.methods(),
 				'state': state,
-				'stateValue': str(stateValue),
+				'stateValue': stateValue,
 				'stateValues': device.stateValues(),
 				'protocol': device.protocol(),
 				'model': device.model(),

@@ -202,7 +202,8 @@ class Device(object):
 				# For backwards compatibility, remove white component
 				value = value >> 8
 		elif method == Device.THERMOSTAT:
-			pass
+			if not isinstance(value, dict):
+				value = None
 		else:
 			value = None
 		def triggerFail(reason):
@@ -525,8 +526,24 @@ class Device(object):
 				return
 		self.lastUpdated = time.time()
 		self._state = state
-		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT) \
-		   and stateValue is not None and stateValue is not '':
+
+		# Make sure the value follows correct format
+		if state == Device.DIM:
+			if not isinstance(stateValue, int):
+				stateValue = int(stateValue)  # pylint: disable=R0204
+			# Only 0-255 allowed
+			stateValue = max(0, min(255, stateValue))
+		elif state == Device.RGB:
+			# TODO
+			pass
+		elif state == Device.THERMOSTAT:
+			if not isinstance(stateValue, dict):
+				stateValue = {}
+			# Make sure only allowed keys exists
+			allowedKeys = ('setpoint', 'mode')
+			stateValue = {key: stateValue[key] for key in stateValue if key in allowedKeys}
+		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT):
+			# Only set the statevalue for these states
 			self._stateValues[str(state)] = stateValue
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
