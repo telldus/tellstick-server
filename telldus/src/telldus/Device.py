@@ -720,6 +720,16 @@ class Thermostat(Device):
 	def isSensor(self):
 		return True
 
+	def setpointValue(self, mode):
+		"""
+		Request the setpoint value for a specific mode
+
+		:param str mode: One of the available modes
+		:returns: The temperature for the setpoint mode or `None` is it's not available
+		"""
+		stateValue = self.stateValue(Device.THERMOSTAT) or {}
+		return stateValue.get('setpoint', {}).get(mode, None)
+
 class CachedDevice(Device):  # pylint: disable=R0902
 	def __init__(self, settings):
 		super(CachedDevice, self).__init__()
