@@ -283,10 +283,15 @@ class Device(object):
 
 	def methods(self):
 		"""
-		Return the methods this supports. This is an or-ed in of device method flags.
+		This function returns the methods this device supports.
+
+		:returns: An or-ed integer of device method flags.
 
 		Example:
-		return Device.TURNON | Device.TURNOFF
+
+		.. code-block:: python
+
+		  return Device.TURNON | Device.TURNOFF
 		"""
 		return 0
 
