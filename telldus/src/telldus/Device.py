@@ -525,7 +525,6 @@ class Device(object):
 				# No need to update
 				return
 		self.lastUpdated = time.time()
-		self._state = state
 
 		# Make sure the value follows correct format
 		if state == Device.DIM:
@@ -545,6 +544,16 @@ class Device(object):
 		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT):
 			# Only set the statevalue for these states
 			self._stateValues[str(state)] = stateValue
+
+		if state == Device.THERMOSTAT:
+			# We never go to this state. We use on or off instead
+			mode = stateValue.get('mode', '')
+			if mode == 'off':
+				state = Device.TURNOFF
+			else:
+				state = Device.TURNON
+		self._state = state
+
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
@@ -696,6 +705,14 @@ class Thermostat(Device):
 	"""Mode constant for heating."""
 	MODE_MAX = 'max'
 	"""Mode constant for continuously heating or cooling."""
+	MODE_OFF = 'off'
+	"""
+	Mode constant for off.
+
+	.. note::
+	  This is a pseudomode. State :attr:`Device.TURNOFF <telldus.Device.TURNOFF>` will be used
+	  instead.
+	"""
 
 	def deviceType(self):
 		return Device.TYPE_THERMOSTAT
