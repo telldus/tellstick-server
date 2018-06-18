@@ -714,6 +714,24 @@ class Thermostat(Device):
 	  instead.
 	"""
 
+	def _command(self, action, value, success, failure, **kwargs):
+		if action is not Device.THERMOSTAT:
+			return Device._command(self, action, value, success, failure, **kwargs)
+		mode = value.get('mode', None)
+		if not Thermostat.isValidThermostatMode(mode):
+			failure(Device.FAILED_STATUS_UNKNOWN)
+			return
+		temperature = value.get('temperature', None)
+		scale = value.get('scale', 0)
+		changeMode = value.get('changeMode', True)
+		self.commandThermostat(mode, temperature, scale, changeMode, success, failure)
+
+	@staticmethod
+	def commandThermostat(mode, temperature, scale, changeMode, success, failure):
+		"""Reimplement this function to change and/or update the mode"""
+		del mode, temperature, scale, changeMode, success
+		failure(0)
+
 	def deviceType(self):
 		return Device.TYPE_THERMOSTAT
 
@@ -729,6 +747,21 @@ class Thermostat(Device):
 		"""
 		stateValue = self.stateValue(Device.THERMOSTAT) or {}
 		return stateValue.get('setpoint', {}).get(mode, None)
+
+	@staticmethod
+	def isValidThermostatMode(thermostatMode):
+		return thermostatMode in (
+			Thermostat.MODE_AUTO,
+			Thermostat.MODE_AWAY,
+			Thermostat.MODE_COOL,
+			Thermostat.MODE_DRY,
+			Thermostat.MODE_ECO_COOL,
+			Thermostat.MODE_ECO_HEAT,
+			Thermostat.MODE_FAN,
+			Thermostat.MODE_HEAT,
+			Thermostat.MODE_MAX,
+			Thermostat.MODE_OFF,
+		)
 
 class CachedDevice(Device):  # pylint: disable=R0902
 	def __init__(self, settings):
