@@ -1,23 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from base import Application, mainthread, Settings
-from tellduslive.base import LiveMessage
-from threading import Timer
 import logging
+from threading import Timer
 import time
 
+from base import Application, mainthread, Settings
+from tellduslive.base import LiveMessage
+
 class Action(object):
-	def __init__(self, event, id, delay, delayPolicy, delayExecTime=None, *args, **kwargs):
-		super(Action,self).__init__()
+	# pylint: disable=W0622
+	def __init__(self, event, id, delay, delayPolicy, delayExecTime=None, *__args, **__kwargs):
+		super(Action, self).__init__()
 		self.event = event
-		self.id = id
+		self.id = id  # pylint: disable=C0103
 		self.delay = delay
 		self.delayPolicy = delayPolicy
 		self.delayExecTime = None
 		if delayExecTime:
 			self.delayExecTime = float(delayExecTime)
 		self.timeout = None
-		self.s = Settings('telldus.event')
+		self.triggerInfo = None
+		self.settings = Settings('telldus.event')
 		Application().registerShutdown(self.stop)
 
 	def close(self):
@@ -28,9 +31,12 @@ class Action(object):
 		if not storedActions or str(self.id) not in storedActions:
 			return
 		storedAction = storedActions[str(self.id)]
-		if 'delayExecTime' not in storedAction or storedAction['delay'] != self.delay or storedAction['delayPolicy'] != self.delayPolicy:
+		if 'delayExecTime' not in storedAction \
+		   or storedAction['delay'] != self.delay \
+		   or storedAction['delayPolicy'] != self.delayPolicy:
 			return
-		# action is waiting for a delay, and delaytime or delaypolicy hasn't been changed, so readd this delay
+		# action is waiting for a delay, and delaytime or delaypolicy hasn't been changed,
+		# so readd this delay
 		self.triggerInfo = None
 		if 'triggerInfo' in storedAction:
 			self.triggerInfo = storedAction['triggerInfo']
@@ -50,7 +56,7 @@ class Action(object):
 			self.timeout = Timer(self.delayExecTime - time.time(), self.executeDelayed)
 			self.timeout.start()
 
-	def execute(self, triggerInfo={}):
+	def execute(self, triggerInfo={}):  # pylint: disable=W0102
 		pass
 
 	def executeDelayed(self):
@@ -64,14 +70,15 @@ class Action(object):
 		for param in params:
 			try:
 				self.parseParam(param, params[param])
-			except Exception as e:
-				logging.error(str(e))
-				logging.error("Could not parse action param, %s - %s" % (param, params[param]))
+			except Exception as error:
+				logging.error(str(error))
+				logging.error("Could not parse action param, %s - %s", param, params[param])
 
 	def parseParam(self, name, value):
 		pass
 
-	def start(self, triggerInfo={}):
+	def start(self, triggerInfo=None):
+		triggerInfo = triggerInfo or {}
 		if self.delay == 0:
 			self.execute(triggerInfo)
 			return
@@ -96,7 +103,7 @@ class Action(object):
 
 	@mainthread
 	def updateStoredAction(self):
-		storeddata = self.s.get('events', {})
+		storeddata = self.settings.get('events', {})
 		eventId = str(self.event.eventId)
 		if eventId in storeddata:
 			if 'actions' in storeddata[eventId]:
@@ -110,15 +117,16 @@ class Action(object):
 						try:
 							del action['delayExecTime']
 							del action['triggerInfo']
-						except Exception as e:
+						except Exception as __e:
 							pass
-		self.s['events'] = storeddata
+		self.settings['events'] = storeddata
 
 class RemoteAction(Action):
 	def __init__(self, **kwargs):
-		super(RemoteAction,self).__init__(**kwargs)
+		super(RemoteAction, self).__init__(**kwargs)
 
-	def execute(self, triggerInfo={}):
+	def execute(self, triggerInfo=None):
+		triggerInfo = triggerInfo or {}
 		msg = LiveMessage('event-executeaction')
 		msg.append({
 			'action': self.id,

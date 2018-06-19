@@ -1,33 +1,37 @@
 # -*- coding: utf-8 -*-
 
-from tellduslive.base import LiveMessage
 import logging
 import time
 
+from tellduslive.base import LiveMessage
+
 class Condition(object):
-	def __init__(self, event, id, group, **kwargs):
-		super(Condition,self).__init__()
+	# pylint: disable=W0622
+	def __init__(self, event, id, group, **__kwargs):
+		super(Condition, self).__init__()
 		self.event = event
-		self.id = id
+		self.id = id  # pylint: disable=C0103
 		self.group = group
 
 	def loadParams(self, params):
 		for param in params:
 			try:
 				self.parseParam(param, params[param])
-			except Exception as e:
-				logging.error(str(e))
-				logging.error("Could not parse condition param, %s - %s" % (param, params[param]))
+			except Exception as error:
+				logging.error(str(error))
+				logging.error("Could not parse condition param, %s - %s", param, params[param])
 
 	def parseParam(self, name, value):
 		pass
 
-	def validate(self, success, failure):
+	@staticmethod
+	def validate(success, failure):
+		del success
 		failure()
 
 class RemoteCondition(Condition):
 	def __init__(self, **kwargs):
-		super(RemoteCondition,self).__init__(**kwargs)
+		super(RemoteCondition, self).__init__(**kwargs)
 		self.outstandingRequests = []
 
 	def receivedResultFromServer(self, result):

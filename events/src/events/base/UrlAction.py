@@ -1,21 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from Action import Action
+import base64
+import httplib
 from threading import Thread
-import base64, httplib, urlparse
+import urlparse
+
+from .Action import Action
 
 class UrlAction(Action):
 	def __init__(self, **kwargs):
-		super(UrlAction,self).__init__(**kwargs)
+		super(UrlAction, self).__init__(**kwargs)
 		self.url = ''
+		self.port = 80
 
 	def parseParam(self, name, value):
 		if name == 'url':
-			if type(value) == unicode:
+			if isinstance(value, unicode):
 				value = value.encode('utf-8')
 			self.url = str(value)
 
-	def execute(self, triggerInfo={}):
+	def execute(self, triggerInfo=None):
+		triggerInfo = triggerInfo or {}
 		# Invoke in a new thread to not block
 		thread = Thread(target=self.__execute, name='UrlAction')
 		thread.start()
@@ -40,4 +45,4 @@ class UrlAction(Action):
 
 		conn = httplib.HTTPConnection('%s:%i' % (sendHost, port))
 		conn.request('GET', sendPath, None, headers)
-		response = conn.getresponse()
+		conn.getresponse()

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from base import Plugin, implements, IInterface, mainthread, ObserverCollection, Settings
-from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
-from Event import Event
-from UrlAction import UrlAction
-import logging
+from tellduslive.base import TelldusLive, ITelldusLiveObserver
+from .Event import Event
+from .UrlAction import UrlAction
 
+# pylint: disable=E0211,E0213,W0622
 class IEventFactory(IInterface):
 	def clearAll():
 		"""This method is called to clean up all existing events"""
@@ -25,7 +25,7 @@ class EventManager(Plugin):
 
 	def __init__(self):
 		self.events = {}
-		self.s = Settings('telldus.event')
+		self.settings = Settings('telldus.event')
 		self.schedulersettings = Settings('telldus.scheduler')
 		self.live = TelldusLive(self.context)
 		self.timezone = self.schedulersettings.get('tz', 'UTC')
@@ -62,7 +62,7 @@ class EventManager(Plugin):
 	def loadLocalEvents(self):
 		if len(self.events) == 0:
 			# only load local events if no report has been received (highly improbable though)
-			data = self.s.get('events', {})
+			data = self.settings.get('events', {})
 			for eventId in data:
 				if eventId not in self.events and data[eventId] != "":
 					self.loadEvent(eventId, data[eventId], {})
@@ -101,8 +101,8 @@ class EventManager(Plugin):
 			# clear old timers
 			self.events[eventId].close()
 		self.events = {}
-		storeddata = self.s.get('events', {})
-		self.s['events'] = data
+		storeddata = self.settings.get('events', {})
+		self.settings['events'] = data
 		for observer in self.observers:
 			observer.clearAll()
 		for eventId in data:
@@ -115,9 +115,9 @@ class EventManager(Plugin):
 		if eventId in self.events:
 			self.events[eventId].close()
 			del self.events[eventId]
-		storeddata = self.s.get('events', {})
+		storeddata = self.settings.get('events', {})
 		storeddata[str(eventId)] = ""
-		self.s['events'] = storeddata
+		self.settings['events'] = storeddata
 
 	@TelldusLive.handler('one-event-report')
 	def receiveEventFromServer(self, msg):
@@ -126,10 +126,10 @@ class EventManager(Plugin):
 		if eventId in self.events:
 			self.events[eventId].close()
 			del self.events[eventId]
-		storeddata = self.s.get('events', {})
+		storeddata = self.settings.get('events', {})
 		newstoreddata = storeddata.copy()
 		newstoreddata[str(eventId)] = data
-		self.s['events'] = newstoreddata
+		self.settings['events'] = newstoreddata
 		self.loadEvent(eventId, data, storeddata)
 
 	@TelldusLive.handler('event-conditionresult')
@@ -138,11 +138,11 @@ class EventManager(Plugin):
 		for eid in self.events:
 			event = self.events[eid]
 			for cgid in event.conditions:
-				cg = event.conditions[cgid]
-				for cid in cg.conditions:
+				conditionGroup = event.conditions[cgid]
+				for cid in conditionGroup.conditions:
 					if cid == data['condition']:
 						try:
-							cg.conditions[cid].receivedResultFromServer(data['status'])
+							conditionGroup.conditions[cid].receivedResultFromServer(data['status'])
 						except AttributeError:
 							# Not a RemoteCondition
 							pass

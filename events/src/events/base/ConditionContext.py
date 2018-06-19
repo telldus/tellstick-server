@@ -6,7 +6,7 @@ class ConditionContext(object):
 	EVALUATING, DONE = range(2)
 
 	def __init__(self, event, conditions, success, failure, **kwargs):
-		super(ConditionContext,self).__init__()
+		super(ConditionContext, self).__init__()
 		self.event = event
 		self.success = success
 		self.failure = failure
@@ -15,8 +15,8 @@ class ConditionContext(object):
 		self.state = ConditionContext.EVALUATING
 		for i in conditions:
 			group = []
-			for c in conditions[i].conditions:
-				group.append(ConditionsEvaluation(self, conditions[i].conditions[c]))
+			for condition in conditions[i].conditions:
+				group.append(ConditionsEvaluation(self, conditions[i].conditions[condition]))
 			self.conditions.append(group)
 
 	def evaluate(self):
@@ -30,7 +30,7 @@ class ConditionContext(object):
 					# No need to evaluate more conditions in this group
 					success = False
 					break
-			if success == True:
+			if success is True:
 				# No need to evaluate more conditions
 				self.state = ConditionContext.DONE
 				self.success(**self.kwargs)
@@ -42,7 +42,7 @@ class ConditionsEvaluation(object):
 	UNEVALUATED, EVALUATING, SUCCESS, FAILED = range(4)
 
 	def __init__(self, context, condition):
-		super(ConditionsEvaluation,self).__init__()
+		super(ConditionsEvaluation, self).__init__()
 		self.condition = condition
 		self.context = context
 		self.state = ConditionsEvaluation.UNEVALUATED
