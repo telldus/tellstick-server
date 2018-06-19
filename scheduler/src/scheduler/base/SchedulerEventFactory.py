@@ -1,18 +1,22 @@
 ﻿# -*- coding: utf-8 -*-
 
-from base import Application, implements, Plugin, Settings, slot, ISignalObserver
-from calendar import timegm
-from datetime import date, datetime, timedelta
-from events.base import IEventFactory, Action, Condition, Trigger
-from pytz import timezone
-from SunCalculator import SunCalculator
-from telldus import Device, DeviceManager
-import pytz
 import threading
 import time
 
+from calendar import timegm
+from datetime import datetime, timedelta
+from pytz import timezone
+import pytz
+
+from base import Application, implements, Plugin, Settings, slot, ISignalObserver
+from events.base import IEventFactory, Condition, Trigger
+from telldus import Device, DeviceManager
+
+from .SunCalculator import SunCalculator
+
 class TimeTriggerManager(object):
 	def __init__(self):
+		self.lastMinute = None
 		self.running = False
 		self.timeLock = threading.Lock()
 		self.triggers = {}
@@ -35,7 +39,7 @@ class TimeTriggerManager(object):
 			for minute in self.triggers:
 				try:
 					self.triggers[minute].remove(trigger)
-				except:
+				except Exception as __error:
 					pass
 
 	def recalcAll(self):
@@ -71,12 +75,12 @@ class TimeTriggerManager(object):
 				for trigger in self.triggers[currentMinute]:
 					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
 						triggertype = 'time'
-						if type(trigger) is SuntimeTrigger:
+						if isinstance(trigger, SuntimeTrigger):
 							triggertype = 'suntime'
-						elif type(trigger) is BlockheaterTrigger:
+						elif isinstance(trigger, BlockheaterTrigger):
 							triggertype = 'blockheater'
 
-						if type(trigger) is SuntimeTrigger and trigger.recalculate():
+						if isinstance(trigger, SuntimeTrigger) and trigger.recalculate():
 							# suntime (time or active-status) was updated (new minute), move it around
 							triggersToRemove.append(trigger)
 						if trigger.active:
@@ -97,14 +101,14 @@ class TimeTriggerManager(object):
 
 class TimeTrigger(Trigger):
 	def __init__(self, manager, **kwargs):
-		super(TimeTrigger,self).__init__(**kwargs)
+		super(TimeTrigger, self).__init__(**kwargs)
 		self.manager = manager
 		self.minute = None
 		self.hour = None
 		self.setHour = None  # this is the hour actually set (not recalculated to UTC)
 		self.active = True  # TimeTriggers are always active
-		self.s = Settings('telldus.scheduler')
-		self.timezone = self.s.get('tz', 'UTC')
+		self.settings = Settings('telldus.scheduler')
+		self.timezone = self.settings.get('tz', 'UTC')
 
 	def close(self):
 		self.manager.deleteTrigger(self)
@@ -120,12 +124,17 @@ class TimeTrigger(Trigger):
 			else:
 				local_timezone = timezone(self.timezone)
 				currentDate = pytz.utc.localize(datetime.utcnow())
-				local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, int(value)))
+				local_datetime = local_timezone.localize(
+					datetime(currentDate.year, currentDate.month, currentDate.day, int(value))
+				)
 				utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 				if datetime.now().hour > utc_datetime.hour:
-					# retry it with new date (will have impact on daylight savings changes (but not sure it will actually help))
+					# retry it with new date (will have impact on daylight savings changes (but not
+					# sure it will actually help))
 					currentDate = currentDate + timedelta(days=1)
-				local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, int(value)))
+				local_datetime = local_timezone.localize(
+					datetime(currentDate.year, currentDate.month, currentDate.day, int(value))
+				)
 				utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 				self.hour = utc_datetime.hour
 		if self.hour is not None and self.minute is not None:
@@ -134,16 +143,21 @@ class TimeTrigger(Trigger):
 	def recalculate(self):
 		if self.hour == -1:
 			return False
-		self.timezone = self.s.get('tz', 'UTC')
+		self.timezone = self.settings.get('tz', 'UTC')
 		currentHour = self.hour
 		local_timezone = timezone(self.timezone)
 		currentDate = pytz.utc.localize(datetime.utcnow())
-		local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour))
+		local_datetime = local_timezone.localize(
+			datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour)
+		)
 		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		if datetime.now().hour > utc_datetime.hour:
-			# retry it with new date (will have impact on daylight savings changes (but not sure it will actually help))
+			# retry it with new date (will have impact on daylight savings changes (but not sure it
+			# will actually help))
 			currentDate = currentDate + timedelta(days=1)
-		local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour))
+		local_datetime = local_timezone.localize(
+			datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour)
+		)
 		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		self.hour = utc_datetime.hour
 		if currentHour == self.hour:
@@ -153,11 +167,11 @@ class TimeTrigger(Trigger):
 
 class SuntimeTrigger(TimeTrigger):
 	def __init__(self, manager, **kwargs):
-		super(SuntimeTrigger,self).__init__(manager = manager, **kwargs)
+		super(SuntimeTrigger, self).__init__(manager=manager, **kwargs)
 		self.sunStatus = None
 		self.offset = None
-		self.latitude = self.s.get('latitude', '55.699592')
-		self.longitude = self.s.get('longitude', '13.187836')
+		self.latitude = self.settings.get('latitude', '55.699592')
+		self.longitude = self.settings.get('longitude', '13.187836')
 
 	def parseParam(self, name, value):
 		if name == 'sunStatus':
@@ -170,13 +184,17 @@ class SuntimeTrigger(TimeTrigger):
 			self.manager.addTrigger(self)
 
 	def recalculate(self):
-		self.latitude = self.s.get('latitude', '55.699592')
-		self.longitude = self.s.get('longitude', '13.187836')
+		self.latitude = self.settings.get('latitude', '55.699592')
+		self.longitude = self.settings.get('longitude', '13.187836')
 		sunCalc = SunCalculator()
 		currentHour = self.hour
 		currentMinute = self.minute
 		currentDate = pytz.utc.localize(datetime.utcnow())
-		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		riseSet = sunCalc.nextRiseSet(
+			timegm(currentDate.utctimetuple()),
+			float(self.latitude),
+			float(self.longitude)
+		)
 		if self.sunStatus == 0:
 			runTime = riseSet['sunset']
 		else:
@@ -185,7 +203,8 @@ class SuntimeTrigger(TimeTrigger):
 		utc_datetime = datetime.utcfromtimestamp(runTime)
 
 		tomorrow = currentDate + timedelta(days=1)
-		if (utc_datetime.day != currentDate.day or utc_datetime.month != currentDate.month) and (utc_datetime.day != tomorrow.day or utc_datetime.month != tomorrow.month):
+		if (utc_datetime.day != currentDate.day or utc_datetime.month != currentDate.month) \
+		   and (utc_datetime.day != tomorrow.day or utc_datetime.month != tomorrow.month):
 			# no sunrise/sunset today or tomorrow
 			if self.active:
 				self.active = False
@@ -200,7 +219,7 @@ class SuntimeTrigger(TimeTrigger):
 
 class BlockheaterTrigger(TimeTrigger):
 	def __init__(self, factory, manager, deviceManager, **kwargs):
-		super(BlockheaterTrigger,self).__init__(manager = manager, **kwargs)
+		super(BlockheaterTrigger, self).__init__(manager=manager, **kwargs)
 		self.factory = factory
 		self.departureHour = None
 		self.departureMinute = None
@@ -210,7 +229,7 @@ class BlockheaterTrigger(TimeTrigger):
 
 	def close(self):
 		self.factory.deleteTrigger(self)
-		super(BlockheaterTrigger,self).close()
+		super(BlockheaterTrigger, self).close()
 
 	def parseParam(self, name, value):
 		if name == 'clientSensorId':
@@ -219,7 +238,9 @@ class BlockheaterTrigger(TimeTrigger):
 			self.departureHour = int(value)
 		elif name == 'minute':
 			self.departureMinute = int(value)
-		if self.departureHour is not None and self.departureMinute is not None and self.sensorId is not None:
+		if self.departureHour is not None \
+		   and self.departureMinute is not None \
+		   and self.sensorId is not None:
 			self.recalculate()
 			self.manager.addTrigger(self)
 
@@ -244,7 +265,7 @@ class BlockheaterTrigger(TimeTrigger):
 			minutes += 24*60
 		self.setHour = int(minutes / 60)
 		self.minute = int(minutes % 60)
-		return super(BlockheaterTrigger,self).recalculate()
+		return super(BlockheaterTrigger, self).recalculate()
 
 	def setTemp(self, temp):
 		self.temp = temp
@@ -252,13 +273,13 @@ class BlockheaterTrigger(TimeTrigger):
 
 class SuntimeCondition(Condition):
 	def __init__(self, **kwargs):
-		super(SuntimeCondition,self).__init__(**kwargs)
+		super(SuntimeCondition, self).__init__(**kwargs)
 		self.sunStatus = None
 		self.sunriseOffset = None
 		self.sunsetOffset = None
-		self.s = Settings('telldus.scheduler')
-		self.latitude = self.s.get('latitude', '55.699592')
-		self.longitude = self.s.get('longitude', '13.187836')
+		self.settings = Settings('telldus.scheduler')
+		self.latitude = self.settings.get('latitude', '55.699592')
+		self.longitude = self.settings.get('longitude', '13.187836')
 
 	def parseParam(self, name, value):
 		if name == 'sunStatus':
@@ -275,9 +296,17 @@ class SuntimeCondition(Condition):
 			return
 		sunCalc = SunCalculator()
 		currentDate = pytz.utc.localize(datetime.utcnow())
-		riseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		riseSet = sunCalc.nextRiseSet(
+			timegm(currentDate.utctimetuple()),
+			float(self.latitude),
+			float(self.longitude)
+		)
 		currentStatus = 1
-		sunToday = sunCalc.riseset(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
+		sunToday = sunCalc.riseset(
+			timegm(currentDate.utctimetuple()),
+			float(self.latitude),
+			float(self.longitude)
+		)
 		sunRise = None
 		sunSet = None
 		if sunToday['sunrise']:
@@ -289,7 +318,6 @@ class SuntimeCondition(Condition):
 				currentStatus = 0
 		else:
 			# no sunset or sunrise, is it winter or summer?
-			nextRiseSet = sunCalc.nextRiseSet(timegm(currentDate.utctimetuple()), float(self.latitude), float(self.longitude))
 			if riseSet['sunrise'] < riseSet['sunset']:
 				# next is a sunrise, it's dark now (winter)
 				if time.time() < (riseSet['sunrise'] + (self.sunriseOffset*60)):
@@ -305,13 +333,13 @@ class SuntimeCondition(Condition):
 
 class TimeCondition(Condition):
 	def __init__(self, **kwargs):
-		super(TimeCondition,self).__init__(**kwargs)
+		super(TimeCondition, self).__init__(**kwargs)
 		self.fromMinute = None
 		self.fromHour = None
 		self.toMinute = None
 		self.toHour = None
-		self.s = Settings('telldus.scheduler')
-		self.timezone = self.s.get('tz', 'UTC')
+		self.settings = Settings('telldus.scheduler')
+		self.timezone = self.settings.get('tz', 'UTC')
 
 	def parseParam(self, name, value):
 		if name == 'fromMinute':
@@ -327,12 +355,19 @@ class TimeCondition(Condition):
 		currentDate = pytz.utc.localize(datetime.utcnow())
 		local_timezone = timezone(self.timezone)
 
-		if self.fromMinute is None or self.toMinute is None or self.fromHour is None or self.toHour is None:
+		if self.fromMinute is None \
+		   or self.toMinute is None \
+		   or self.fromHour is None \
+		   or self.toHour is None:
 			# validate that all parameters have been loaded
 			failure()
 			return
-		toTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0))
-		fromTime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0))
+		toTime = local_timezone.localize(
+			datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0)
+		)
+		fromTime = local_timezone.localize(
+			datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0)
+		)
 		if fromTime > toTime:
 			if (currentDate >= fromTime or currentDate <= toTime):
 				success()
@@ -347,10 +382,10 @@ class TimeCondition(Condition):
 
 class WeekdayCondition(Condition):
 	def __init__(self, **kwargs):
-		super(WeekdayCondition,self).__init__(**kwargs)
+		super(WeekdayCondition, self).__init__(**kwargs)
 		self.weekdays = None
-		self.s = Settings('telldus.scheduler')
-		self.timezone = self.s.get('tz', 'UTC')
+		self.settings = Settings('telldus.scheduler')
+		self.timezone = self.settings.get('tz', 'UTC')
 
 	def parseParam(self, name, value):
 		if name == 'weekdays':
@@ -377,7 +412,9 @@ class SchedulerEventFactory(Plugin):
 	def clearAll(self):
 		self.triggerManager.clearAll()
 
-	def createCondition(self, type, params, **kwargs):
+	@staticmethod
+	def createCondition(type, params, **kwargs):  # pylint: disable=W0622
+		del params
 		if type == 'suntime':
 			return SuntimeCondition(**kwargs)
 		elif type == 'time':
@@ -385,17 +422,20 @@ class SchedulerEventFactory(Plugin):
 		elif type == 'weekdays':
 			return WeekdayCondition(**kwargs)
 
-	def createTrigger(self, type, **kwargs):
+	def createTrigger(self, type, **kwargs):  # pylint: disable=W0622
 		if type == 'blockheater':
-			trigger = BlockheaterTrigger(factory=self, manager=self.triggerManager, deviceManager=DeviceManager(self.context), **kwargs)
+			trigger = BlockheaterTrigger(
+				factory=self,
+				manager=self.triggerManager,
+				deviceManager=DeviceManager(self.context),
+				**kwargs
+			)
 			self.blockheaterTriggers.append(trigger)
 			return trigger
 		if type == 'time':
-			trigger = TimeTrigger(manager=self.triggerManager, **kwargs)
-			return trigger
+			return TimeTrigger(manager=self.triggerManager, **kwargs)
 		if type == 'suntime':
-			trigger = SuntimeTrigger(manager=self.triggerManager, **kwargs)
-			return trigger
+			return SuntimeTrigger(manager=self.triggerManager, **kwargs)
 		return None
 
 	def deleteTrigger(self, trigger):
@@ -406,7 +446,7 @@ class SchedulerEventFactory(Plugin):
 		self.triggerManager.recalcAll()
 
 	@slot('sensorValueUpdated')
-	def sensorValueUpdated(self, device, valueType, value, scale):
+	def sensorValueUpdated(self, device, valueType, value, __scale):
 		if valueType != Device.TEMPERATURE:
 			return
 		for trigger in self.blockheaterTriggers:
