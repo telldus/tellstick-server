@@ -19,6 +19,8 @@ class TimeTriggerManager(object):
 		Application().registerShutdown(self.stop)
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
+		self.s = Settings('telldus.scheduler')
+		self.timezone = self.s.get('tz', 'UTC')
 
 	def addTrigger(self, trigger):
 		with self.timeLock:
@@ -61,7 +63,9 @@ class TimeTriggerManager(object):
 		self.running = True
 		self.lastMinute = None
 		while self.running:
-			currentMinute = datetime.utcnow().minute
+			local_timezone = timezone(self.timezone)
+			local_time =  datetime.now(local_timezone)
+			currentMinute = local_time.minute
 			if self.lastMinute is None or self.lastMinute is not currentMinute:
 				# new minute, check triggers
 				self.lastMinute = currentMinute
@@ -69,7 +73,7 @@ class TimeTriggerManager(object):
 					continue
 				triggersToRemove = []
 				for trigger in self.triggers[currentMinute]:
-					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
+					if trigger.hour == -1 or trigger.hour == local_time.hour:
 						triggertype = 'time'
 						if type(trigger) is SuntimeTrigger:
 							triggertype = 'suntime'
@@ -324,9 +328,9 @@ class TimeCondition(Condition):
 			self.toHour = int(value)
 
 	def validate(self, success, failure):
-		currentDate = pytz.utc.localize(datetime.utcnow())
+		utcCurrentDate = pytz.utc.localize(datetime.utcnow())
 		local_timezone = timezone(self.timezone)
-
+		currentDate = utcCurrentDate.astimezone(local_timezone)
 		if self.fromMinute is None or self.toMinute is None or self.fromHour is None or self.toHour is None:
 			# validate that all parameters have been loaded
 			failure()
