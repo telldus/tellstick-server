@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import time
 
@@ -202,8 +203,15 @@ class Device(object):
 				# For backwards compatibility, remove white component
 				value = value >> 8
 		elif method == Device.THERMOSTAT:
+			if isinstance(value, str):
+				# It could be a json-string. Try to decode it
+				try:
+					value = json.loads(value)
+				except ValueError:
+					# Could not decode, fallback to empty value
+					value = {}  # pylint: disable=R0204
 			if not isinstance(value, dict):
-				value = None
+				value = {}
 		else:
 			value = None
 		def triggerFail(reason):
