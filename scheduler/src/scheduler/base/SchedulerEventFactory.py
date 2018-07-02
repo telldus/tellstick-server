@@ -60,13 +60,7 @@ class TimeTriggerManager(object):
 	def run(self):
 		self.running = True
 		self.lastMinute = None
-		sed = Settings('telldus.scheduler')
-		timezone2 = sed.get('tz', 'UTC')
 		while self.running:
-			local_timezone = timezone(timezone2)
-			currentDate = pytz.utc.localize(datetime.utcnow())
-			local_datetime = local_timezone.localize(datetime(currentDate.year, currentDate.month, currentDate.day, currentDate.hour, currentDate.minute))
-			timevar = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 			currentMinute = datetime.utcnow().minute
 			if self.lastMinute is None or self.lastMinute is not currentMinute:
 				# new minute, check triggers
