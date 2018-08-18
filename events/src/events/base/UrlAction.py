@@ -43,6 +43,9 @@ class UrlAction(Action):
 			headers['Authorization'] = 'Basic %s' % (base64.b64encode(sendHost[:atIndex]))
 			sendHost = sendHost[atIndex+1:]
 
-		conn = httplib.HTTPConnection('%s:%i' % (sendHost, port))
+		if url.scheme=="http":
+			conn = httplib.HTTPConnection('%s' % (sendHost))
+		else:
+			conn = httplib.HTTPSConnection('%s' % (sendHost))
 		conn.request('GET', sendPath, None, headers)
 		conn.getresponse()
