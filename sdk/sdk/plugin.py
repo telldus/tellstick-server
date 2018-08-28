@@ -78,7 +78,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		self.packageDir = '%s/package' % os.getcwd()  # pylint: disable=W0201
 		self.name = self.distribution.metadata.name.replace(' ', '_')  # pylint: disable=W0201
 		files = set()
-		packages = set()
+		packages = []
 
 		# Find prebuilt packages
 		prebuiltPackages = {}
@@ -93,7 +93,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		# Download and package dependencies for the project
 		if os.path.exists('%s/requirements.txt' % os.getcwd()):
 			requirements = self.__downloadRequirements(prebuiltPackages)
-			packages.update(requirements)
+			packages.extend(requirements)
 
 		# Build the plugin as egg
 		cmdObj = self.distribution.get_command_obj('bdist_egg')
@@ -101,7 +101,9 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		cmdObj.exclude_source_files = True
 		self.run_command('bdist_egg')
 		for distfile in self.distribution.dist_files:
-			packages.add(distfile[2])
+			if distfile[2] in packages:
+				continue
+			packages.append(distfile[2])
 
 		files.update(packages)
 
