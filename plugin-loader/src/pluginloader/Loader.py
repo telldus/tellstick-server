@@ -187,7 +187,7 @@ class Loader(Plugin):
 		return None
 
 	def importKey(self, acceptKeyId):
-		return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
+		# return {'success': False, 'msg': 'Importing of custom keys are not allowed'}
 		filename = '%s/staging.zip' % Board.pluginPath()
 		if not os.path.exists(filename):
 			return {'success': False, 'msg': 'No plugin uploaded'}
