@@ -2,7 +2,7 @@ var gulp = require('gulp');
 var babel = require("gulp-babel");
 var requirejsOptimize = require('gulp-requirejs-optimize');
 
-gulp.task('default', ['plugins', 'oauth2'], function() {
+gulp.task('default', ['plugins', 'oauth2', 'dropdown'], function() {
 });
 
 gulp.task("babel", function () {
@@ -11,6 +11,21 @@ gulp.task("babel", function () {
 			presets: ['es2015', 'stage-0', 'react']
 		}))
 		.pipe(gulp.dest('src/pluginloader/build'));
+});
+
+gulp.task('dropdown', ['babel'], function () {
+	return gulp.src('src/pluginloader/build/plugins/dropdown.js')
+		.pipe(requirejsOptimize({
+			//optimize: 'none',
+			paths: {
+				'react': 'empty:',
+				'react-mdl': 'empty:',
+				'react-redux': 'empty:',
+			},
+			baseUrl: 'src/pluginloader/build',
+			name: 'plugins/dropdown'
+		}))
+		.pipe(gulp.dest('src/pluginloader/htdocs'));
 });
 
 gulp.task('oauth2', ['babel'], function () {

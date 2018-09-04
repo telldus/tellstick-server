@@ -26,6 +26,9 @@ class WebFrontend(Plugin):
 			},
 			'plugins/oauth2': {
 				'script': 'pluginloader/oauth2.js'
+			},
+			'plugins/dropdown': {
+				'script': 'pluginloader/dropdown.js'
 			}
 		}
 
@@ -45,7 +48,8 @@ class WebFrontend(Plugin):
 			'plugins',
 			'saveConfiguration',
 			'storePlugins',
-			'upload'
+			'upload',
+			'dropdown'
 		]:
 			return True
 		return False
@@ -75,10 +79,24 @@ class WebFrontend(Plugin):
 			return WebResponseJson({'success': False, 'msg': str(error)})
 		return WebResponseRedirect('%s/plugins?settings=%s' % (request.base(), plugin))
 
+	def handleDropDownRequest(self, params, request):
+		if request.method() == 'POST':
+			plugin = params['pluginname']
+			configuration = json.loads(params['config'])
+			try:
+				Loader(self.context).saveConfiguration(plugin, configuration)
+			except Exception as error:
+				return WebResponseJson({'success': False, 'msg': str(error)})
+			return WebResponseJson({'success': True})
+
+
 	def handleRequest(self, plugin, path, params, request, **kwargs):
 		del kwargs
 		if path == 'oauth2':
 			return self.handleOauth2Request(params, request)
+
+		if path == 'dropdown':
+			return self.handleDropDownRequest(params, request)
 
 		if path == 'icon':
 			for plugin in Loader(self.context).plugins:
