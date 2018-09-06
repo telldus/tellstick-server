@@ -149,7 +149,7 @@ class DeviceAction(Action):
 		elif name == 'repeats':
 			self.repeats = min(10, max(1, int(value)))
 		elif name == 'value':
-			self.value = int(value)
+			self.value = value
 
 	def execute(self, triggerInfo=None):
 		del triggerInfo
