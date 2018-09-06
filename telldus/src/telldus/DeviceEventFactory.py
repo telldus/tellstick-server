@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from threading import Timer
+
 from base import Plugin, implements
 from events.base import IEventFactory, Action, Condition, Trigger
-from Device import Device
-from DeviceManager import DeviceManager, IDeviceChange
-from threading import Timer
+from .Device import Device
+from .DeviceManager import DeviceManager, IDeviceChange
 
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
@@ -13,37 +14,37 @@ class DeviceEventFactory(Plugin):
 	def __init__(self):
 		self.deviceTriggers = []
 		self.sensorTriggers = []
-		self.deviceManager = DeviceManager(self.context)
+		self.deviceManager = DeviceManager(self.context)  # pylint: disable=E1121
 
 	def clearAll(self):
 		self.deviceTriggers = []
 		self.sensorTriggers = []
 
-	def createAction(self, type, params, **kwargs):
+	def createAction(self, type, params, **kwargs):  # pylint: disable=W0622
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
-				return DeviceAction(manager = self.deviceManager, **kwargs)
+				return DeviceAction(manager=self.deviceManager, **kwargs)
 		return None
 
-	def createCondition(self, type, params, **kwargs):
+	def createCondition(self, type, params, **kwargs):  # pylint: disable=W0622
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
-				return DeviceCondition(manager = self.deviceManager, **kwargs)
+				return DeviceCondition(manager=self.deviceManager, **kwargs)
 			return None
 		if type == 'sensor':
 			if 'local' in params and params['local'] == 1:
-				return SensorCondition(manager = self.deviceManager, **kwargs)
+				return SensorCondition(manager=self.deviceManager, **kwargs)
 		return None
 
-	def createTrigger(self, type, **kwargs):
+	def createTrigger(self, type, **kwargs):  # pylint: disable=W0622
 		if type == 'device':
-			trigger = DeviceTrigger(self, **kwargs)
-			self.deviceTriggers.append(trigger)
-			return trigger
+			deviceTrigger = DeviceTrigger(self, **kwargs)
+			self.deviceTriggers.append(deviceTrigger)
+			return deviceTrigger
 		if type == 'sensor':
-			trigger = SensorTrigger(self, **kwargs)
-			self.sensorTriggers.append(trigger)
-			return trigger
+			sensorTrigger = SensorTrigger(self, **kwargs)
+			self.sensorTriggers.append(sensorTrigger)
+			return sensorTrigger
 		return None
 
 	def deleteTrigger(self, trigger):
@@ -58,9 +59,14 @@ class DeviceEventFactory(Plugin):
 				trigger.triggerSensorUpdate(valueType, value, scale)
 
 	def stateChanged(self, device, method, statevalue):
+		del statevalue
 		for trigger in self.deviceTriggers:
 			if trigger.deviceId == device.id() and trigger.method == int(method):
-				trigger.triggered({'triggertype': 'device', 'clientdeviceid': device.id(), 'method': int(method)})
+				trigger.triggered({
+					'triggertype': 'device',
+					'clientdeviceid': device.id(),
+					'method': int(method)
+				})
 
 class DeviceActionExecutor(object):
 	def __init__(self, device, method, value, repeats, description):
@@ -74,25 +80,31 @@ class DeviceActionExecutor(object):
 			self.retries = 0  # No retries for 433
 			i = 1
 			while i < self.repeats:
-				t = Timer(3*i, self.execute)
-				t.start()
+				tmr = Timer(3*i, self.execute)
+				tmr.start()
 				i += 1
 		else:
 			self.retries = self.repeats
 		self.execute()
 
 	def execute(self):
-		self.device.command(self.method, self.value, origin='Event - %s' % self.description, failure=self.__failure)
+		self.device.command(
+			self.method,
+			self.value,
+			origin='Event - %s' % self.description,
+			failure=self.__failure
+		)
 
 	def __failure(self, reason):
+		del reason
 		self.retries -= 1
 		if self.retries > 0:
-			t = Timer(60, self.execute)
-			t.start()
+			tmr = Timer(60, self.execute)
+			tmr.start()
 
 class DeviceAction(Action):
 	def __init__(self, manager, **kwargs):
-		super(DeviceAction,self).__init__(**kwargs)
+		super(DeviceAction, self).__init__(**kwargs)
 		self.manager = manager
 		self.deviceId = 0
 		self.method = 0
@@ -109,17 +121,24 @@ class DeviceAction(Action):
 		elif name == 'value':
 			self.value = int(value)
 
-	def execute(self, triggerInfo={}):
+	def execute(self, triggerInfo=None):
+		del triggerInfo
 		device = self.manager.device(self.deviceId)
 		if device is None:
 			return
 		# We do not store the deviceExecutor object so it can be garbage collected
 		# when it is done.
-		deviceExecutor = DeviceActionExecutor(device, self.method, self.value, self.repeats, self.event.description)
+		deviceExecutor = DeviceActionExecutor(  # pylint: disable=W0612
+			device,
+			self.method,
+			self.value,
+			self.repeats,
+			self.event.description
+		)
 
 class DeviceCondition(Condition):
 	def __init__(self, manager, **kwargs):
-		super(DeviceCondition,self).__init__(**kwargs)
+		super(DeviceCondition, self).__init__(**kwargs)
 		self.manager = manager
 		self.deviceId = 0
 		self.method = 0
@@ -135,7 +154,7 @@ class DeviceCondition(Condition):
 		if device is None:
 			failure()
 			return
-		(state, stateValue) = device.state()
+		(state, __stateValue) = device.state()
 		if state == self.method:
 			success()
 		else:
@@ -143,7 +162,7 @@ class DeviceCondition(Condition):
 
 class DeviceTrigger(Trigger):
 	def __init__(self, factory, **kwargs):
-		super(DeviceTrigger,self).__init__(**kwargs)
+		super(DeviceTrigger, self).__init__(**kwargs)
 		self.deviceId = 0
 		self.method = 0
 		self.factory = factory
@@ -159,7 +178,7 @@ class DeviceTrigger(Trigger):
 
 class SensorCondition(Condition):
 	def __init__(self, manager, **kwargs):
-		super(SensorCondition,self).__init__(**kwargs)
+		super(SensorCondition, self).__init__(**kwargs)
 		self.manager = manager
 		self.sensorId = 0
 		self.value = 0
@@ -208,7 +227,8 @@ class SensorCondition(Condition):
 		else:
 			failure()
 
-	def __compare(self, value, condition, edge):
+	@staticmethod
+	def __compare(value, condition, edge):
 		if edge == 1:
 			return value > condition
 		if edge == 0:
@@ -225,6 +245,10 @@ class SensorTrigger(Trigger):
 		self.firstValue = True
 		self.scale = None
 		self.factory = factory
+		self.edge = 0
+		self.sensorId = 0
+		self.value = None
+		self.valueType = None
 
 	def close(self):
 		self.factory.deleteTrigger(self)
@@ -270,7 +294,13 @@ class SensorTrigger(Trigger):
 					self.isTriggered = True
 					self.requireReload = True
 					if not self.firstValue:
-						self.triggered({'triggertype': 'sensor', 'clientsensorid': self.sensorId, 'value': value, 'valueType': ttype,  'scale': scale})
+						self.triggered({
+							'triggertype': 'sensor',
+							'clientsensorid': self.sensorId,
+							'value': value,
+							'valueType': ttype,
+							'scale': scale
+						})
 			else:
 				if self.requireReload:
 					self.requireReload = abs(value-self.value) < self.reloadValue
@@ -280,10 +310,11 @@ class SensorTrigger(Trigger):
 					else:
 						self.isTriggered = self.__compare(value, self.value, self.edge)
 			self.firstValue = False
-		except Exception as e:
+		except Exception as _error:
 			pass
 
-	def __compare(self, value, trigger, edge):
+	@staticmethod
+	def __compare(value, trigger, edge):
 		if edge == 1:
 			return value > trigger
 		if edge == 0:
