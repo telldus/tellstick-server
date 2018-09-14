@@ -14,7 +14,7 @@ class ProtocolUpm(Protocol):
 		del data
 		S = ';'
 		L = '~'
-		STARTq = S
+		START = S
 		B1 = L+S
 		B0 = S+L
 		intUnit = self.intParameter('unit', 1, 4)-1
