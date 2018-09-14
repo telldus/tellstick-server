@@ -1,14 +1,17 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
 from telldus import Device
+from .Protocol import Protocol
 
 class ProtocolUpm(Protocol):
 
-	def methods(self):
+	@staticmethod
+	def methods():
 		return Device.TURNON | Device.TURNOFF
 
+	# pylint: disable=C0103
 	def stringForMethod(self, method, data=None):
+		del data
 		S = ';'
 		L = '~'
 		STARTq = S
