@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import netifaces, time, random
+import logging
+import random
 import threading
+import time
+
+import netifaces
 
 from base import Application, Settings, IInterface, ObserverCollection, Plugin, mainthread
 from board import Board
-from .ServerList import *
+from .ServerList import ServerList
 from .ServerConnection import ServerConnection
-from .LiveMessage import *
+from .LiveMessage import LiveMessage
 
 class ITelldusLiveObserver(IInterface):
 	def liveConnected():
@@ -26,10 +30,11 @@ class TelldusLive(Plugin):
 		self.supportedMethods = 0
 		self.connected = False
 		self.registered = False
+		self.running = False
 		self.serverList = ServerList()
 		Application().registerShutdown(self.stop)
-		self.s = Settings('tellduslive.config')
-		self.uuid = self.s['uuid']
+		self.settings = Settings('tellduslive.config')
+		self.uuid = self.settings['uuid']
 		self.conn = ServerConnection()
 		self.pingTimer = 0
 		self.thread = threading.Thread(target=self.run)
@@ -44,8 +49,11 @@ class TelldusLive(Plugin):
 			self.connected = True
 			self.registered = False
 			params = message.argument(0).dictVal
-			self.s['uuid'] = params['uuid'].stringVal
-			logging.info("This client isn't activated, please activate it using this url:\n%s", params['url'].stringVal)
+			self.settings['uuid'] = params['uuid'].stringVal
+			logging.info(
+				"This client isn't activated, please activate it using this url:\n%s",
+				params['url'].stringVal
+			)
 			self.observers.liveConnected()
 			return
 
@@ -75,9 +83,9 @@ class TelldusLive(Plugin):
 			return
 
 		handled = False
-		for o in self.observers:
-			for f in getattr(o, '_telldusLiveHandlers', {}).get(message.name(), []):
-				f(o, message)
+		for observer in self.observers:
+			for func in getattr(observer, '_telldusLiveHandlers', {}).get(message.name(), []):
+				func(observer, message)
 				handled = True
 		if not handled:
 			logging.warning("Did not understand: %s", message.toByteArray())
@@ -161,11 +169,11 @@ class TelldusLive(Plugin):
 
 	@staticmethod
 	def handler(message):
-		def call(fn):
+		def call(func):
 			import sys
-			frame = sys._getframe(1)
-			frame.f_locals.setdefault('_telldusLiveHandlers', {}).setdefault(message, []).append(fn)
-			return fn
+			frame = sys._getframe(1)  # pylint: disable=W0212
+			frame.f_locals.setdefault('_telldusLiveHandlers', {}).setdefault(message, []).append(func)
+			return func
 		return call
 
 	def __sendRegisterMessage(self):
@@ -190,6 +198,6 @@ class TelldusLive(Plugin):
 		addrs = netifaces.ifaddresses(ifname)
 		try:
 			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except (IndexError, KeyError) as e:
+		except (IndexError, KeyError) as __error:
 			return ''
 		return mac.upper().replace(':', '')
