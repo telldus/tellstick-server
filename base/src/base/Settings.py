@@ -6,9 +6,11 @@ import logging
 import shutil
 import time
 from threading import Timer
-from .Application import Application
+
 from configobj import ConfigObj, ParseError
 from board import Board
+
+from .Application import Application
 
 class Settings(object):
 	_config = None
