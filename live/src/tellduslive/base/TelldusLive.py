@@ -1,13 +1,34 @@
 # -*- coding: utf-8 -*-
 
-import netifaces, time, random
+import bz2
+import logging
+import random
+from StringIO import StringIO
+import struct
 import threading
+import time
 
-from base import Application, Settings, IInterface, ObserverCollection, Plugin, mainthread
+from pbkdf2 import PBKDF2
+from Crypto.Cipher import AES
+from Crypto import Random
+import netifaces
+import requests
+
+from base import \
+	Application, \
+	Settings, \
+	IInterface, \
+	ISignalObserver, \
+	ObserverCollection, \
+	Plugin, \
+	implements, \
+	mainthread, \
+	signal, \
+	slot
 from board import Board
-from .ServerList import *
+from .ServerList import ServerList
 from .ServerConnection import ServerConnection
-from .LiveMessage import *
+from .LiveMessage import LiveMessage
 
 class ITelldusLiveObserver(IInterface):
 	def liveConnected():
@@ -18,6 +39,7 @@ class ITelldusLiveObserver(IInterface):
 		"""This method is call when we are disconnected"""
 
 class TelldusLive(Plugin):
+	implements(ISignalObserver)
 	observers = ObserverCollection(ITelldusLiveObserver)
 
 	def __init__(self):
@@ -26,16 +48,34 @@ class TelldusLive(Plugin):
 		self.supportedMethods = 0
 		self.connected = False
 		self.registered = False
+		self.running = False
 		self.serverList = ServerList()
+		self.lastBackedUpConfig = None
 		Application().registerShutdown(self.stop)
-		self.s = Settings('tellduslive.config')
-		self.uuid = self.s['uuid']
+		self.settings = Settings('tellduslive.config')
+		self.uuid = self.settings['uuid']
 		self.conn = ServerConnection()
 		self.pingTimer = 0
 		self.thread = threading.Thread(target=self.run)
 		if self.conn.publicKey != '':
 			# Only connect if the keys has been set.
 			self.thread.start()
+
+	@slot('configurationWritten')
+	def configurationWritten(self, path):
+		if self.lastBackedUpConfig is not None:
+			self.lastBackedUpConfig = time.time()
+			return
+		uploadPath = 'https://%s/upload/config' % Board.liveServer()
+		with open(path, 'rb') as fd:
+			fileData = fd.read()
+		fileData = bz2.compress(fileData)  # Compress it
+		fileData = TelldusLive.deviceSpecificEncrypt(fileData)  # Encrypt it
+		requests.post(
+			uploadPath,
+			data={'mac': TelldusLive.getMacAddr(Board.networkInterface())},
+			files={'Telldus.conf.bz2': fileData}
+		)
 
 	@mainthread
 	def handleMessage(self, message):
@@ -44,8 +84,11 @@ class TelldusLive(Plugin):
 			self.connected = True
 			self.registered = False
 			params = message.argument(0).dictVal
-			self.s['uuid'] = params['uuid'].stringVal
-			logging.info("This client isn't activated, please activate it using this url:\n%s", params['url'].stringVal)
+			self.settings['uuid'] = params['uuid'].stringVal
+			logging.info(
+				"This client isn't activated, please activate it using this url:\n%s",
+				params['url'].stringVal
+			)
 			self.observers.liveConnected()
 			return
 
@@ -75,9 +118,9 @@ class TelldusLive(Plugin):
 			return
 
 		handled = False
-		for o in self.observers:
-			for f in getattr(o, '_telldusLiveHandlers', {}).get(message.name(), []):
-				f(o, message)
+		for observer in self.observers:
+			for func in getattr(observer, '_telldusLiveHandlers', {}).get(message.name(), []):
+				func(observer, message)
 				handled = True
 		if not handled:
 			logging.warning("Did not understand: %s", message.toByteArray())
@@ -161,11 +204,11 @@ class TelldusLive(Plugin):
 
 	@staticmethod
 	def handler(message):
-		def call(fn):
+		def call(func):
 			import sys
-			frame = sys._getframe(1)
-			frame.f_locals.setdefault('_telldusLiveHandlers', {}).setdefault(message, []).append(fn)
-			return fn
+			frame = sys._getframe(1)  # pylint: disable=W0212
+			frame.f_locals.setdefault('_telldusLiveHandlers', {}).setdefault(message, []).append(func)
+			return func
 		return call
 
 	def __sendRegisterMessage(self):
@@ -190,6 +233,23 @@ class TelldusLive(Plugin):
 		addrs = netifaces.ifaddresses(ifname)
 		try:
 			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except (IndexError, KeyError) as e:
+		except (IndexError, KeyError) as __error:
 			return ''
 		return mac.upper().replace(':', '')
+
+	@staticmethod
+	def deviceSpecificEncrypt(payload):
+		# TODO: Use security plugin once available
+		password = Board.secret()
+		iv = Random.new().read(16)  # pylint: disable=C0103
+		key = PBKDF2(password, iv).read(32)
+		encryptor = AES.new(key, AES.MODE_CBC, iv)
+
+		buff = StringIO()
+		buff.write(struct.pack('<Q', len(payload)))
+		buff.write(iv)
+		if len(payload) % 16 != 0:
+			# Pad payload
+			payload += ' ' * (16 - len(payload) % 16)
+		buff.write(encryptor.encrypt(payload))
+		return buff.getvalue()
