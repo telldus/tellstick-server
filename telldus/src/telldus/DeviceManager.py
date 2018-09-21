@@ -31,6 +31,8 @@ class IDeviceChange(IInterface):
 		"""
 	def deviceRemoved(deviceId):  # pylint: disable=E0213
 		"""This method is called when a device is removed"""
+	def deviceUpdated(device):  #pylint: disable=E0213
+		"""This method is called when a device parameter is updated"""
 	def sensorValueUpdated(device, valueType, value, scale):  # pylint: disable=E0213
 		"""This method is called when a new sensor value is received from a sensor"""
 	def stateChanged(device, state, statevalue):  # pylint: disable=E0213
@@ -116,6 +118,7 @@ class DeviceManager(Plugin):
 
 	def deviceParamUpdated(self, device, param):
 		self.save()
+		self.__deviceUpdated(device)
 		if param == 'name':
 			if device.isDevice():
 				self.__sendDeviceReport()
@@ -423,6 +426,13 @@ class DeviceManager(Plugin):
 		device id. The ref to the device is no longer available
 		"""
 		self.observers.deviceRemoved(deviceId)
+
+	@signal('deviceUpdated')
+	def __deviceUpdated(self, device):
+		"""
+		Called every time a device parameter is updated
+		"""
+		self.observers.deviceUpdated(device)
 
 	@signal('deviceStateChanged')
 	def __deviceStateChanged(self, device, state, stateValue, origin):
