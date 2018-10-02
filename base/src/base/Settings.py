@@ -88,6 +88,7 @@ class Settings(object):
 		shutil.copy('%s.1' % Settings._config.filename, '%s.bak' % Settings._config.filename)
 		# Do not us shutils for rename. We must ensure an atomic operation here
 		os.rename('%s.1' % Settings._config.filename, Settings._config.filename)
+		Application.signal('configurationWritten', Settings._config.filename)
 
 	def __writeToDisk(self):
 		if Settings._writeTimer is not None:
