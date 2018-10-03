@@ -111,7 +111,11 @@ class Device(object):
 		Similar as parameters() but this returnes more values such as the device type
 		"""
 		params = self.parameters()
-		params['devicetype'] = self.deviceType()
+		try:
+			params['devicetype'] = self.deviceType()
+		except Exception as error:
+			params['devicetype'] = Device.TYPE_UNKNOWN
+			Application.printException(error)
 		return params
 
 	def battery(self):  # pylint: disable=R0201
