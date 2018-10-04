@@ -11,22 +11,21 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 		handleChange(e) {
 			errorFlag = true;
 			patternRegExp = new RegExp("^" + e.pattern + "$");
-			if(!patternRegExp.test(e.value))
+			if (!patternRegExp.test(e.value)) {
 				errorFlag = false;
-			if(errorFlag)
-			{
+			}
+			if (errorFlag) {
 				this.setState({value: e.value});
 				this.props.onChange(e.value)
-			}
-			else
+			} else {
 				alert("Please enter valid data.");
+			}
 		}
 		render() {
-			if(this.props.type == 'string')
-			{
-				if((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength){
+			if (this.props.type == 'string') {
+				if ((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength) {
 					patternStr = ".{" + this.props.minLength + "," + this.props.maxLength + "}";
-				}else{
+				} else {
 					patternStr = ".{0,}";
 				}
 				return (
@@ -39,15 +38,15 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 						value = {this.state.value}
 					/>
 				);
-			}else if(this.props.type == 'number'){
-				if((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength){
+			} else if (this.props.type == 'number') {
+				if ((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength) {
 					patternStr = "[0-9]{" + this.props.minLength + "," + this.props.maxLength + "}";
-					if(this.props.minLength == this.props.maxLength){
+					if (this.props.minLength == this.props.maxLength) {
 						errorStr = "Please enter only number.That must contain " + this.props.minLength + " digits.";
 					}else{
 						errorStr = "Please enter only number.That must be in range " + this.props.minLength + " to " + this.props.maxLength;
 					}
-				}else{
+				} else {
 					patternStr = "[0-9]{0,}";
 					errorStr = "Please enter only number."
 				}
@@ -55,7 +54,7 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 					<ReactMDL.Textfield
 						floatingLabel
 						pattern = {patternStr}
-    					error = {errorStr}
+						error = {errorStr}
 						onChange = {e => this.handleChange(e.target)}
 						label = {this.props.title}
 						value = {this.state.value}
