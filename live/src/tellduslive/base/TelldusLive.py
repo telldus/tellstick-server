@@ -50,7 +50,7 @@ class TelldusLive(Plugin):
 		self.registered = False
 		self.running = False
 		self.serverList = ServerList()
-		self.lastBackedUpConfig = None
+		self.lastBackedUpConfig = 0
 		Application().registerShutdown(self.stop)
 		self.settings = Settings('tellduslive.config')
 		self.uuid = self.settings['uuid']
@@ -63,10 +63,12 @@ class TelldusLive(Plugin):
 
 	@slot('configurationWritten')
 	def configurationWritten(self, path):
-		if self.lastBackedUpConfig is not None:
-			self.lastBackedUpConfig = time.time()
+		if time.time() - self.lastBackedUpConfig < 86400:
+			# Only send the backup once per day
 			return
-		uploadPath = 'https://%s/upload/config' % Board.liveServer()
+		self.lastBackedUpConfig = time.time()
+		uploadPath = 'http://%s/upload/config' % Board.liveServer()
+		logging.info('Upload backup to %s', uploadPath)
 		with open(path, 'rb') as fd:
 			fileData = fd.read()
 		fileData = bz2.compress(fileData)  # Compress it
