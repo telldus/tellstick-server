@@ -17,50 +17,62 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 			if (errorFlag) {
 				this.setState({value: e.value});
 				this.props.onChange(e.value)
-			} else {
-				alert("Please enter valid data.");
 			}
 		}
 		render() {
-			if (this.props.type == 'string') {
-				if ((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength) {
-					patternStr = ".{" + this.props.minLength + "," + this.props.maxLength + "}";
-				} else {
-					patternStr = ".{0,}";
-				}
-				return (
-					<ReactMDL.Textfield
-						floatingLabel
-						onChange = {e => this.handleChange(e.target)}
-						pattern = {patternStr}
-						error = {this.props.title + " must be in range " + this.props.minLength + " to " + this.props.maxLength}
-						label = {this.props.title}
-						value = {this.state.value}
-					/>
-				);
-			} else if (this.props.type == 'number') {
-				if ((this.props.maxLength != 0 || this.props.minLength != 0) && this.props.maxLength) {
-					patternStr = "[0-9]{" + this.props.minLength + "," + this.props.maxLength + "}";
-					if (this.props.minLength == this.props.maxLength) {
-						errorStr = "Please enter only number.That must contain " + this.props.minLength + " digits.";
-					}else{
-						errorStr = "Please enter only number.That must be in range " + this.props.minLength + " to " + this.props.maxLength;
-					}
-				} else {
-					patternStr = "[0-9]{0,}";
-					errorStr = "Please enter only number."
-				}
-				return (
-					<ReactMDL.Textfield
-						floatingLabel
-						pattern = {patternStr}
-						error = {errorStr}
-						onChange = {e => this.handleChange(e.target)}
-						label = {this.props.title}
-						value = {this.state.value}
-					/>
-				);
+			if (this.props.maxLength != 0 || this.props.minLength != 0) {
+				patternStr = ".{" + this.props.minLength + "," + this.props.maxLength + "}";
+			} else {
+				patternStr = ".{0,}";
 			}
+			return (
+				<ReactMDL.Textfield
+					floatingLabel
+					onChange = {e => this.handleChange(e.target)}
+					pattern = {patternStr}
+					error = {this.props.title + " length must between " + this.props.minLength + " and " + this.props.maxLength + " characters"}
+					label = {this.props.title}
+					value = {this.state.value}
+				/>
+			);
+		}
+	}
+	class ConfigNumberInput extends React.Component {
+		constructor(props) {
+			super(props)
+			this.state = {
+				value: this.props.value
+			}
+		}
+		handleChange(e) {
+			errorFlag = true;
+			patternRegExp = new RegExp("^" + e.pattern + "$");
+			if (!patternRegExp.test(e.value)) {
+				errorFlag = false;
+			}
+			if (errorFlag) {
+				this.setState({value: e.value});
+				this.props.onChange(e.value)
+			}
+		}
+		render() {
+			if (this.props.maximum != 0 || this.props.minimum != 0) {
+				patternStr = "[0-9]{" + this.props.minLength + "," + this.props.maxLength + "}";
+				errorStr = "Please enter a number in the range " + this.props.minLength + " to " + this.props.maxLength;
+			} else {
+				patternStr = "[0-9]{0,}";
+				errorStr = "Please enter a number."
+			}
+			return (
+				<ReactMDL.Textfield
+					floatingLabel
+					pattern = {patternStr}
+					error = {errorStr}
+					onChange = {e => this.handleChange(e.target)}
+					label = {this.props.title}
+					value = {this.state.value}
+				/>
+			);
 		}
 	}
 	class ConfigInput extends React.Component {
@@ -75,6 +87,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 						{...this.props.config}
 					/>
 				)
+			} else if (this.props.config.type == 'number') {
+				return <ConfigNumberInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
 			}
 			// Default to a string
 			return <ConfigTextInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
