@@ -10,8 +10,8 @@ from distutils.errors import DistutilsSetupError
 import pkg_resources
 import yaml
 import gnupg
-from pip.commands.download import DownloadCommand
-from pip.utils.build import BuildDirectory
+from pip._internal.commands.download import DownloadCommand
+from pip._internal.utils.temp_dir import TempDirectory
 
 class chdir(object):  # pylint: disable=C0103
 	def __init__(self, newDir):
@@ -155,14 +155,14 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 
 	def __downloadRequirements(self, prebuiltPackages):
 		packages = []
-		with BuildDirectory(None, False) as tempDir:
+		with TempDirectory(None, False) as tempDir:
 			cmd = DownloadCommand()
 			options, args = cmd.parse_args([
 				'--no-binary',
 				':all:',
 				'--no-clean',
-				'-b', tempDir,
-				'--dest', tempDir,
+				'-b', tempDir.path,
+				'--dest', tempDir.path,
 				'-r', 'requirements.txt'
 			])
 			requirement_set = cmd.run(options, args)
