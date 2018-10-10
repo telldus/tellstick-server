@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import datetime
+
 from api import IApiCallHandler, apicall
 from base import Plugin, implements
+from board import Board
 from .Device import Device
 from .DeviceManager import DeviceManager
 
@@ -209,6 +212,14 @@ class DeviceApiManager(Plugin):
 		Renames a sensor
 		"""
 		return self.deviceSetName(id, name, **kwargs)
+
+	@apicall('system', 'info')
+	def systemInfo(self, **kwargs):
+		return {
+			'product': Board.product(),
+			'time': datetime.datetime.now().isoformat(),
+			'version': Board.firmwareVersion().strip(),
+		}
 
 	def __retrieveDevice(self, deviceId):
 		deviceManager = DeviceManager(self.context)
