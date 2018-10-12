@@ -1,2 +1,5 @@
 netifaces
+pbkdf2
+pycrypto
 python-openid
+requests
