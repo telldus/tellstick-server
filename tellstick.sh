@@ -99,6 +99,7 @@ printHelp() {
 	echo -e "  \t\t  The server will be restarted automatically when a file changes"
 	echo -e "  setup:\tSets up the virtualenv and installs a minium set of required plugins"
 	echo -e "  shell:\tStarts a new shell with the virtualenv activated"
+	echo -e "  test:\tRun unit testing"
 	echo -e "  uninstall:\tUninstall a plugin. Usage:"
 	echo -e "  \t\t  $0 uninstall [plugin-name]"
 	echo -e "  \t\t  where [plugin-name] is the name of the plugin."
@@ -168,6 +169,9 @@ case $1 in
 		echo "Starting sandboxed shell"
 		PS1='(TellStick) \[\033[01;32m\]\u@\h\[\033[01;34m\] \$\[\033[00m\] '
 		sh
+	;;
+	test)
+		python -m unittest tests
 	;;
 	uninstall)
 		pip uninstall $2
