@@ -23,8 +23,6 @@ class TimeTriggerManager(object):
 		Application().registerShutdown(self.stop)
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
-		self.s = Settings('telldus.scheduler')
-		self.timezone = self.s.get('tz', 'UTC')
 
 	def addTrigger(self, trigger):
 		with self.timeLock:
@@ -67,9 +65,7 @@ class TimeTriggerManager(object):
 		self.running = True
 		self.lastMinute = None
 		while self.running:
-			local_timezone = timezone(self.timezone)
-			local_time =  datetime.now(local_timezone)
-			currentMinute = local_time.minute
+			currentMinute = datetime.utcnow().minute
 			if self.lastMinute is None or self.lastMinute is not currentMinute:
 				# new minute, check triggers
 				self.lastMinute = currentMinute
@@ -77,7 +73,7 @@ class TimeTriggerManager(object):
 					continue
 				triggersToRemove = []
 				for trigger in self.triggers[currentMinute]:
-					if trigger.hour == -1 or trigger.hour == local_time.hour:
+					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
 						triggertype = 'time'
 						if isinstance(trigger, SuntimeTrigger):
 							triggertype = 'suntime'
