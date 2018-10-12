@@ -363,23 +363,77 @@ class TimeCondition(Condition):
 			# validate that all parameters have been loaded
 			failure()
 			return
-		toTime = local_timezone.localize(
-			datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0)
-		)
-		fromTime = local_timezone.localize(
-			datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0)
-		)
-		if fromTime > toTime:
-			if (currentDate >= fromTime or currentDate <= toTime):
-				success()
-			else:
+		fromTimeNonExistent = False
+		fromTimeIsAmbigious = False
+		try:
+			fromTime = local_timezone.localize(
+				datetime(
+					currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0
+				), is_dst=None
+			)
+		except pytz.exceptions.NonExistentTimeError:
+			# we reckon this has to be DST transition
+			# since the condition starts at non-existing time, instead start it just after the DST switch
+			fromTime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour+1, 0, 0)
+			)
+			fromTimeNonExistent = True
+		except pytz.exceptions.AmbiguousTimeError:
+			fromTime = local_timezone.localize(
+				datetime(
+					currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0
+				), is_dst=True
+			)
+			fromTimeIsAmbigious = True
+		try:
+			toTime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0),
+				is_dst=None
+			)
+		except pytz.exceptions.NonExistentTimeError:
+			# we reckon this has to be DST transition
+			# since the condition ends at non-existing time, instead end it just before the DST switch
+			if fromTimeNonExistent:
+				# in the condition interval, both from and to occurs in an non-existent time,
+				# it can't fail much more than that
 				failure()
+				return
+			toTime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour-1, 59, 59)
+			)
+		except pytz.exceptions.AmbiguousTimeError:
+			if fromTimeIsAmbigious:
+				# both to and from occurs in an ambigious time interval,
+				# we have to check the condition against two intervals
+				toTime = local_timezone.localize(
+					datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0),
+					is_dst=True
+				)
+				if self.validateCompare(currentDate, toTime, fromTime):  # running compare for first interval
+					success()
+					return
+				# first interval did not match, setting up for next interval:
+				fromTime = local_timezone.localize(
+					datetime(
+						currentDate.year, currentDate.month, currentDate.day, self.fromHour, self.fromMinute, 0
+					), is_dst=False
+				)
+
+			toTime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.toHour, self.toMinute, 0),
+				is_dst=False
+			)
+		if self.validateCompare(currentDate, toTime, fromTime):
+			success()
 		else:
+			failure()
+
+	@staticmethod
+	def validateCompare(currentDate, toTime, fromTime):
+		if fromTime > toTime:
 			# condition interval passes midnight
-			if (currentDate >= fromTime and currentDate <= toTime):
-				success()
-			else:
-				failure()
+			return (currentDate >= fromTime or currentDate <= toTime)
+		return (currentDate >= fromTime and currentDate <= toTime)
 
 class WeekdayCondition(Condition):
 	def __init__(self, **kwargs):
