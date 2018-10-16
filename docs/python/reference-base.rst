@@ -40,7 +40,7 @@ Configurations
     class MyPlugin(Plugin):
       pass
 
-.. autoclass:: base.ConfigurationValue(valueType, defaultValue, writable=True, readable=True, hidden=False)
+.. autoclass:: base.ConfigurationValue(valueType, defaultValue, writable=True, readable=True, hidden=False, sortOrder=0)
 
 .. autoclass:: base.ConfigurationBool(defaultValue=False)
 
