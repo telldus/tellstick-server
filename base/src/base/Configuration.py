@@ -46,6 +46,15 @@ class ConfigurationValue(object):
 			'writable': self.writable,
 		}
 
+class ConfigurationBool(ConfigurationValue):
+	"""
+	Configuration class used to store boolean values
+
+	.. versionadded:: 1.2
+	"""
+	def __init__(self, defaultValue=False, **kwargs):
+		super(ConfigurationBool, self).__init__('bool', defaultValue, **kwargs)
+
 class ConfigurationDict(ConfigurationValue):
 	"""
 	Configuration class used to store dictionaries
