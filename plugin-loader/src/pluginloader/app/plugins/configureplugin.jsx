@@ -143,7 +143,11 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 					<ReactMDL.DialogContent>
 						{Object.keys(this.props.plugin.config).map(name => (
 							<div key = {name}>
-								{Object.keys(this.props.plugin.config[name]).map(config => (
+								{Object.keys(this.props.plugin.config[name]).sort((a,b) => {
+									let s1 = this.props.plugin.config[name][a].sortOrder;
+									let s2 = this.props.plugin.config[name][b].sortOrder;
+									return s1 - s2;
+								}).map(config => (
 									<div key = {config}>
 										<ConfigInput
 											plugin = {this.props.plugin.name}

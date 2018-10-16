@@ -27,19 +27,33 @@ class ConfigurationValue(object):
 	Base class for configuration values. Do not use this class directly but use one of the
 	subclasses instead.
 
+	.. versionchanged:: 1.2
+	   Added parameter *sortOrder*
+
 	:param str valueType: The type of the configuration value. Only set this in subclasses..
 	:param str defaultValue: The default value used if not value is set.
 	:param bool writable: If this value can be set by the user in the UI.
 	:param bool readable: `True` if the current value could be read by user interfaces. Set this to
 	  `False` for fields such as password where the current value should not be exposed to the UI.
 	:param bool hidden: If this field should be user configurable in the UI or not.
+	:param int sortOrder: The order the values should be sorted by in the UI.
 	"""
-	def __init__(self, valueType, defaultValue, writable=True, readable=True, hidden=False, **kwargs):
+	def __init__(
+		self,
+		valueType,
+		defaultValue,
+		writable=True,
+		readable=True,
+		hidden=False,
+		sortOrder=0,
+		**kwargs
+	):
 		self.valueType = valueType
 		self.defaultValue = defaultValue
 		self.readable = readable
 		self.writable = writable
 		self.hidden = hidden
+		self.sortOrder = sortOrder
 		self.title = kwargs.setdefault('title', '')
 		self.description = kwargs.setdefault('description', '')
 
@@ -48,6 +62,7 @@ class ConfigurationValue(object):
 			'description': self.description,
 			'hidden': self.hidden,
 			'readable': self.readable,
+			'sortOrder': self.sortOrder,
 			'title': self.title,
 			'type': self.valueType,
 			'writable': self.writable,
