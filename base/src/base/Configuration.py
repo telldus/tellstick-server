@@ -26,6 +26,13 @@ class ConfigurationValue(object):
 	"""
 	Base class for configuration values. Do not use this class directly but use one of the
 	subclasses instead.
+
+	:param str valueType: The type of the configuration value. Only set this in subclasses..
+	:param str defaultValue: The default value used if not value is set.
+	:param bool writable: If this value can be set by the user in the UI.
+	:param bool readable: `True` if the current value could be read by user interfaces. Set this to
+	  `False` for fields such as password where the current value should not be exposed to the UI.
+	:param bool hidden: If this field should be user configurable in the UI or not.
 	"""
 	def __init__(self, valueType, defaultValue, writable=True, readable=True, hidden=False, **kwargs):
 		self.valueType = valueType
