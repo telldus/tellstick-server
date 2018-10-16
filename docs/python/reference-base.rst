@@ -42,6 +42,8 @@ Configurations
 
 .. autoclass:: base.ConfigurationValue(valueType, defaultValue, writable=True, readable=True, hidden=False)
 
+.. autoclass:: base.ConfigurationBool(defaultValue=False)
+
 .. autoclass:: base.ConfigurationDict(defaultValue={})
 
 .. autoclass:: base.ConfigurationNumber(defaultValue=0)

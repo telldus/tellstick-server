@@ -1,6 +1,18 @@
 define(
 	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions', 'plugins/categoryicon'],
 function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, CategoryIcon ) {
+	class ConfigBoolInput extends React.Component {
+		render() {
+			return (
+				<ReactMDL.Checkbox
+					label = {this.props.title}
+					defaultChecked = {this.props.value}
+					onChange = {e => this.props.onChange(e.target.checked)}
+					ripple
+				/>
+			);
+		}
+	}
 	class ConfigTextInput extends React.Component {
 		constructor(props) {
 			super(props)
@@ -87,6 +99,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 						{...this.props.config}
 					/>
 				)
+			} else if (this.props.config.type == 'bool') {
+				return <ConfigBoolInput onChange = {value => this.props.onChange(value)} {...this.props.config} />;
 			} else if (this.props.config.type == 'number') {
 				return <ConfigNumberInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
 			}

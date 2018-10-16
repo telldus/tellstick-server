@@ -37,8 +37,12 @@ class Settings(object):
 			return default
 		if isinstance(default, dict) or isinstance(default, list):
 			value = json.loads(value)
-		if isinstance(default, int):
-			value = int(value)
+		if isinstance(default, bool):
+			if value in (True, 'True', 1):
+				return True
+			return False
+		elif isinstance(default, int):
+			return int(value)
 		return value
 
 	def __loadFile(self):
