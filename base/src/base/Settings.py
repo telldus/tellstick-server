@@ -36,7 +36,11 @@ class Settings(object):
 		if value is None:
 			return default
 		if isinstance(default, dict) or isinstance(default, list):
-			value = json.loads(value)
+			try:
+				value = json.loads(value)
+			except ValueError:
+				logging.warning('Could not decode json "%s"', value)
+				return default
 		if isinstance(default, bool):
 			if value in (True, 'True', 1):
 				return True
