@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from telldus.web import ConfigurationReactComponent
+from base import ConfigurationValue
 
-class ConfigurationDropDown(ConfigurationReactComponent):
-	def __init__(self, menuList, selected=None, **kwargs):
+class ConfigurationDropDown(ConfigurationValue):
+	def __init__(self, options=None, **kwargs):
 		super(ConfigurationDropDown, self).__init__(
-			'plugins/dropdown',
-			defaultValue={
-				"selected": selected,
-				"list":menuList
-			},
+			'select',
 			**kwargs
 		)
-		self.menuList = menuList or {}
-		self.selected = selected
+		self.options = options or {}
+
+	def serialize(self):
+		retval = super(ConfigurationDropDown, self).serialize()
+		retval['options'] = self.options
+		return retval

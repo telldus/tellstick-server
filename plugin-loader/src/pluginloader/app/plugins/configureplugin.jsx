@@ -1,6 +1,6 @@
 define(
-	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions', 'plugins/categoryicon'],
-function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, CategoryIcon ) {
+	['react', 'react-mdl', 'react-redux', 'dialog-polyfill', 'telldus', 'plugins/actions', 'plugins/categoryicon', 'plugins/dropdown'],
+function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, CategoryIcon, ConfigDropdownInput ) {
 	class ConfigBoolInput extends React.Component {
 		render() {
 			return (
@@ -103,6 +103,8 @@ function(React, ReactMDL, ReactRedux, DialogPolyfill, Telldus, Actions, Category
 				return <ConfigBoolInput onChange = {value => this.props.onChange(value)} {...this.props.config} />;
 			} else if (this.props.config.type == 'number') {
 				return <ConfigNumberInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
+			} else if (this.props.config.type == 'select') {
+				return <ConfigDropdownInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
 			}
 			// Default to a string
 			return <ConfigTextInput onChange = {value => this.props.onChange(value)} {...this.props.config} />
