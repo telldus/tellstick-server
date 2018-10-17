@@ -108,6 +108,21 @@ class ConfigurationNumber(ConfigurationValue):
 		retval['maximum'] = self.maximum
 		return retval
 
+class ConfigurationSelect(ConfigurationValue):
+	"""
+	Configuration class used to store one value out of a predefined selection
+
+	.. versionadded:: 1.2
+	"""
+	def __init__(self, options=None, **kwargs):
+		super(ConfigurationSelect, self).__init__('select', **kwargs)
+		self.options = options or {}
+
+	def serialize(self):
+		retval = super(ConfigurationSelect, self).serialize()
+		retval['options'] = self.options
+		return retval
+
 class ConfigurationString(ConfigurationValue):
 	"""
 	Configuration class used to store strings
