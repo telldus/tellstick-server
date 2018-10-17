@@ -50,6 +50,8 @@ Configurations
 
 .. autoclass:: base.ConfigurationList(defaultValue=[])
 
+.. autoclass:: base.ConfigurationSelect(defaultValue='', options={})
+
 .. autoclass:: base.ConfigurationString(defaultValue='', minLength=0, maxLength=0)
 
 Signals & Slots

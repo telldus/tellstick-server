@@ -9,6 +9,7 @@ from .Configuration import \
 	ConfigurationDict, \
 	ConfigurationList, \
 	ConfigurationNumber, \
+	ConfigurationSelect, \
 	ConfigurationString, \
 	ConfigurationManager
 from .Plugin import IInterface, Plugin, PluginContext, ObserverCollection, implements
