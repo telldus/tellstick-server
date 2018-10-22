@@ -1,2 +1,6 @@
 captainhook
+freezegun
+mock
 pylint
+python-dateutil
+tzlocal
