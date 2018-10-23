@@ -4,15 +4,15 @@
 import logging
 import getopt
 import hashlib
-import httplib
 import os
 import platform
 import sys
 import time
 import subprocess
-import urllib2
-import urlparse
 import xml.parsers.expat
+
+from six.moves import http_client, urllib
+
 from board import Board
 
 
@@ -28,7 +28,7 @@ class UpgradeManager(object):
 		self._url = ''
 
 	def check(self):
-		conn = httplib.HTTPConnection('fw.telldus.com:80')
+		conn = http_client.HTTPConnection('fw.telldus.com:80')
 		try:
 			conn.request('GET', '/versions.xml')
 			response = conn.getresponse()
@@ -59,9 +59,9 @@ class UpgradeManager(object):
 		if version is None:
 			return
 		if attrs['version'] == version:
-			print element, "up to date"
+			logging.info("%s up to date", element)
 			return
-		print "Do upgrade", element
+		logging.warning("Do upgrade %s", element)
 		if element in ['firmware', 'kernel', 'u-boot']:
 			self._attrs = attrs
 			self._url = self._content
@@ -95,7 +95,7 @@ class UpgradeManager(object):
 		url = self._url
 		if 'size' not in attrs or 'sha1' not in attrs:
 			return (None, None)
-		urlsplit = urlparse.urlsplit(url)
+		urlsplit = urllib.parse.urlsplit(url)
 		targetFilename = os.path.basename(urlsplit.path)
 		downloadDir = Board.firmwareDownloadDir() + '/download/'
 		downloadFilename = downloadDir + targetFilename
@@ -110,7 +110,7 @@ class UpgradeManager(object):
 		stat = os.statvfs(downloadDir)
 		freeSpace = stat.f_frsize * stat.f_bavail
 		if int(attrs['size']) > freeSpace:
-			print "Not enough RAM to download image"
+			logging.error("Not enough RAM to download image")
 			return (None, None)
 
 		if not self._downloadFile(url, downloadFilename, size=int(attrs['size'])):
@@ -132,7 +132,7 @@ class UpgradeManager(object):
 	@staticmethod
 	def verifyFile(path, size, checksum):
 		if os.stat(path).st_size != size:
-			print "Downloaded filesize doesn't match recorded size"
+			logging.error("Downloaded filesize doesn't match recorded size")
 			return False
 		sha1 = hashlib.sha1()
 		fd = open(path, 'rb')
@@ -141,7 +141,7 @@ class UpgradeManager(object):
 		finally:
 			fd.close()
 		if sha1.hexdigest() != checksum:
-			print "Checksum mismatch", sha1.hexdigest(), checksum
+			logging.error("Checksum mismatch %s!=%s", sha1.hexdigest(), checksum)
 			return False
 		# Check signature
 		retval = subprocess.call(['gpg',
@@ -151,9 +151,9 @@ class UpgradeManager(object):
 			'%s.asc' % path
 			])
 		if retval != 0:
-			print "Could not verify signature"
+			logging.error("Could not verify signature")
 			return False
-		print "File verified successfully"
+		logging.info("File verified successfully")
 		return True
 
 	def _characterDataHandler(self, character):
@@ -162,16 +162,16 @@ class UpgradeManager(object):
 	@staticmethod
 	def _downloadFile(url, downloadFilename, size=None):
 		try:
-			urlRequest = urllib2.urlopen(url)
+			urlRequest = urllib.request.urlopen(url)
 		except Exception as error:
-			print "Error downloading:", error
+			logging.error("Error downloading: %s", error)
 			return False
 		meta = urlRequest.info()
 		fileSize = int(meta.getheaders("Content-Length")[0])
 		if size is not None and fileSize != size:
-			print "Size mismatch", fileSize, size
+			logging.error("Size mismatch %s!=%s", fileSize, size)
 			return False
-		print "Downloading bytes: %s" % (fileSize)
+		logging.info("Downloading bytes: %s", (fileSize))
 		fd = open(downloadFilename, 'wb')
 		fileSizeDl = 0
 		blockSz = 8192
@@ -182,7 +182,8 @@ class UpgradeManager(object):
 			fileSizeDl += len(buff)
 			fd.write(buff)
 			status = "%10d  [%3.2f%%]\r" % (fileSizeDl, fileSizeDl * 100. / fileSize)
-			print status,
+			sys.stdout.write(status)
+			sys.stdout.flush()
 		fd.close()
 		return True
 
@@ -203,7 +204,7 @@ class UpgradeManager(object):
 		(element, attrs) = self._queue.pop()
 		self._content = self._content.strip()
 		if element != name:
-			print "Error!"
+			logging.error("Error!")
 		if name == 'product':
 			self._product = None
 		if name == 'dist':
@@ -213,6 +214,7 @@ class UpgradeManager(object):
 		self._content = ''
 
 def runCli():
+	logging.getLogger().setLevel(logging.INFO)
 	opts, __args = getopt.getopt(sys.argv[1:], "", ["check", "monitor", "upgrade"])
 	upgradeManager = UpgradeManager()
 
@@ -232,21 +234,21 @@ def runCli():
 		while True:
 			try:
 				if not upgradeManager.check():
-					print "Sleep for one day"
+					logging.info("Sleep for one day")
 					time.sleep(60*60*24)
 					continue
 				(fwType, filename) = upgradeManager.download()
 				if fwType is None:
 					raise Exception("Error downloading file")
 				Board.doUpgradeImage(fwType, filename)
-				print "Sleep for one day"
+				logging.info("Sleep for one day")
 				time.sleep(60*60*24)
 			except KeyboardInterrupt:
-				print "Exit"
+				logging.info("Exit")
 				sys.exit(0)
 			except Exception as error:
-				print "Could not fetch. Sleep one minute and try again"
-				print str(error)
+				logging.warning("Could not fetch. Sleep one minute and try again")
+				logging.warning(str(error))
 				time.sleep(60)
 
 	if check:
