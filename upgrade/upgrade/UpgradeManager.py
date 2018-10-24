@@ -224,7 +224,10 @@ class HotFixManager(UpgradeManagerBase):
 				'target': target,
 			})
 		for fileInfo in hotfixInfo.get('scripts', []):
-			source = fileInfo.get('source', '')
+			if isinstance(fileInfo, dict):
+				source = fileInfo.get('source', '')
+			else:
+				source = fileInfo
 			if source is '':
 				continue
 			if source[0] != '/':
