@@ -83,7 +83,6 @@ class HotFixManagerTest(unittest.TestCase):
 
 	def testScripts(self):
 		self.assertFalse(self.__getHotFix('script')['applied'])
-
 		self.assertFalse(os.path.exists('/tmp/tests/helloFromScript'))
 		self.assertTrue(self.hotfixManager.apply('script'))
 		self.assertTrue(os.path.exists('/tmp/tests/helloFromScript'))
@@ -91,6 +90,10 @@ class HotFixManagerTest(unittest.TestCase):
 			self.assertEqual(fd.read(), 'Hello World\n')
 		os.remove('/tmp/tests/helloFromScript')
 		self.assertTrue(self.__getHotFix('script')['applied'])
+
+		self.assertFalse(self.__getHotFix('scriptFailing')['applied'])
+		self.assertFalse(self.hotfixManager.apply('scriptFailing'))
+		self.assertFalse(self.__getHotFix('scriptFailing')['applied'])
 
 	def testSignature(self):
 		self.assertFalse(self.__getHotFix('invalidSignature')['applied'])

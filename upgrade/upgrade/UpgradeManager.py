@@ -156,7 +156,10 @@ class HotFixManager(UpgradeManagerBase):
 
 			# Run scripts
 			for script in scripts:
-				subprocess.call(script)
+				retval = subprocess.call(script)
+				if retval != 0:
+					# Script failed. No not continue. Let this script run again.
+					return False
 
 		finally:
 			# Cleanup of downloaded files
