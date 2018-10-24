@@ -6,12 +6,15 @@ import getopt
 import hashlib
 import os
 import platform
-import sys
-import time
+import shutil
 import subprocess
+import sys
+import tempfile
+import time
 import xml.parsers.expat
 
 from six.moves import http_client, urllib
+import yaml
 
 from board import Board
 
@@ -90,6 +93,153 @@ class UpgradeManagerBase(object):
 			logging.error("Could not verify signature")
 			return False
 		logging.info("File verified successfully")
+		return True
+
+class HotFixManager(UpgradeManagerBase):
+	URL = 'https://fw.telldus.com/hotfixes.yml'
+	APPLIED_FILE = '/etc/upgrade/hotfixes'
+
+	def __init__(self):
+		self.url = urllib.parse.urlparse(HotFixManager.URL)
+		self.appliedHotfixes = None
+		self.hotfixes = None  # Cache the list
+
+	def apply(self, name):
+		hotfixes = self.list()
+		if name not in hotfixes:
+			return False
+		hotfix = hotfixes[name]
+		try:
+			files = []
+			targets = {}
+			for hotfixFile in hotfix['files']:
+				__fd, filename = tempfile.mkstemp()
+				files.append(filename)
+				targets[filename] = hotfixFile['target']
+				if not self.downloadFile(hotfixFile['source'], filename):
+					return False
+				signature = '%s.asc' % filename
+				if not self.downloadFile('%s.asc' % hotfixFile['source'], signature):
+					return False
+				files.append(signature)
+				if not self.verifyFile(filename):
+					return False
+			for source, target in targets.iteritems():
+				directory = os.path.dirname(target)
+				if not os.path.exists(directory):
+					os.makedirs(directory)
+				shutil.move(source, target)
+		finally:
+			# Cleanup of downloaded files
+			for filename in files:
+				if os.path.exists(filename):
+					os.remove(filename)
+		# Record applied hotfixes
+		self.appliedHotfixes.append(name)
+		with open(HotFixManager.APPLIED_FILE, 'w') as fd:
+			fd.write('\n'.join(self.appliedHotfixes))
+			fd.write('\n')
+		return True
+
+	def clearCache(self):
+		self.hotfixes = None
+
+	def list(self):
+		if isinstance(self.hotfixes, dict):
+			return self.hotfixes
+		self.hotfixes = {}
+		conn = http_client.HTTPSConnection(self.url.netloc)
+		try:
+			conn.request('GET', self.url.path)
+			response = conn.getresponse()
+		except Exception as error:
+			logging.warning("Could not get hotfix list: %s", error)
+			return {}
+		hotfixes = yaml.load(response)
+		for name in hotfixes:
+			if not HotFixManager.isHotfixValid(hotfixes[name]):
+				continue
+			self.hotfixes[name] = self.processHotfix(name, hotfixes[name])
+		return self.hotfixes
+
+	def processHotfix(self, name, hotfixInfo):
+		files = []
+		scripts = []
+		base = hotfixInfo.get('base', '/')
+		if base[0] != '/':
+			base = '/%s' % base
+		path = os.path.dirname(self.url.path)
+		if path == '/':
+			path = ''
+		elif path[0] != '/':
+			path = '/%s' % path
+		for fileInfo in hotfixInfo.get('files', []):
+			source = fileInfo.get('source', '')
+			target = fileInfo.get('target', '')
+			if source is '' or target is '':
+				continue
+			if source[0] != '/':
+				source = '/%s' % source
+			source = '%s://%s%s%s%s' % (
+				self.url.scheme,
+				self.url.netloc,
+				path,
+				base,
+				source
+			)
+			files.append({
+				'source': source,
+				'target': target,
+			})
+		for fileInfo in hotfixInfo.get('scripts', []):
+			source = fileInfo.get('source', '')
+			if source is '':
+				continue
+			if source[0] != '/':
+				source = '/%s' % source
+			source = '%s://%s%s%s%s' % (
+				self.url.scheme,
+				self.url.netloc,
+				path,
+				base,
+				source
+			)
+			scripts.append({
+				'source': source,
+			})
+		deployment = 'manual' if hotfixInfo.get('deployment', 'auto') != 'auto' else 'auto'
+		return {
+			'applied': self.isHotfixApplied(name),
+			'files': files,
+			'deployment': deployment,
+			'restart': hotfixInfo.get('restart', False),
+			'scripts': scripts,
+		}
+
+	def isHotfixApplied(self, name):
+		if self.appliedHotfixes is None:
+			self.loadAppliedHotfixes()
+		return name in self.appliedHotfixes
+
+	def loadAppliedHotfixes(self):
+		self.appliedHotfixes = []
+		if not os.path.exists(HotFixManager.APPLIED_FILE):
+			return
+		with open(HotFixManager.APPLIED_FILE, 'r') as fd:
+			self.appliedHotfixes = [line.strip() for line in fd]
+
+	@staticmethod
+	def isHotfixValid(hotfixInfo):
+		if 'version' in hotfixInfo:
+			if hotfixInfo['version'] != UpgradeManagerBase.fetchVersion('firmware'):
+				return False
+		if 'products' in hotfixInfo:
+			products = hotfixInfo['products']
+			if not isinstance(products, list):
+				return False  # Malformed hotfix
+			if Board.product() not in products:
+				# Hotfix not for this board
+				return False
 		return True
 
 class UpgradeManager(UpgradeManagerBase):
@@ -218,17 +368,33 @@ class UpgradeManager(UpgradeManagerBase):
 
 def runCli():
 	logging.getLogger().setLevel(logging.INFO)
-	opts, __args = getopt.getopt(sys.argv[1:], "", ["check", "monitor", "upgrade"])
+	opts, __args = getopt.getopt(sys.argv[1:], "", [
+		"apply=",
+		"check",
+		"hotfix",
+		"list",
+		"monitor",
+		"upgrade"
+	])
 	upgradeManager = UpgradeManager()
 
+	applyHotfix = ''
 	check = False
+	hotfix = False
+	listFixes = False
 	upgrade = False
 	monitor = False
-	for opt, __arg in opts:
+	for opt, arg in opts:
+		if opt in ("--apply"):
+			applyHotfix = arg
 		if opt in ("--check"):
 			check = True
 		if opt in ("--upgrade"):
 			upgrade = True
+		if opt in ("--hotfix"):
+			hotfix = True
+		if opt in ("--list"):
+			listFixes = True
 		if opt in ("--monitor"):
 			monitor = True
 			break
@@ -253,6 +419,27 @@ def runCli():
 				logging.warning("Could not fetch. Sleep one minute and try again")
 				logging.warning(str(error))
 				time.sleep(60)
+
+	if hotfix:
+		if listFixes is False and applyHotfix is False:
+			logging.error('Please include --list or --apply in the command for listing hotfixes')
+			sys.exit(1)
+		hotfixManager = HotFixManager()
+		if listFixes:
+			for hotfixName, hfix in hotfixManager.list().iteritems():
+				sys.stdout.write('%s %s\n' % ('*' if hfix['applied'] else ' ', hotfixName))
+			sys.stdout.flush()
+		if applyHotfix:
+			if applyHotfix not in hotfixManager.list():
+				logging.error('Hotfix %s not found', applyHotfix)
+				sys.exit(1)
+			if hotfixManager.isHotfixApplied(applyHotfix):
+				logging.error('Hotfix %s already applied', applyHotfix)
+				sys.exit(1)
+			logging.warning('Applying %s', applyHotfix)
+			if hotfixManager.apply(applyHotfix):
+				sys.exit(0)
+			sys.exit(1)
 
 	if check:
 		if upgradeManager.check():
