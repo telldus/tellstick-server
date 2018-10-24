@@ -164,6 +164,7 @@ class HotFixManager(UpgradeManagerBase):
 				if os.path.exists(filename):
 					os.remove(filename)
 		self.appliedHotfixes.append(name)
+		self.hotfixes[name]['applied'] = True
 		self.writeAppliedHotfixes()
 		if hotfix['restart']:
 			self.reboot()

@@ -90,6 +90,7 @@ class HotFixManagerTest(unittest.TestCase):
 		with open('/tmp/tests/helloFromScript', 'r') as fd:
 			self.assertEqual(fd.read(), 'Hello World\n')
 		os.remove('/tmp/tests/helloFromScript')
+		self.assertTrue(self.__getHotFix('script')['applied'])
 
 	def testSignature(self):
 		self.assertFalse(self.__getHotFix('invalidSignature')['applied'])
