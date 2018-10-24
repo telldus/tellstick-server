@@ -11,8 +11,16 @@ from ..UpgradeManager import HotFixManager, UpgradeManagerBase
 def fetchVersion(__imageType):
 	return '1.2.3'
 
+def loadAppliedHotfixes(self):
+	self.appliedHotfixes = []
+
+def writeAppliedHotfixes(__self):
+	pass
+
 class HotFixManagerTest(unittest.TestCase):
 	@patch.object(UpgradeManagerBase, 'fetchVersion', fetchVersion)
+	@patch.object(HotFixManager, 'loadAppliedHotfixes', loadAppliedHotfixes)
+	@patch.object(HotFixManager, 'writeAppliedHotfixes', writeAppliedHotfixes)
 	def setUp(self):
 		HotFixManager.URL = 'https://fw.telldus.com/hotfixes/tests/testcases.yml'
 		self.hotfixManager = HotFixManager()

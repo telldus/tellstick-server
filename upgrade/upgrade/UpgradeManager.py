@@ -159,11 +159,8 @@ class HotFixManager(UpgradeManagerBase):
 			for filename in files:
 				if os.path.exists(filename):
 					os.remove(filename)
-		# Record applied hotfixes
 		self.appliedHotfixes.append(name)
-		with open(HotFixManager.APPLIED_FILE, 'w') as fd:
-			fd.write('\n'.join(self.appliedHotfixes))
-			fd.write('\n')
+		self.writeAppliedHotfixes()
 		return True
 
 	def clearCache(self):
@@ -252,6 +249,11 @@ class HotFixManager(UpgradeManagerBase):
 			return
 		with open(HotFixManager.APPLIED_FILE, 'r') as fd:
 			self.appliedHotfixes = [line.strip() for line in fd]
+
+	def writeAppliedHotfixes(self):
+		with open(HotFixManager.APPLIED_FILE, 'w') as fd:
+			fd.write('\n'.join(self.appliedHotfixes))
+			fd.write('\n')
 
 	@staticmethod
 	def isHotfixValid(hotfixInfo):
