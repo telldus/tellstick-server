@@ -112,6 +112,8 @@ class HotFixManager(UpgradeManagerBase):
 		try:
 			files = []
 			targets = {}
+			scripts = []
+			# Download files
 			for hotfixFile in hotfix['files']:
 				__fd, filename = tempfile.mkstemp()
 				files.append(filename)
@@ -124,11 +126,34 @@ class HotFixManager(UpgradeManagerBase):
 				files.append(signature)
 				if not self.verifyFile(filename):
 					return False
-			for source, target in targets.iteritems():
+
+			# Download scripts
+			for hotfixFile in hotfix['scripts']:
+				fd, filename = tempfile.mkstemp()
+				files.append(filename)
+				if not self.downloadFile(hotfixFile['source'], filename):
+					return False
+				signature = '%s.asc' % filename
+				if not self.downloadFile('%s.asc' % hotfixFile['source'], signature):
+					return False
+				files.append(signature)
+				if not self.verifyFile(filename):
+					return False
+				os.close(fd)
+				os.chmod(filename, 0o744)
+				scripts.append(filename)
+
+			# Copy files
+			for source, target in targets.items():
 				directory = os.path.dirname(target)
 				if not os.path.exists(directory):
 					os.makedirs(directory)
 				shutil.move(source, target)
+
+			# Run scripts
+			for script in scripts:
+				subprocess.call(script)
+
 		finally:
 			# Cleanup of downloaded files
 			for filename in files:
@@ -426,7 +451,7 @@ def runCli():
 			sys.exit(1)
 		hotfixManager = HotFixManager()
 		if listFixes:
-			for hotfixName, hfix in hotfixManager.list().iteritems():
+			for hotfixName, hfix in hotfixManager.list().items():
 				sys.stdout.write('%s %s\n' % ('*' if hfix['applied'] else ' ', hotfixName))
 			sys.stdout.flush()
 		if applyHotfix:

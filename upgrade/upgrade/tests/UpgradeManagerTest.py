@@ -57,6 +57,16 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertFalse(self.__getHotFix('doNotRestart')['restart'])
 		self.assertTrue(self.__getHotFix('doRestart')['restart'])
 
+	def testScripts(self):
+		self.assertFalse(self.__getHotFix('script')['applied'])
+
+		self.assertFalse(os.path.exists('/tmp/tests/helloFromScript'))
+		self.assertTrue(self.hotfixManager.apply('script'))
+		self.assertTrue(os.path.exists('/tmp/tests/helloFromScript'))
+		with open('/tmp/tests/helloFromScript', 'r') as fd:
+			self.assertEqual(fd.read(), 'Hello World\n')
+		os.remove('/tmp/tests/helloFromScript')
+
 	def testSignature(self):
 		self.assertFalse(self.__getHotFix('invalidSignature')['applied'])
 		self.assertFalse(self.hotfixManager.apply('invalidSignature'))
