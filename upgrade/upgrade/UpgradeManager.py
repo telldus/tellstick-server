@@ -15,8 +15,84 @@ from six.moves import http_client, urllib
 
 from board import Board
 
+class UpgradeManagerBase(object):
+	KEYRING = '/etc/upgrade/telldus.gpg'
 
-class UpgradeManager(object):
+	@staticmethod
+	def downloadFile(url, downloadFilename, size=None):
+		try:
+			urlRequest = urllib.request.urlopen(url)
+		except Exception as error:
+			logging.error("Error downloading: %s", error)
+			return False
+		meta = urlRequest.info()
+		fileSize = int(meta.getheaders("Content-Length")[0])
+		if size is not None and fileSize != size:
+			logging.error("Size mismatch %s!=%s", fileSize, size)
+			return False
+		logging.info("Downloading bytes: %s", (fileSize))
+		fd = open(downloadFilename, 'wb')
+		fileSizeDl = 0
+		blockSz = 8192
+		while True:
+			buff = urlRequest.read(blockSz)
+			if not buff:
+				break
+			fileSizeDl += len(buff)
+			fd.write(buff)
+			status = "%10d  [%3.2f%%]\r" % (fileSizeDl, fileSizeDl * 100. / fileSize)
+			sys.stdout.write(status)
+			sys.stdout.flush()
+		fd.close()
+		return True
+
+	@staticmethod
+	def fetchVersion(imageType):
+		if imageType == 'firmware':
+			with open('/etc/builddate') as fd:
+				return fd.readline().strip()
+		if imageType == 'kernel':
+			return platform.release()
+		if imageType == 'u-boot':
+			with open('/proc/cmdline') as fd:
+				for value in fd.readline().split(' '):
+					parts = value.strip().split('=')
+					if len(parts) < 2:
+						continue
+					if parts[0] == 'ubootver':
+						return parts[1]
+				return None
+		return None
+
+	@staticmethod
+	def verifyFile(path, size=None, checksum=None):
+		if size is not None and os.stat(path).st_size != size:
+			logging.error("Downloaded filesize doesn't match recorded size")
+			return False
+		if checksum is not None:
+			sha1 = hashlib.sha1()
+			fd = open(path, 'rb')
+			try:
+				sha1.update(fd.read())
+			finally:
+				fd.close()
+			if sha1.hexdigest() != checksum:
+				logging.error("Checksum mismatch %s!=%s", sha1.hexdigest(), checksum)
+				return False
+		# Check signature
+		retval = subprocess.call(['gpg',
+			'--verify',
+			'--no-default-keyring',
+			'--keyring', UpgradeManagerBase.KEYRING,
+			'%s.asc' % path
+			])
+		if retval != 0:
+			logging.error("Could not verify signature")
+			return False
+		logging.info("File verified successfully")
+		return True
+
+class UpgradeManager(UpgradeManagerBase):
 	def __init__(self):
 		self._filename = False
 		self._firmwareType = None
@@ -68,24 +144,6 @@ class UpgradeManager(object):
 			self._firmwareType = element
 
 	@staticmethod
-	def fetchVersion(imageType):
-		if imageType == 'firmware':
-			with open('/etc/builddate') as fd:
-				return fd.readline().strip()
-		if imageType == 'kernel':
-			return platform.release()
-		if imageType == 'u-boot':
-			with open('/proc/cmdline') as fd:
-				for value in fd.readline().split(' '):
-					parts = value.strip().split('=')
-					if len(parts) < 2:
-						continue
-					if parts[0] == 'ubootver':
-						return parts[1]
-				return None
-		return None
-
-	@staticmethod
 	def distribution():
 		with open('/etc/distribution') as fd:
 			return fd.readline().strip()
@@ -113,9 +171,9 @@ class UpgradeManager(object):
 			logging.error("Not enough RAM to download image")
 			return (None, None)
 
-		if not self._downloadFile(url, downloadFilename, size=int(attrs['size'])):
+		if not self.downloadFile(url, downloadFilename, size=int(attrs['size'])):
 			return (None, None)
-		if not self._downloadFile('%s.asc' % url, '%s.asc' % downloadFilename):
+		if not self.downloadFile('%s.asc' % url, '%s.asc' % downloadFilename):
 			os.remove(downloadFilename)
 			return (None, None)
 		if not self.verifyFile(downloadFilename, int(attrs['size']), attrs['sha1']):
@@ -129,63 +187,8 @@ class UpgradeManager(object):
 	def hw():
 		return Board.product() if Board.hw() == 'tellstick' else Board.hw()
 
-	@staticmethod
-	def verifyFile(path, size, checksum):
-		if os.stat(path).st_size != size:
-			logging.error("Downloaded filesize doesn't match recorded size")
-			return False
-		sha1 = hashlib.sha1()
-		fd = open(path, 'rb')
-		try:
-			sha1.update(fd.read())
-		finally:
-			fd.close()
-		if sha1.hexdigest() != checksum:
-			logging.error("Checksum mismatch %s!=%s", sha1.hexdigest(), checksum)
-			return False
-		# Check signature
-		retval = subprocess.call(['gpg',
-			'--verify',
-			'--no-default-keyring',
-			'--keyring', '/etc/upgrade/telldus.gpg',
-			'%s.asc' % path
-			])
-		if retval != 0:
-			logging.error("Could not verify signature")
-			return False
-		logging.info("File verified successfully")
-		return True
-
 	def _characterDataHandler(self, character):
 		self._content = self._content + character
-
-	@staticmethod
-	def _downloadFile(url, downloadFilename, size=None):
-		try:
-			urlRequest = urllib.request.urlopen(url)
-		except Exception as error:
-			logging.error("Error downloading: %s", error)
-			return False
-		meta = urlRequest.info()
-		fileSize = int(meta.getheaders("Content-Length")[0])
-		if size is not None and fileSize != size:
-			logging.error("Size mismatch %s!=%s", fileSize, size)
-			return False
-		logging.info("Downloading bytes: %s", (fileSize))
-		fd = open(downloadFilename, 'wb')
-		fileSizeDl = 0
-		blockSz = 8192
-		while True:
-			buff = urlRequest.read(blockSz)
-			if not buff:
-				break
-			fileSizeDl += len(buff)
-			fd.write(buff)
-			status = "%10d  [%3.2f%%]\r" % (fileSizeDl, fileSizeDl * 100. / fileSize)
-			sys.stdout.write(status)
-			sys.stdout.flush()
-		fd.close()
-		return True
 
 	def _startElement(self, name, attrs):
 		self._queue.append((name, attrs))
