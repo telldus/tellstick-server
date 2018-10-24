@@ -68,6 +68,10 @@ class UpgradeManagerBase(object):
 		return None
 
 	@staticmethod
+	def reboot():
+		subprocess.call('/sbin/reboot')
+
+	@staticmethod
 	def verifyFile(path, size=None, checksum=None):
 		if size is not None and os.stat(path).st_size != size:
 			logging.error("Downloaded filesize doesn't match recorded size")
@@ -161,6 +165,8 @@ class HotFixManager(UpgradeManagerBase):
 					os.remove(filename)
 		self.appliedHotfixes.append(name)
 		self.writeAppliedHotfixes()
+		if hotfix['restart']:
+			self.reboot()
 		return True
 
 	def clearCache(self):

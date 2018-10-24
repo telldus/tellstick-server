@@ -7,12 +7,19 @@ from mock import patch
 
 from ..UpgradeManager import HotFixManager, UpgradeManagerBase
 
+class RebootException(Exception):
+	pass
+
 @staticmethod
 def fetchVersion(__imageType):
 	return '1.2.3'
 
 def loadAppliedHotfixes(self):
 	self.appliedHotfixes = []
+
+@staticmethod
+def reboot():
+	raise RebootException()
 
 def writeAppliedHotfixes(__self):
 	pass
@@ -61,10 +68,18 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertNotIn('invalidProduct', self.hotfixes.keys())
 		self.assertIn('tellstickDesktop', self.hotfixes.keys())
 
+	@patch.object(UpgradeManagerBase, 'reboot', reboot)
 	def testRestart(self):
 		self.assertFalse(self.__getHotFix('default')['restart'])
 		self.assertFalse(self.__getHotFix('doNotRestart')['restart'])
 		self.assertTrue(self.__getHotFix('doRestart')['restart'])
+		with self.assertRaises(RebootException):
+			self.hotfixManager.apply('doRestart')
+		try:
+			self.hotfixManager.apply('default')
+			self.hotfixManager.apply('doNotRestart')
+		except RebootException:
+			self.fail('Hotfix tried to reboot that shouldn\'t')
 
 	def testScripts(self):
 		self.assertFalse(self.__getHotFix('script')['applied'])
