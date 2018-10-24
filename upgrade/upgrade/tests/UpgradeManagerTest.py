@@ -22,7 +22,10 @@ class HotFixManagerTest(unittest.TestCase):
 	@patch.object(HotFixManager, 'loadAppliedHotfixes', loadAppliedHotfixes)
 	@patch.object(HotFixManager, 'writeAppliedHotfixes', writeAppliedHotfixes)
 	def setUp(self):
+		keyring = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'telldus.gpg'))
+		UpgradeManagerBase.KEYRING = keyring
 		HotFixManager.URL = 'https://fw.telldus.com/hotfixes/tests/testcases.yml'
+
 		self.hotfixManager = HotFixManager()
 		self.hotfixes = self.hotfixManager.list()
 
@@ -34,8 +37,6 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertTrue(self.__getHotFix('default')['applied'])
 
 	def testApply(self):
-		keyring = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'telldus.gpg'))
-		UpgradeManagerBase.KEYRING = keyring
 		self.assertFalse(self.hotfixManager.apply('unknown'))
 
 		self.assertFalse(os.path.exists('/tmp/tests/helloworld'))
