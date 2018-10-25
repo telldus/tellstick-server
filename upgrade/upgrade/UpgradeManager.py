@@ -173,6 +173,15 @@ class HotFixManager(UpgradeManagerBase):
 			self.reboot()
 		return True
 
+	def applyAll(self):
+		for name, hotfix in self.list().items():
+			if hotfix['applied']:
+				continue
+			if hotfix['deployment'] != 'auto':
+				continue
+			yield name
+			self.apply(name)
+
 	def clearCache(self):
 		self.hotfixes = None
 
@@ -458,6 +467,10 @@ def runCli():
 			for hotfixName, hfix in hotfixManager.list().items():
 				sys.stdout.write('%s %s\n' % ('*' if hfix['applied'] else ' ', hotfixName))
 			sys.stdout.flush()
+			sys.exit(0)
+		if hotfix == 'all':
+			for hotfixName in hotfixManager.applyAll():
+				logging.warning('Applying %s', hotfixName)
 			sys.exit(0)
 		if hotfix not in hotfixManager.list():
 			logging.error('Hotfix %s not found', hotfix)

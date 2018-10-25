@@ -61,6 +61,24 @@ class HotFixManagerTest(unittest.TestCase):
 		with open('/tmp/tests/helloworld', 'r') as fd:
 			self.assertEqual(fd.read(), 'Hello World!\n')
 
+	@patch.object(UpgradeManagerBase, 'reboot', reboot)
+	def testApplyAll(self):
+		autoHotfixes = ['default', 'deployAuto']
+		manualHotfixes = ['deployMalformed', 'deployManual', 'helloworld']
+		failedHotfixes = ['invalidSignature', 'scriptFailing']
+
+		self.assertEqual(self.hotfixManager.appliedHotfixes, [])
+		with self.assertRaises(RebootException):
+			for name in self.hotfixManager.applyAll():
+				# No manual hotfix may be applied
+				self.assertNotIn(name, manualHotfixes)
+		for name in autoHotfixes:
+			# Make sure all auto has been appled
+			self.assertIn(name, self.hotfixManager.appliedHotfixes)
+		for name in failedHotfixes:
+			# Make sure no failed has been marked as applied
+			self.assertNotIn(name, self.hotfixManager.appliedHotfixes)
+
 	def testDeployment(self):
 		self.assertEqual(self.__getHotFix('default')['deployment'], 'auto')
 		self.assertEqual(self.__getHotFix('deployAuto')['deployment'], 'auto')
