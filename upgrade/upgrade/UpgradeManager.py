@@ -409,32 +409,24 @@ class UpgradeManager(UpgradeManagerBase):
 def runCli():
 	logging.getLogger().setLevel(logging.INFO)
 	opts, __args = getopt.getopt(sys.argv[1:], "", [
-		"apply=",
 		"check",
-		"hotfix",
-		"list",
+		"hotfix=",
 		"monitor",
 		"upgrade"
 	])
 	upgradeManager = UpgradeManager()
 
-	applyHotfix = ''
 	check = False
-	hotfix = False
-	listFixes = False
+	hotfix = ''
 	upgrade = False
 	monitor = False
 	for opt, arg in opts:
-		if opt in ("--apply"):
-			applyHotfix = arg
 		if opt in ("--check"):
 			check = True
 		if opt in ("--upgrade"):
 			upgrade = True
 		if opt in ("--hotfix"):
-			hotfix = True
-		if opt in ("--list"):
-			listFixes = True
+			hotfix = arg
 		if opt in ("--monitor"):
 			monitor = True
 			break
@@ -461,25 +453,22 @@ def runCli():
 				time.sleep(60)
 
 	if hotfix:
-		if listFixes is False and applyHotfix is False:
-			logging.error('Please include --list or --apply in the command for listing hotfixes')
-			sys.exit(1)
 		hotfixManager = HotFixManager()
-		if listFixes:
+		if hotfix == 'list':
 			for hotfixName, hfix in hotfixManager.list().items():
 				sys.stdout.write('%s %s\n' % ('*' if hfix['applied'] else ' ', hotfixName))
 			sys.stdout.flush()
-		if applyHotfix:
-			if applyHotfix not in hotfixManager.list():
-				logging.error('Hotfix %s not found', applyHotfix)
-				sys.exit(1)
-			if hotfixManager.isHotfixApplied(applyHotfix):
-				logging.error('Hotfix %s already applied', applyHotfix)
-				sys.exit(1)
-			logging.warning('Applying %s', applyHotfix)
-			if hotfixManager.apply(applyHotfix):
-				sys.exit(0)
+			sys.exit(0)
+		if hotfix not in hotfixManager.list():
+			logging.error('Hotfix %s not found', hotfix)
 			sys.exit(1)
+		if hotfixManager.isHotfixApplied(hotfix):
+			logging.error('Hotfix %s already applied', hotfix)
+			sys.exit(1)
+		logging.warning('Applying %s', hotfix)
+		if hotfixManager.apply(hotfix):
+			sys.exit(0)
+		sys.exit(1)
 
 	if check:
 		if upgradeManager.check():
