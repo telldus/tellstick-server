@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import socket, ssl, errno, select, logging
+import errno
+import logging
+import select
+import socket
+import ssl
 from .LiveMessage import LiveMessage
 from base import Settings
 
@@ -13,16 +17,17 @@ class ServerConnection(object):
 		self.state = ServerConnection.CLOSED
 		self.msgs = []
 		self.server = None
-		s = Settings('tellduslive.config')
-		self.useSSL = s.get('useSSL', True)
+		self.socket = None
+		settings = Settings('tellduslive.config')
+		self.useSSL = settings.get('useSSL', True)
 
 	def close(self):
-			self.state = ServerConnection.CLOSED
-			try:
-				self.socket.shutdown(socket.SHUT_RDWR)
-				self.socket.close()
-			except:
-				pass
+		self.state = ServerConnection.CLOSED
+		try:
+			self.socket.shutdown(socket.SHUT_RDWR)
+			self.socket.close()
+		except Exception as __error:
+			pass
 
 	def connect(self, address, port):
 		if not self.useSSL:
@@ -42,20 +47,21 @@ class ServerConnection(object):
 			return ServerConnection.CLOSED
 		if self.state == ServerConnection.CONNECTING:
 			try:
-				s = socket.create_connection(self.server)
+				newSocket = socket.create_connection(self.server)
 				ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
 				ctx.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
 				if self.useSSL:
-					self.socket = ctx.wrap_socket(s)
+					self.socket = ctx.wrap_socket(newSocket)
 				else:
-					self.socket = s
+					self.socket = newSocket
 				self.state = ServerConnection.CONNECTED
-			except socket.error as (error, errorString):
+			except socket.error as socketException:
+				(error, errorString) = socketException.args
 				logging.error("%s %s", str(error), (errorString))
 				self.state = ServerConnection.CLOSED
 				return ServerConnection.DISCONNECTED
-			except Exception as e:
-				logging.error(str(e))
+			except Exception as error:
+				logging.error(str(error))
 				self.state = ServerConnection.CLOSED
 				return ServerConnection.DISCONNECTED
 			logging.info("Connected to Telldus Live! server")
@@ -70,12 +76,12 @@ class ServerConnection(object):
 
 		try:
 			fileno = self.socket.fileno()
-			r, w, e = select.select([fileno], [], [], 5)
-		except Exception as e:
-			logging.exception(e)
+			readlist, __writelist, __xlist = select.select([fileno], [], [], 5)
+		except Exception as error:
+			logging.exception(error)
 			self.close()
 			return self.state
-		if fileno not in r:
+		if fileno not in readlist:
 			return self.state
 		if self.useSSL:
 			resp = self._readSSL()
@@ -107,9 +113,9 @@ class ServerConnection(object):
 				self.socket.write(signedMessage)
 			else:
 				self.socket.send(signedMessage)
-		except Exception as e:
+		except Exception as error:
 			logging.error('ERROR, could not write to socket. Close and reconnect')
-			logging.error(str(e))
+			logging.error(str(error))
 			self.close()
 
 	def _readSSL(self):
@@ -122,17 +128,17 @@ class ServerConnection(object):
 				if (len(data) < buffSize):
 					hasMoreData = False
 				resp += data
-			except ssl.SSLError as e:
-				if e.args[0] == ssl.SSL_ERROR_WANT_READ:
+			except ssl.SSLError as error:
+				if error.args[0] == ssl.SSL_ERROR_WANT_READ:
 					pass
 				else:
-					logging.error("SSLSocket error: %s", str(e))
+					logging.error("SSLSocket error: %s", str(error))
 					return None
-			except socket.error as e:
-				logging.error("Socket error: %s", str(e))
+			except socket.error as error:
+				logging.error("Socket error: %s", str(error))
 				return None
-			except Exception as e:
-				logging.error(str(e))
+			except Exception as error:
+				logging.error(str(error))
 				return None
 		return resp
 
@@ -146,7 +152,8 @@ class ServerConnection(object):
 				if (len(packet) < buffSize):
 					hasMoreData = False
 				request = request + packet
-			except socket.error, (err, errstr):
+			except socket.error as socketException:
+				(err, errstr) = socketException.args
 				if (err == errno.EAGAIN):
 					return None
 				return ''  # is not alive
