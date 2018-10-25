@@ -16,6 +16,8 @@ unittest:
   stage: test
   script:
     - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv
+    - mkdir /etc/upgrade
+    - touch /etc/builddate
     - ./tellstick.sh setup
     - ./tellstick.sh install events
     - ./tellstick.sh install scheduler
