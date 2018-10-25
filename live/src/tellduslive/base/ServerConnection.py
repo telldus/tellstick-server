@@ -110,7 +110,17 @@ class ServerConnection(object):
 		signedMessage = msg.toSignedMessage('sha1', self.privateKey)
 		try:
 			if self.useSSL:
-				self.socket.write(signedMessage)
+				retry = True
+				while retry:
+					retry = False
+					try:
+						self.socket.write(signedMessage)
+					except socket.error as error:
+						if isinstance(error.args, tuple):
+							if error[0] == socket.SSL_ERROR_WANT_WRITE:
+								# more to write
+								retry = True
+								continue
 			else:
 				self.socket.send(signedMessage)
 		except Exception as error:
