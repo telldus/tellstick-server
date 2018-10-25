@@ -114,6 +114,14 @@ class ServerConnection(object):
 				while retry:
 					retry = False
 					try:
+						if len(signedMessage) % 16384 == 0:
+							# the server can't really handle
+							# messages evenly divided by 16384
+							# (SSL max size is 16384, and there
+							# is no sure way of knowing if more
+							# data is coming or not), add some
+							# padding
+							signedMessage = signedMessage + "="
 						self.socket.write(signedMessage)
 					except socket.error as error:
 						if isinstance(error.args, tuple):
