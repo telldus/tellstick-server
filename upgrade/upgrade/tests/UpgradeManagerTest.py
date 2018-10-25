@@ -36,6 +36,15 @@ class HotFixManagerTest(unittest.TestCase):
 		self.hotfixManager = HotFixManager()
 		self.hotfixes = self.hotfixManager.list()
 
+	def tearDown(self):
+		files = [
+			'/tmp/tests/helloworld',
+			'/tmp/tests/helloFromScript',
+		]
+		for path in files:
+			if os.path.exists(path):
+				os.remove(path)
+
 	def testApplied(self):
 		self.assertFalse(self.__getHotFix('default')['applied'])
 		self.hotfixManager.appliedHotfixes = ['default']
@@ -51,7 +60,6 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertTrue(os.path.exists('/tmp/tests/helloworld'))
 		with open('/tmp/tests/helloworld', 'r') as fd:
 			self.assertEqual(fd.read(), 'Hello World!\n')
-		os.remove('/tmp/tests/helloworld')
 
 	def testDeployment(self):
 		self.assertEqual(self.__getHotFix('default')['deployment'], 'auto')
@@ -88,7 +96,6 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertTrue(os.path.exists('/tmp/tests/helloFromScript'))
 		with open('/tmp/tests/helloFromScript', 'r') as fd:
 			self.assertEqual(fd.read(), 'Hello World\n')
-		os.remove('/tmp/tests/helloFromScript')
 		self.assertTrue(self.__getHotFix('script')['applied'])
 
 		self.assertFalse(self.__getHotFix('scriptFailing')['applied'])
