@@ -198,9 +198,24 @@ class DeviceManager(Plugin):
 		return lst
 
 	@signal
+	def sensorValueUpdated(self, device, valueType, value, scale):
+		"""
+		Called every time a sensor value is updated.
+
+		:param device: The device/sensor being updated
+		:param valueType: Type of updated value
+		:param value: The updated value
+		:param scale: Scale of updated value
+		"""
+		pass
+
+	@signal
 	def sensorValuesUpdated(self, device, values):
 		"""
-		Called every time a sensors value is updated.
+		Called every time a sensor value is updated.
+
+		:param device: The device/sensor being updated
+		:param values: A list with all values updated
 		"""
 		if device.isSensor() is False:
 			return
@@ -210,6 +225,7 @@ class DeviceManager(Plugin):
 			value = valueElement['value']
 			scale = valueElement['scale']
 			self.observers.sensorValueUpdated(device, valueType, value, scale)
+			self.sensorValueUpdated(device, valueType, value, scale)
 			if valueType not in device.lastUpdatedLive \
 			   or valueType not in device.valueChangedTime \
 			   or device.valueChangedTime[valueType] > device.lastUpdatedLive[valueType] \
