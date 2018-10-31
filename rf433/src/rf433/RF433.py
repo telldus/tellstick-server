@@ -117,8 +117,7 @@ class SensorNode(RF433Node):
 			return  # don't update any values yet
 		if self.declaredDead:
 			self.declaredDead = False
-		for value in data:
-			self.setSensorValue(value['type'], value['value'], value['scale'])
+		self.setSensorValues(data)
 
 class DeviceNode(RF433Node):
 	def __init__(self, controller):

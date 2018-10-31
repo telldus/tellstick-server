@@ -361,32 +361,44 @@ class Device(object):
 		pass
 
 	def setSensorValue(self, valueType, value, scale):
-		if valueType not in self._sensorValues:
-			self._sensorValues[valueType] = []
-		found = False
-		for sensorType in self._sensorValues[valueType]:
-			if sensorType['scale'] == scale:
-				if sensorType['value'] != str(value) or valueType not in self.valueChangedTime:
-					# value has changed
-					self.valueChangedTime[valueType] = int(time.time())
-				else:
-					if sensorType['lastUpdated'] > int(time.time() - 1):
-						# Same value and less than a second ago, most probably
-						# just the same value being resent, ignore
-						return
-				sensorType['value'] = str(value)
-				sensorType['lastUpdated'] = int(time.time())
-				found = True
-				break
-		if not found:
-			self._sensorValues[valueType].append({
-				'value': str(value),
-				'scale': scale,
-				'lastUpdated': int(time.time())
-			})
-			self.valueChangedTime[valueType] = int(time.time())
-		if self._manager:
-			self._manager.sensorValueUpdated(self, valueType, value, scale)
+		self.setSensorValues([{'type': valueType, 'value':value, 'scale': scale}])
+
+	def setSensorValues(self, values):
+		withinOneSecond = True
+		for valueElement in values:
+			valueType = valueElement['type']
+			value = valueElement['value']
+			scale = valueElement['scale']
+			if valueType not in self._sensorValues:
+				self._sensorValues[valueType] = []
+			found = False
+			for sensorType in self._sensorValues[valueType]:
+				if sensorType['scale'] == scale:
+					if sensorType['value'] != str(value) or valueType not in self.valueChangedTime:
+						# value has changed
+						self.valueChangedTime[valueType] = int(time.time())
+						withinOneSecond = False
+					else:
+						if sensorType['lastUpdated'] > int(time.time() - 1):
+							# Same value and less than a second ago, most probably
+							# just the same value being resent, ignore
+							found = True
+							break
+						else:
+							withinOneSecond = False
+					sensorType['value'] = str(value)
+					sensorType['lastUpdated'] = int(time.time())
+					found = True
+					break
+			if not found and not withinOneSecond:
+				self._sensorValues[valueType].append({
+					'value': str(value),
+					'scale': scale,
+					'lastUpdated': int(time.time())
+				})
+				self.valueChangedTime[valueType] = int(time.time())
+		if self._manager and not withinOneSecond:
+			self._manager.sensorValuesUpdated(self, values)
 			self._manager.save()
 
 	def setState(self, state, stateValue=None, ack=None, origin=None):
@@ -530,7 +542,7 @@ class CachedDevice(Device):  # pylint: disable=R0902
 		if 'ignored' in settings:
 			self._ignored = settings['ignored']
 		if 'sensorValues' in settings:
-			self.setSensorValues(settings['sensorValues'])
+			self.fillSensorValues(settings['sensorValues'])
 		if 'isSensor' in settings:
 			self._isSensor = settings['isSensor']
 		if 'declaredDead' in settings:
@@ -551,7 +563,7 @@ class CachedDevice(Device):  # pylint: disable=R0902
 	def setParams(self, params):
 		self.paramsStorage = params
 
-	def setSensorValues(self, sensorValues):
+	def fillSensorValues(self, sensorValues):
 		# this method just fills cached values, no signals or reports are sent
 		for valueTypeFetch in sensorValues:
 			valueType = int(valueTypeFetch)
