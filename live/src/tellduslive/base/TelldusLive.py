@@ -2,6 +2,7 @@
 
 import bz2
 import logging
+import os
 import random
 from StringIO import StringIO
 import struct
@@ -10,7 +11,6 @@ import time
 
 from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
-from Crypto import Random
 import netifaces
 import requests
 
@@ -243,7 +243,7 @@ class TelldusLive(Plugin):
 	def deviceSpecificEncrypt(payload):
 		# TODO: Use security plugin once available
 		password = Board.secret()
-		iv = Random.new().read(16)  # pylint: disable=C0103
+		iv = os.urandom(16)  # pylint: disable=C0103
 		key = PBKDF2(password, iv).read(32)
 		encryptor = AES.new(key, AES.MODE_CBC, iv)
 
