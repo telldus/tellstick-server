@@ -31,6 +31,10 @@ from .ServerConnection import ServerConnection
 from .LiveMessage import LiveMessage
 
 class ITelldusLiveObserver(IInterface):
+	"""
+	.. deprecated:: 1.2
+	   Use signals/slots instead to avoid hard dependencies
+	"""
 	def liveConnected():
 		"""This method is called when we have succesfully connected to a Live! server"""
 	def liveRegistered(params):

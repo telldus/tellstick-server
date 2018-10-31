@@ -20,7 +20,11 @@ from .Device import CachedDevice, DeviceAbortException
 __name__ = 'telldus'  # pylint: disable=W0622
 
 class IDeviceChange(IInterface):
-	"""Implement this IInterface to recieve notifications on device changes"""
+	"""Implement this IInterface to recieve notifications on device changes
+
+	.. deprecated:: 1.2
+	   Use signals/slots instead to avoid hard dependencies
+	"""
 
 	def deviceAdded(device):  # pylint: disable=E0213
 		"""This method is called when a device is added"""
