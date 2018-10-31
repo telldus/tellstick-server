@@ -194,22 +194,28 @@ class DeviceManager(Plugin):
 		return lst
 
 	@signal
-	def sensorValueUpdated(self, device, valueType, value, scale):
+	def sensorValuesUpdated(self, device, values):
 		"""
 		Called every time a sensors value is updated.
 		"""
 		if device.isSensor() is False:
 			return
-		self.observers.sensorValueUpdated(device, valueType, value, scale)
-		if not self.live.registered or device.ignored():
-			# don't send if not connected to live or sensor is ignored
-			return
-		if valueType in device.lastUpdatedLive \
-		   and (valueType in device.valueChangedTime \
-		   and device.valueChangedTime[valueType] < device.lastUpdatedLive[valueType]) \
-		   and device.lastUpdatedLive[valueType] > (int(time.time()) - 300):
-			# no values have changed since the last live-update, and the last
-			# time this sensor was sent to live was less than 5 minutes ago
+		shouldUpdateLive = False
+		for valueElement in values:
+			valueType = valueElement['type']
+			value = valueElement['value']
+			scale = valueElement['scale']
+			self.observers.sensorValueUpdated(device, valueType, value, scale)
+			if valueType not in device.lastUpdatedLive \
+			   or valueType not in device.valueChangedTime \
+			   or device.valueChangedTime[valueType] > device.lastUpdatedLive[valueType] \
+			   or device.lastUpdatedLive[valueType] < (int(time.time()) - 300):
+				shouldUpdateLive = True
+				break
+
+		if not self.live.registered or device.ignored() or not shouldUpdateLive:
+			# don't send if not connected to live, sensor is ignored or if
+			# values haven't changed and five minutes hasn't passed yet
 			return
 
 		msg = LiveMessage("SensorEvent")
@@ -234,6 +240,7 @@ class DeviceManager(Plugin):
 		values = device.sensorValues()
 		valueList = []
 		for valueType in values:
+			device.lastUpdatedLive[valueType] = int(time.time())
 			for value in values[valueType]:
 				valueList.append({
 					'type': valueType,
@@ -242,7 +249,6 @@ class DeviceManager(Plugin):
 					'scale': value['scale']
 				})
 		msg.append(valueList)
-		device.lastUpdatedLive[valueType] = int(time.time())
 		self.live.send(msg)
 
 	def stateUpdated(self, device, ackId=None, origin=None):
