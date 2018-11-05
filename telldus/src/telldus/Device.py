@@ -401,16 +401,29 @@ class Device(object):
 			self._manager.sensorValuesUpdated(self, values)
 			self._manager.save()
 
-	def setState(self, state, stateValue=None, ack=None, origin=None):
+	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False):
+		"""
+		Update the state of the device. Use this method if the state should be updated from an
+		external source and not by an command. Examples if the state was updated on the device
+		itself.
+
+		:param state: The new state
+		:param stateValue: State value for the state if needed. Not all states has values.
+		:param ack: Internal, do not use
+		:param origin: The origin how the state was updated. If not set this will be "Incoming signal"
+		:param onlyUpdateIfChanged: Skip the update if the state is changed or not. If this is `False`
+		       the new state will always trigger and update. This parameter was added in version 1.2
+		"""
 		if stateValue is None:
 			stateValue = ''
-		if self._state == state \
-		   and self._stateValue == stateValue \
-		   and self.lastUpdated \
-		   and self.lastUpdated > int(time.time() - 1):
-			# Same state/statevalue and less than one second ago, most probably
-			# just the same value being resent, ignore
-			return
+		if self._state == state and self._stateValue == stateValue:
+			if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
+				# Same state/statevalue and less than one second ago, most probably
+				# just the same value being resent, ignore
+				return
+			if onlyUpdateIfChanged:
+				# No need to update
+				return
 		self.lastUpdated = time.time()
 		self._state = state
 		self._stateValue = stateValue
