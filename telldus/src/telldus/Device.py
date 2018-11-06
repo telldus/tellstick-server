@@ -364,7 +364,7 @@ class Device(object):
 		self.setSensorValues([{'type': valueType, 'value':value, 'scale': scale}])
 
 	def setSensorValues(self, values):
-		withinOneSecond = True
+		withinOneSecond = None
 		for valueElement in values:
 			valueType = valueElement['type']
 			value = valueElement['value']
@@ -382,6 +382,9 @@ class Device(object):
 						if sensorType['lastUpdated'] > int(time.time() - 1):
 							# Same value and less than a second ago, most probably
 							# just the same value being resent, ignore
+							if withinOneSecond is None:
+								# if it has been explicitly set to False, don't change it
+								withinOneSecond = True
 							found = True
 							break
 						else:
