@@ -2,6 +2,11 @@
 
 import time
 import unittest
+import pytz
+
+from datetime import datetime, timedelta
+from freezegun import freeze_time
+from tzlocal import get_localzone
 
 from ..Device import Device
 
@@ -35,12 +40,11 @@ class TelldusTest(unittest.TestCase):
 		self.device.setSensorValues(values)
 		self.assertEqual([], self.device.manager().values,
 		   "Values passed on to server dispite not one second since last report")
-
-		time.sleep(2)
-		self.device.manager().values = []  # reset
-		self.device.setSensorValues(values)
-		self.assertEqual(values, self.device.manager().values,
-		   "Values not passed on to server dispite two seconds since last report")
+		with freeze_time(datetime.now(pytz.timezone(str(get_localzone()))) + timedelta(0, 2)):
+			self.device.manager().values = []  # reset
+			self.device.setSensorValues(values)
+			self.assertEqual(values, self.device.manager().values,
+			   "Values not passed on to server dispite two seconds since last report")
 
 		values = [{'scale': 0, 'type': 1, 'value': '21.3'}, {'scale': 0, 'type': 2, 'value': '46'}]
 		self.device.manager().values = []  # reset
@@ -71,7 +75,7 @@ class TelldusTest(unittest.TestCase):
 		element = {}
 		element['scale'] = 0
 		element['type'] = 2
-		element['lastUpdated'] = int(time.time()-2)
+		element['lastUpdated'] = int(time.time() - 2)
 		element['value'] = '47'
 		self.device._sensorValues[2] = [element]  # pylint: disable=protected-access
 		self.device.manager().values = []  # reset
