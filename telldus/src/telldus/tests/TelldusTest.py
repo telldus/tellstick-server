@@ -18,9 +18,6 @@ class MockDeviceManager(object):
 		pass
 
 class TelldusTest(unittest.TestCase):
-	def __init__(self, *args, **kwargs):
-		super(TelldusTest, self).__init__(*args, **kwargs)
-
 	def setUp(self):
 		self.device = Device()
 		self.device.setManager(MockDeviceManager())
