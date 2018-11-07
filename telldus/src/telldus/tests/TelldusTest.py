@@ -40,7 +40,10 @@ class TelldusTest(unittest.TestCase):
 		self.device.setSensorValues(values)
 		self.assertEqual([], self.device.manager().values,
 		   "Values passed on to server dispite not one second since last report")
-		with freeze_time(datetime.now(pytz.timezone(str(get_localzone()))) + timedelta(0, 2)):
+		localtz = str(get_localzone())
+		if not localtz or localtz == 'local':
+			localtz = 'UTC'  # which timezone doesn't make any difference here
+		with freeze_time(datetime.now(pytz.timezone(localtz)) + timedelta(0, 2)):
 			self.device.manager().values = []  # reset
 			self.device.setSensorValues(values)
 			self.assertEqual(values, self.device.manager().values,
