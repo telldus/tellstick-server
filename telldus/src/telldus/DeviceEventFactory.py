@@ -210,6 +210,22 @@ class SensorCondition(Condition):
 				self.valueType = Device.WATT
 			elif value == 'lum':
 				self.valueType = Device.LUMINANCE
+			elif value == 'genmeter':
+				self.valueType = Device.GENERIC_METER
+			elif value == 'weight':
+				self.valueType = Device.WEIGHT
+			elif value == 'co2':
+				self.valueType = Device.CO2
+			elif value == 'volume':
+				self.valueType = Device.VOLUME
+			elif value == 'loudness':
+				self.valueType = Device.LOUDNESS
+			elif value == 'particulatematter25':
+				self.valueType = Device.PM25
+			elif value == 'co':
+				self.valueType = Device.CO
+			elif value == 'moisture':
+				self.valueType = Device.MOISTURE
 		elif name == 'scale':
 			self.scale = int(value)
 

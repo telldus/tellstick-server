@@ -62,6 +62,14 @@ class Device(object):
 	LUMINANCE = 512             #: Sensor type flag for luminance
 	DEW_POINT = 1024            #: Sensor type flag for dew point
 	BAROMETRIC_PRESSURE = 2048  #: Sensor type flag for barometric pressure
+	GENERIC_METER = 4096		#: Sensor type flag for generic meter
+	CO2 = 8192					#: Sensor type flag for CO²
+	VOLUME = 16384				#: Sensor type flag for volume
+	LOUDNESS = 32768			#: Sensor type flag for loudness
+	PM25 = 65536				#: Sensor type flag for particulate matter 2.5
+	CO = 131072					#: Sensor type flag for CO
+	WEIGHT = 262144				#: Sensor type flag for weight
+	MOISTURE = 524288			#: Sensor type flag for moisture
 
 	SCALE_UNKNOWN = 0
 	SCALE_TEMPERATURE_CELCIUS = 0
@@ -73,12 +81,23 @@ class Device(object):
 	SCALE_WIND_DIRECTION = 0
 	SCALE_UV_INDEX = 0
 	SCALE_POWER_KWH = 0
+	SCALE_POWER_KVAH = 1
 	SCALE_POWER_WATT = 2
+	SCALE_POWER_PULSE = 3
 	SCALE_POWER_VOLT = 4
 	SCALE_POWER_AMPERE = 5
+	SCALE_POWER_POWERFACTOR = 6
 	SCALE_LUMINANCE_PERCENT = 0
 	SCALE_LUMINANCE_LUX = 1
 	SCALE_BAROMETRIC_PRESSURE_KPA = 0
+	SCALE_PULSE = 0
+	SCALE_PPM = 1
+	SCALE_LITRE = 0
+	SCALE_M3 = 1
+	SCALE_DB = 0
+	SCALE_DBA = 1
+	SCALE_MICROGPERM3 = 1
+	SCALE_KG = 0
 
 	FAILED_STATUS_RETRIES_FAILED = 1
 	FAILED_STATUS_NO_REPLY = 2
@@ -515,7 +534,14 @@ class Device(object):
 			Device.LUMINANCE: 'lum',
 			Device.DEW_POINT: 'dewp',
 			Device.BAROMETRIC_PRESSURE: 'barpress',
-			#Device.GENRIC_METER: 'genmeter'
+			Device.GENRIC_METER: 'genmeter',
+			Device.WEIGHT: 'weight',
+			Device.CO2: 'co2',
+			Device.VOLUME: 'volume',
+			Device.LOUDNESS: 'loudness',
+			Device.PM25: 'particulatematter25',
+			Device.CO: 'co',
+			Device.MOISTURE: 'moisture'
 		}
 		return types.get(sensorType, 'unknown')
 
