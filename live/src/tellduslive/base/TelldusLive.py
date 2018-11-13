@@ -90,7 +90,8 @@ class TelldusLive(Plugin):
 			self.connected = True
 			self.registered = False
 			params = message.argument(0).dictVal
-			self.settings['uuid'] = params['uuid'].stringVal
+			self.uuid = params['uuid'].stringVal
+			self.settings['uuid'] = self.uuid
 			logging.info(
 				"This client isn't activated, please activate it using this url:\n%s",
 				params['url'].stringVal
@@ -104,6 +105,9 @@ class TelldusLive(Plugin):
 			data = message.argument(0).toNative()
 			if 'email' in data:
 				self.email = data['email']
+			if 'uuid' in data and data['uuid'] != self.uuid:
+				self.uuid = data['uuid']
+				self.settings['uuid'] = self.uuid
 			self.liveRegistered(data)
 			return
 
