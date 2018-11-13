@@ -95,7 +95,7 @@ class TelldusLive(Plugin):
 				"This client isn't activated, please activate it using this url:\n%s",
 				params['url'].stringVal
 			)
-			self.observers.liveConnected()
+			self.liveConnected()
 			return
 
 		if (message.name() == "registered"):
@@ -104,7 +104,7 @@ class TelldusLive(Plugin):
 			data = message.argument(0).toNative()
 			if 'email' in data:
 				self.email = data['email']
-			self.observers.liveRegistered(data)
+			self.liveRegistered(data)
 			return
 
 		if (message.name() == "command"):
@@ -136,6 +136,24 @@ class TelldusLive(Plugin):
 
 	def isRegistered(self):
 		return self.registered
+
+	@signal
+	def liveConnected(self):
+		"""This signal is sent when we have succesfully connected to a Live! server"""
+		self.observers.liveConnected()
+
+	@signal
+	def liveDisconnected(self):
+		"""
+		This signal is sent when we are disconnected. Please note that it is normal for it di be
+		disconnected and happens regularly
+		"""
+		self.observers.liveDisconnected()
+
+	@signal
+	def liveRegistered(self, options):
+		"""This signal is sent when we have succesfully registered with a Live! server"""
+		self.observers.liveRegistered(options)
 
 	def run(self):
 		self.running = True
@@ -204,7 +222,7 @@ class TelldusLive(Plugin):
 		self.connected = False
 		self.registered = False
 		def sendNotification():
-			self.observers.liveDisconnected()
+			self.liveDisconnected()
 		# Syncronize signal with main thread
 		Application().queue(sendNotification)
 
