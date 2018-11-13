@@ -92,6 +92,11 @@ class DeviceManager(Plugin):
 			self.__deviceAdded(device)
 			if self.live.registered and device.isDevice():
 				(state, stateValue) = device.state()
+				parameters = json.dumps(
+					device.allParameters(),
+					separators=(',', ':'),
+					sort_keys=True
+				)
 				deviceDict = {
 					'id': device.id(),
 					'name': device.name(),
@@ -100,6 +105,8 @@ class DeviceManager(Plugin):
 					'stateValue': stateValue,
 					'protocol': device.protocol(),
 					'model': device.model(),
+					'parameters': parameters,
+					'parametersHash': hashlib.sha1(parameters).hexdigest(),
 					'transport': device.typeString()
 				}
 				msg = LiveMessage("DeviceAdded")
