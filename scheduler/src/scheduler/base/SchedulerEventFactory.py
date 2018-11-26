@@ -61,6 +61,16 @@ class TimeTriggerManager(object):
 						self.triggers[trigger.minute] = []
 					self.triggers[trigger.minute].append(trigger)
 
+	def recalcOne(self, trigger):
+		if trigger.recalculate():
+			with self.timeLock:
+				for minute in self.triggers:
+					if trigger in self.triggers[minute]:
+						self.triggers[minute].remove(trigger)
+				if trigger.minute not in self.triggers:
+					self.triggers[trigger.minute] = []
+				self.triggers[trigger.minute].append(trigger)
+
 	def run(self):
 		self.running = True
 		self.lastMinute = None
@@ -264,12 +274,14 @@ class BlockheaterTrigger(TimeTrigger):
 		if minutes < 0:
 			minutes += 24*60
 		self.setHour = int(minutes / 60)
+		minuteBefore = self.minute
 		self.minute = int(minutes % 60)
-		return super(BlockheaterTrigger, self).recalculate()
+
+		return super(BlockheaterTrigger, self).recalculate() or minuteBefore != self.minute
 
 	def setTemp(self, temp):
 		self.temp = temp
-		self.recalculate()
+		self.manager.recalcOne(self)
 
 class SuntimeCondition(Condition):
 	def __init__(self, **kwargs):
