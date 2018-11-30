@@ -343,6 +343,21 @@ class Device(object):
 	def protocol(self):
 		return self.typeString()
 
+	def sensorElement(self, valueType, scale):
+		"""
+		:returns: a sensor value and lastUpdated-time, as a dict, of a the specified
+		  valueType and scale. Returns ``None`` is no such value exists
+		"""
+		if valueType not in self._sensorValues:
+			return None
+		for sensorType in self._sensorValues[valueType]:
+			if sensorType['scale'] == scale:
+				lastUpdated = None
+				if 'lastUpdated' in sensorType:
+					lastUpdated = sensorType['lastUpdated']
+				return {'value': float(sensorType['value']), 'lastUpdated': lastUpdated}
+		return None
+
 	def sensorValue(self, valueType, scale):
 		"""
 		:returns: a sensor value of a the specified valueType and scale. Returns ``None``

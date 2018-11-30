@@ -298,8 +298,12 @@ class BlockheaterTrigger(TimeTrigger):
 				return False
 			sensor = self.deviceManager.device(self.sensorId)
 			# TODO: Support Fahrenheit also
-			temp = sensor.sensorValue(Device.TEMPERATURE, Device.SCALE_TEMPERATURE_CELCIUS)
+			sensorElement = sensor.sensorElement(Device.TEMPERATURE, Device.SCALE_TEMPERATURE_CELCIUS)
+			temp = sensorElement['value']
 			if temp is None:
+				return False
+			if sensorElement['lastUpdated'] and sensorElement['lastUpdated'] < (time.time() - self.maxRunTime):
+				# this fetched value was received too long ago, don't use this to set the blockheater
 				return False
 			self.temp = temp
 		if self.temp > 10:
