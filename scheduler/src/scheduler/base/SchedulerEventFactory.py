@@ -15,14 +15,15 @@ from telldus import Device, DeviceManager
 from .SunCalculator import SunCalculator
 
 class TimeTriggerManager(object):
-	def __init__(self):
+	def __init__(self, run=True):
 		self.lastMinute = None
 		self.running = False
 		self.timeLock = threading.Lock()
 		self.triggers = {}
-		Application().registerShutdown(self.stop)
-		self.thread = threading.Thread(target=self.run)
-		self.thread.start()
+		Application(run).registerShutdown(self.stop)
+		if run:
+			self.thread = threading.Thread(target=self.run)
+			self.thread.start()
 
 	def addTrigger(self, trigger):
 		with self.timeLock:
@@ -75,36 +76,38 @@ class TimeTriggerManager(object):
 		self.running = True
 		self.lastMinute = None
 		while self.running:
-			currentMinute = datetime.utcnow().minute
-			if self.lastMinute is None or self.lastMinute is not currentMinute:
-				# new minute, check triggers
-				self.lastMinute = currentMinute
-				if currentMinute not in self.triggers:
-					continue
-				triggersToRemove = []
-				for trigger in self.triggers[currentMinute]:
-					if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
-						triggertype = 'time'
-						if isinstance(trigger, SuntimeTrigger):
-							triggertype = 'suntime'
-						elif isinstance(trigger, BlockheaterTrigger):
-							triggertype = 'blockheater'
-
-						if isinstance(trigger, SuntimeTrigger) and trigger.recalculate():
-							# suntime (time or active-status) was updated (new minute), move it around
-							triggersToRemove.append(trigger)
-						if trigger.active:
-							# is active (not inactive due to sunrise/sunset-thing)
-							trigger.triggered({'triggertype': triggertype})
-				with self.timeLock:
-					for trigger in triggersToRemove:
-						self.triggers[currentMinute].remove(trigger)
-						if not trigger.active:
-							continue
-						if trigger.minute not in self.triggers:
-							self.triggers[trigger.minute] = []
-						self.triggers[trigger.minute].append(trigger)
+			self.runMinute()
 			time.sleep(5)
+
+	def runMinute(self):
+		currentMinute = datetime.utcnow().minute
+		if self.lastMinute is None or self.lastMinute is not currentMinute:
+			# new minute, check triggers
+			self.lastMinute = currentMinute
+			if currentMinute not in self.triggers:
+				return
+			triggersToRemove = []
+			for trigger in self.triggers[currentMinute]:
+				if trigger.hour == -1 or trigger.hour == datetime.utcnow().hour:
+					triggertype = 'time'
+					if isinstance(trigger, SuntimeTrigger):
+						triggertype = 'suntime'
+					elif isinstance(trigger, BlockheaterTrigger):
+						triggertype = 'blockheater'
+					if isinstance(trigger, SuntimeTrigger) and trigger.recalculate():
+						# suntime (time or active-status) was updated (new minute), move it around
+						triggersToRemove.append(trigger)
+					if trigger.active and not trigger.isTriggered():
+						# is active (not inactive due to sunrise/sunset-thing)
+						trigger.triggered({'triggertype': triggertype})
+			with self.timeLock:
+				for trigger in triggersToRemove:
+					self.triggers[currentMinute].remove(trigger)
+					if not trigger.active:
+						continue
+					if trigger.minute not in self.triggers:
+						self.triggers[trigger.minute] = []
+					self.triggers[trigger.minute].append(trigger)
 
 	def stop(self):
 		self.running = False
