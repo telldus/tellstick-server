@@ -19,6 +19,8 @@ class TimeTriggerManager(object):
 		self.lastMinute = None
 		self.running = False
 		self.timeLock = threading.Lock()
+		# TODO, the list below should be written to file
+		self.triggered = {}  # keep track of when triggered between reloads
 		self.triggers = {}
 		Application(run).registerShutdown(self.stop)
 		if run:
@@ -45,11 +47,14 @@ class TimeTriggerManager(object):
 
 	def recalcAll(self):
 		# needs to recalc all triggers, for example longitude/latitude/timezone has changed
+		# reset triggeredAt in this case
 		triggersToRemove = {}
 		for minute in self.triggers:
 			for trigger in self.triggers[minute]:
 				if trigger.recalculate():
 					# trigger was updated (new minute), move it around
+					trigger.triggeredAt = None
+					del self.triggered[trigger.id]
 					if minute not in triggersToRemove:
 						triggersToRemove[minute] = []
 					triggersToRemove[minute].append(trigger)
@@ -121,15 +126,29 @@ class TimeTrigger(Trigger):
 		self.setHour = None  # this is the hour actually set (not recalculated to UTC)
 		self.active = True  # TimeTriggers are always active
 		self.timezone = self.getTimezone()
+		self.triggeredAt = self.fetchTriggeredAt()
 
 	def close(self):
 		self.manager.deleteTrigger(self)
+
+	def fetchTriggeredAt(self):
+		if self.id in self.manager.triggered:
+			return  self.manager.triggered[self.id]
+		return None
 
 	def getSettings(self):
 		return Settings('telldus.scheduler')
 
 	def getTimezone(self):
 		return self.getSettings().get('tz', 'UTC')
+
+	def isTriggered(self):
+		# is it already triggered this minute
+		if self.triggeredAt:
+			# note, nanosecond in the future?
+			return datetime.fromtimestamp(self.triggeredAt).replace(second=0,
+			   microsecond=0) == datetime.now().replace(second=0, microsecond=0)
+		return False
 
 	def parseParam(self, name, value):
 		if name == 'minute':
@@ -254,6 +273,10 @@ class BlockheaterTrigger(TimeTrigger):
 	def close(self):
 		self.factory.deleteTrigger(self)
 		super(BlockheaterTrigger, self).close()
+
+	def isTriggered(self):
+		# is it already triggered less than 2 hours ago?
+		return (self.triggeredAt and self.triggeredAt > (time.time() - self.maxRunTime))
 
 	def parseParam(self, name, value):
 		if name == 'clientSensorId':
