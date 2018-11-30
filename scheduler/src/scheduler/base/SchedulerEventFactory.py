@@ -121,6 +121,7 @@ class TimeTrigger(Trigger):
 	def __init__(self, manager, **kwargs):
 		super(TimeTrigger, self).__init__(**kwargs)
 		self.manager = manager
+		self.calculatedTime = None
 		self.minute = None
 		self.hour = None
 		self.setHour = None  # this is the hour actually set (not recalculated to UTC)
@@ -313,8 +314,14 @@ class BlockheaterTrigger(TimeTrigger):
 		self.setHour = int(minutes / 60)
 		minuteBefore = self.minute
 		self.minute = int(minutes % 60)
-
-		return super(BlockheaterTrigger, self).recalculate() or minuteBefore != self.minute
+		shouldRecalc = super(BlockheaterTrigger, self).recalculate() or minuteBefore != self.minute
+		if self.calculatedHourTime and time.mktime(self.calculatedHourTime.replace(minute=self.minute).timetuple()) < time.time():
+			# note, python 3 has .timestamp()
+			# the new calculated value has already passed, run it now!
+			if not self.isTriggered():
+				self.triggered({'triggertype': 'blockheater'})
+				return True
+		return shouldRecalc
 
 	def setTemp(self, temp):
 		self.temp = temp
