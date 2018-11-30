@@ -243,6 +243,7 @@ class SuntimeTrigger(TimeTrigger):
 class BlockheaterTrigger(TimeTrigger):
 	def __init__(self, factory, manager, deviceManager, **kwargs):
 		super(BlockheaterTrigger, self).__init__(manager=manager, **kwargs)
+		self.maxRunTime = 7200
 		self.factory = factory
 		self.departureHour = None
 		self.departureMinute = None
@@ -282,7 +283,7 @@ class BlockheaterTrigger(TimeTrigger):
 			return True
 		self.active = True
 		offset = int(round(60+100*self.temp/(self.temp-35)))
-		offset = min(120, offset) #  Never longer than 120 minutes
+		offset = min(self.maxRunTime/60, offset) #  Never longer than 120 minutes
 		minutes = (self.departureHour * 60) + self.departureMinute - offset
 		if minutes < 0:
 			minutes += 24*60
