@@ -120,11 +120,16 @@ class TimeTrigger(Trigger):
 		self.hour = None
 		self.setHour = None  # this is the hour actually set (not recalculated to UTC)
 		self.active = True  # TimeTriggers are always active
-		self.settings = Settings('telldus.scheduler')
-		self.timezone = self.settings.get('tz', 'UTC')
+		self.timezone = self.getTimezone()
 
 	def close(self):
 		self.manager.deleteTrigger(self)
+
+	def getSettings(self):
+		return Settings('telldus.scheduler')
+
+	def getTimezone(self):
+		return self.getSettings().get('tz', 'UTC')
 
 	def parseParam(self, name, value):
 		if name == 'minute':
@@ -156,7 +161,6 @@ class TimeTrigger(Trigger):
 	def recalculate(self):
 		if self.hour == -1:
 			return False
-		self.timezone = self.settings.get('tz', 'UTC')
 		currentHour = self.hour
 		local_timezone = timezone(self.timezone)
 		currentDate = pytz.utc.localize(datetime.utcnow())
@@ -168,23 +172,29 @@ class TimeTrigger(Trigger):
 			# retry it with new date (will have impact on daylight savings changes (but not sure it
 			# will actually help))
 			currentDate = currentDate + timedelta(days=1)
-		local_datetime = local_timezone.localize(
-			datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour)
-		)
-		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+			local_datetime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour)
+			)
+			utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		self.hour = utc_datetime.hour
+		self.calculatedHourTime = utc_datetime
 		if currentHour == self.hour:
 			#no change
 			return False
 		return True
+
+	def triggered(self, triggerInfo=None):
+		self.triggeredAt = time.time()
+		self.manager.triggered[self.id] = self.triggeredAt
+		super(TimeTrigger, self).triggered(triggerInfo)
 
 class SuntimeTrigger(TimeTrigger):
 	def __init__(self, manager, **kwargs):
 		super(SuntimeTrigger, self).__init__(manager=manager, **kwargs)
 		self.sunStatus = None
 		self.offset = None
-		self.latitude = self.settings.get('latitude', '55.699592')
-		self.longitude = self.settings.get('longitude', '13.187836')
+		self.latitude = self.getSettings().get('latitude', '55.699592')
+		self.longitude = self.getSettings().get('longitude', '13.187836')
 
 	def parseParam(self, name, value):
 		if name == 'sunStatus':
@@ -197,8 +207,8 @@ class SuntimeTrigger(TimeTrigger):
 			self.manager.addTrigger(self)
 
 	def recalculate(self):
-		self.latitude = self.settings.get('latitude', '55.699592')
-		self.longitude = self.settings.get('longitude', '13.187836')
+		self.latitude = self.getSettings().get('latitude', '55.699592')
+		self.longitude = self.getSettings().get('longitude', '13.187836')
 		sunCalc = SunCalculator()
 		currentHour = self.hour
 		currentMinute = self.minute
@@ -292,7 +302,7 @@ class SuntimeCondition(Condition):
 		self.sunStatus = None
 		self.sunriseOffset = None
 		self.sunsetOffset = None
-		self.settings = Settings('telldus.scheduler')
+		self.settings = self.getSettings()
 		self.latitude = self.settings.get('latitude', '55.699592')
 		self.longitude = self.settings.get('longitude', '13.187836')
 
@@ -353,8 +363,7 @@ class TimeCondition(Condition):
 		self.fromHour = None
 		self.toMinute = None
 		self.toHour = None
-		self.settings = Settings('telldus.scheduler')
-		self.timezone = self.settings.get('tz', 'UTC')
+		self.timezone = self.getTimezone()
 
 	def parseParam(self, name, value):
 		if name == 'fromMinute':
@@ -454,8 +463,7 @@ class WeekdayCondition(Condition):
 	def __init__(self, **kwargs):
 		super(WeekdayCondition, self).__init__(**kwargs)
 		self.weekdays = None
-		self.settings = Settings('telldus.scheduler')
-		self.timezone = self.settings.get('tz', 'UTC')
+		self.timezone = self.getTimezone()
 
 	def parseParam(self, name, value):
 		if name == 'weekdays':
