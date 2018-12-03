@@ -566,3 +566,32 @@ class SchedulerTest(unittest.TestCase):
 			self.checkTime(None, None)  # too old
 			self.resetTrigger(10, timezone=self.usertimezone, lastUpdated=time.time()-7199)
 			self.checkTime(7, 40)
+
+	def testTimeTrigger(self):
+		self.usertimezone = 'Europe/Stockholm'
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 05:05")):
+			# check that everything is OK
+			self.timeTrigger.parseParam('hour', 8)
+			self.timeTrigger.parseParam('minute', 0)
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.event.execute.call_count == 0)
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 08:00")):
+			# ordinary run
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.event.execute.call_count == 1)
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 08:00:01")):
+			# don't run twice this minute, "isTriggered" prevents it
+			self.timeTrigger.manager.lastMinute = None  # bit of a cheat, but want to test isTriggered
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.event.execute.call_count == 1)
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 08:00:02")):
+			# don't run twice this minute, "lastMinute" prevents it (doesn't make it through trigger reloads)
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.event.execute.call_count == 1)
+			self.timeTrigger.parseParam('hour', 8)
+			self.timeTrigger.parseParam('minute', 5)
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 08:05:30")):
+			# new time set, should run
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.event.execute.call_count == 2)
+
