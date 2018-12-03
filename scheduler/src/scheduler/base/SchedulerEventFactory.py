@@ -279,6 +279,19 @@ class BlockheaterTrigger(TimeTrigger):
 		# is it already triggered less than 2 hours ago?
 		return (self.triggeredAt and self.triggeredAt > (time.time() - self.maxRunTime))
 
+	def moreThan2HoursToDeparture(self):
+		# even if the temperature rises above 10, don't inactivate the trigger
+		# if it's less than 2 hours until departure
+		if not self.active:
+			return True
+		local_timezone = timezone(self.timezone)
+		currentDate = pytz.utc.localize(datetime.utcnow())
+		local_datetime = local_timezone.localize(
+			datetime(currentDate.year, currentDate.month, currentDate.day, self.departureHour, self.departureMinute)
+		)
+		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+		return currentDate < (utc_datetime - timedelta(hours=self.maxRunTime/3600))
+
 	def parseParam(self, name, value):
 		if name == 'clientSensorId':
 			self.sensorId = int(value)
@@ -306,7 +319,7 @@ class BlockheaterTrigger(TimeTrigger):
 				# this fetched value was received too long ago, don't use this to set the blockheater
 				return False
 			self.temp = temp
-		if self.temp > 10:
+		if self.temp > 10 and self.moreThan2HoursToDeparture():
 			self.active = False
 			return True
 		self.active = True
