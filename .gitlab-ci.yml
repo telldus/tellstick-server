@@ -15,11 +15,11 @@ unittest:
   image: python:2.7-alpine
   stage: test
   script:
-    - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv
+    - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv > /dev/null 2>&1
     - mkdir /etc/upgrade
     - touch /etc/builddate
-    - ./tellstick.sh setup
-    - ./tellstick.sh install events
-    - ./tellstick.sh install scheduler
-    - ./tellstick.sh install upgrade
+    - ./tellstick.sh setup > /dev/null 2>&1
+    - ./tellstick.sh install events > /dev/null 2>&1
+    - ./tellstick.sh install scheduler > /dev/null 2>&1
+    - ./tellstick.sh install upgrade > /dev/null 2>&1
     - ./tellstick.sh test
