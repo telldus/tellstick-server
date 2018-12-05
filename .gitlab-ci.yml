@@ -14,6 +14,9 @@ pylint:
 unittest:
   image: python:2.7-alpine
   stage: test
+  cache:
+    paths:
+      - build/
   script:
     - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv > /dev/null 2>&1
     - mkdir /etc/upgrade
