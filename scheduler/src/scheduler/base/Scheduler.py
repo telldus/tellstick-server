@@ -32,12 +32,14 @@ class Scheduler(Plugin):
 		self.latitude = self.settings.get('latitude', '55.699592')
 		self.longitude = self.settings.get('longitude', '13.187836')
 		self.jobs = []
+		self.jobsFetchedFromServer = False
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
 		self.deviceManager = DeviceManager(self.context)
 		if self.live.isRegistered():
 			#probably not practically possible to end up here
 			self.requestJobsFromServer()
+			self.jobsFetchedFromServer = True
 
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
@@ -234,7 +236,9 @@ class Scheduler(Plugin):
 		if 'tz' in msg:
 			self.timezone = msg['tz']
 
-		self.requestJobsFromServer()
+		if not self.jobsFetchedFromServer:
+			self.requestJobsFromServer()
+			self.jobsFetchedFromServer = True
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
