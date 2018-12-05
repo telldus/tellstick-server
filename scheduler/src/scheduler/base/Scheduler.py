@@ -39,7 +39,6 @@ class Scheduler(Plugin):
 		if self.live.isRegistered():
 			#probably not practically possible to end up here
 			self.requestJobsFromServer()
-			self.jobsFetchedFromServer = True
 
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
@@ -238,7 +237,6 @@ class Scheduler(Plugin):
 
 		if not self.jobsFetchedFromServer:
 			self.requestJobsFromServer()
-			self.jobsFetchedFromServer = True
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
@@ -281,6 +279,7 @@ class Scheduler(Plugin):
 		# self.live.pushToWeb('scheduler', 'updated', job['id'])
 
 	def requestJobsFromServer(self):
+		self.jobsFetchedFromServer = True
 		self.live.send(LiveMessage("scheduler-requestjob"))
 
 	def run(self):
