@@ -223,7 +223,7 @@ class Scheduler(Plugin):
 			jobs = self.settings.get('jobs', [])
 		except ValueError:
 			jobs = [] #something bad has been stored, just ignore it and continue?
-			print "WARNING: Could not fetch schedules from local storage"
+			print("WARNING: Could not fetch schedules from local storage")
 		self.calculateJobs(jobs)
 
 	def liveRegistered(self, msg):
@@ -238,7 +238,7 @@ class Scheduler(Plugin):
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
-		if len(msg.argument(0).toNative()) != 0:
+		if len(msg.argument(0).toNative()) != 0:  # pylint: disable=C1801
 			scheduleDict = msg.argument(0).toNative()
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
@@ -248,7 +248,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
 		"""Receive list of jobs from server, saves to settings and calculate nextRunTimes"""
-		if len(msg.argument(0).toNative()) == 0:
+		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
 			jobs = []
 		else:
 			scheduleDict = msg.argument(0).toNative()
@@ -259,11 +259,10 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-update')
 	def receiveOneJobFromServer(self, msg):
 		"""Receive one job from server, add or edit, save to settings and calculate nextRunTime"""
-		if len(msg.argument(0).toNative()) == 0:
-			jobs = []
-		else:
-			scheduleDict = msg.argument(0).toNative()
-			job = scheduleDict['job']
+		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
+			return
+		scheduleDict = msg.argument(0).toNative()
+		job = scheduleDict['job']
 
 		active = self.calculateNextRunTime(job)
 		self.deleteJob(job['id']) #delete the job if it already exists (update)
@@ -317,12 +316,12 @@ class Scheduler(Plugin):
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():
 						if 'client_device_id' not in runningJob:
-							print "Missing client_device_id, this is an error, perhaps refetch jobs? "
-							print runningJob
+							print("Missing client_device_id, this is an error, perhaps refetch jobs?")
+							print(runningJob)
 							continue
 						device = self.deviceManager.device(runningJob['client_device_id'])
 						if not device:
-							print "Missing device, b: " + str(runningJob['client_device_id'])
+							print("Missing device, b: " + str(runningJob['client_device_id']))
 							continue
 						if device.typeString() == '433' and runningJob['originalRepeats'] > 1:
 							#repeats for 433-devices only
@@ -369,7 +368,7 @@ class Scheduler(Plugin):
 	def runJob(self, jobData):
 		device = self.deviceManager.device(jobData['client_device_id'])
 		if not device:
-			print "Missing device: " + str(jobData['client_device_id'])
+			print("Missing device: " + str(jobData['client_device_id']))
 			return
 		method = jobData['method']
 		value = None
