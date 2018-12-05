@@ -3,6 +3,7 @@
 import logging
 import time
 
+from base import Settings
 from tellduslive.base import LiveMessage
 
 class Condition(object):
@@ -12,6 +13,12 @@ class Condition(object):
 		self.event = event
 		self.id = id  # pylint: disable=C0103
 		self.group = group
+
+	def getSettings(self):
+		return Settings('telldus.scheduler')
+
+	def getTimezone(self):
+		return self.getSettings().get('tz', 'UTC')
 
 	def loadParams(self, params):
 		for param in params:
