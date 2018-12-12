@@ -131,7 +131,7 @@ class Device(object):
 		"""
 		Similar as parameters() but this returnes more values such as the device type
 		"""
-		params = self.parameters()
+		params = self.parameters().copy()
 		try:
 			params['devicetype'] = self.deviceType()
 		except Exception as error:
