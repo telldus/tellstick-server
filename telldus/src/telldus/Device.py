@@ -116,6 +116,7 @@ class Device(object):
 		self._loadCount = 0
 		self._name = None
 		self._manager = None
+		self._room = None
 		self._state = Device.TURNOFF
 		self._stateValue = ''
 		self._sensorValues = {}
@@ -129,7 +130,7 @@ class Device(object):
 
 	def allParameters(self):
 		"""
-		Similar as parameters() but this returnes more values such as the device type
+		Similar as parameters() but this returnes more values such as the device type and the room
 		"""
 		params = self.parameters()
 		if isinstance(params, dict):
@@ -144,6 +145,11 @@ class Device(object):
 		except Exception as error:
 			params['devicetype'] = Device.TYPE_UNKNOWN
 			Application.printException(error)
+		if self._room is None:
+			# Make sure it's removed
+			params.pop('room', None)
+		else:
+			params['room'] = self._room
 		return params
 
 	def battery(self):  # pylint: disable=R0201
@@ -261,6 +267,7 @@ class Device(object):
 		self._loadCount = 0
 		self.setParams(olddevice.params())
 		(state, stateValue) = olddevice.state()
+		self._room = olddevice._room
 		self._state = state
 		self._stateValue = stateValue
 		self._ignored = olddevice._ignored
@@ -276,6 +283,8 @@ class Device(object):
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
+		if 'room' in settings:
+			self._room = settings['room']
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
 
@@ -350,6 +359,12 @@ class Device(object):
 	def protocol(self):
 		return self.typeString()
 
+	def room(self):
+		"""
+		:returns: The current room this device belongs to
+		"""
+		return self._room
+
 	def sensorElement(self, valueType, scale):
 		"""
 		:returns: a sensor value and lastUpdated-time, as a dict, of a the specified
@@ -400,6 +415,18 @@ class Device(object):
 
 	def setParams(self, params):
 		pass
+
+	def setRoom(self, room):
+		"""
+		Adds the device to a room.
+		Set to None or empty string to remove from room
+		"""
+		room = None if room == '' else room
+		if self._room == room:
+			# Don't fire update if not changed
+			return
+		self._room = room
+		self.paramUpdated('room')
 
 	def setSensorValue(self, valueType, value, scale):
 		self.setSensorValues([{'type': valueType, 'value':value, 'scale': scale}])

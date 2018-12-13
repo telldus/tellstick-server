@@ -52,6 +52,7 @@ class DeviceManager(Plugin):
 
 	def __init__(self):
 		self.devices = []
+		self.rooms = {}
 		self.settings = Settings('telldus.devicemanager')
 		self.nextId = self.settings.get('nextId', 0)
 		self.live = TelldusLive(self.context)
@@ -135,6 +136,8 @@ class DeviceManager(Plugin):
 				self.__sendDeviceReport()
 			if device.isSensor:
 				self.__sendSensorReport()
+		if param == 'room':
+			self.__sendDeviceParameterReport(device, sendParameters=True, sendMetadata=False)
 
 	def findByName(self, name):
 		for device in self.devices:
@@ -368,6 +371,19 @@ class DeviceManager(Plugin):
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
 				return
+		elif args['action'] == 'setParameter':
+			device = None
+			for dev in self.devices:
+				if dev.id() == args['device']:
+					device = dev
+					break
+			if device is None:
+				return
+			name = args.get('name', '')
+			value = args.get('value', '')
+			if name == 'room':
+				device.setRoom(value)
+				return
 
 	@TelldusLive.handler('device-requestdata')
 	def __handleDeviceParametersRequest(self, msg):
@@ -375,28 +391,9 @@ class DeviceManager(Plugin):
 		device = self.device(args.get('id', 0))
 		if not device:
 			return
-		reply = LiveMessage('device-datareport')
-		data = {
-			'id': args['id']
-		}
-		if args.get('parameters', 0) == 1:
-			parameters = json.dumps(
-				device.allParameters(),
-				separators=(',', ':'),
-				sort_keys=True
-			)
-			data['parameters'] = parameters
-			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
-		if args.get('metadata', 0) == 1:
-			metadata = json.dumps(
-				device.metadata(),
-				separators=(',', ':'),
-				sort_keys=True
-			)
-			data['metadata'] = metadata
-			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
-		reply.append(data)
-		self.live.send(reply)
+		sendParameters = True if args.get('parameters', 0) == 1 else False
+		sendMetadata = True if args.get('metadata', 0) == 1 else False
+		self.__sendDeviceParameterReport(device, sendParameters, sendMetadata)
 
 	@TelldusLive.handler('reload')
 	def __handleSensorUpdate(self, msg):
@@ -429,12 +426,47 @@ class DeviceManager(Plugin):
 			# cleaned up
 			self.__sendSensorReport()
 
+	@TelldusLive.handler('room')
+	def handleRoom(self, msg):
+		data = msg.argument(0).toNative()
+		if data['action'] == 'add':
+			isOwner = bool(data.get('isOwner', False))
+			self.rooms[data['id']] = {
+				'name': data.get('name', ''),
+				'parent': data.get('parent', ''),
+				'color': data.get('color', ''),
+				'icon': data.get('icon', ''),
+				'isOwner': isOwner,
+				'mode': '',  # Not implemented yet
+			}
+			if self.live.registered and isOwner:
+				msg = LiveMessage('RoomAdded')
+				msg.append(self.rooms[data['id']])
+				self.live.send(msg)
+			self.settings['rooms'] = self.rooms
+			return
+
+		if data['action'] == 'remove':
+			room = self.rooms.pop(data['id'], None)
+			if room is None:
+				logging.warning('Room %s was not found', data['id'])
+				return
+			if not room['isOwner']:
+				return
+			if self.live.registered:
+				msg = LiveMessage('RoomRemoved')
+				msg.append({'id': data['id']})
+				self.live.send(msg)
+			self.settings['rooms'] = self.rooms
+			return
+
 	def liveRegistered(self, __msg):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()
 
 	def __load(self):
+		self.rooms = self.settings.get('rooms', {})
 		self.store = self.settings.get('devices', [])
 		for dev in self.store:
 			if 'type' not in dev or 'localId' not in dev:
@@ -561,6 +593,30 @@ class DeviceManager(Plugin):
 		msg.append(valueType)
 		msg.append(value)
 		self.live.send(msg)
+
+	def __sendDeviceParameterReport(self, device, sendParameters, sendMetadata):
+		reply = LiveMessage('device-datareport')
+		data = {
+			'id': device.id()
+		}
+		if sendParameters:
+			parameters = json.dumps(
+				device.allParameters(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['parameters'] = parameters
+			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
+		if sendMetadata:
+			metadata = json.dumps(
+				device.metadata(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['metadata'] = metadata
+			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
+		reply.append(data)
+		self.live.send(reply)
 
 	def __sendSensorReport(self):
 		if not self.live.registered:
