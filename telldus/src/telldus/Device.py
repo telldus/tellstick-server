@@ -336,7 +336,7 @@ class Device(object):
 	def parameters(self):
 		"""
 		:returns: a static dictionary of paramters describing the device.
-		  These should not containd the current state of the device, only descriptive parameters.
+		  These should not contain the current state of the device, only descriptive parameters.
 		"""
 		return {}
 
