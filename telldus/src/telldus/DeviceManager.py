@@ -540,7 +540,6 @@ class DeviceManager(Plugin):
 				dev['battery'] = battery
 			lst.append(dev)
 		msg = LiveMessage("DevicesReport")
-		logging.warning("DR %s", lst)
 		msg.append(lst)
 		self.live.send(msg)
 
