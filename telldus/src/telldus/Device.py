@@ -131,7 +131,14 @@ class Device(object):
 		"""
 		Similar as parameters() but this returnes more values such as the device type
 		"""
-		params = self.parameters().copy()
+		params = self.parameters()
+		if isinstance(params, dict):
+			# Copy so we don't alter the original
+			params = params.copy()
+		else:
+			# parameters() must return a dict
+			params = {}
+
 		try:
 			params['devicetype'] = self.deviceType()
 		except Exception as error:
