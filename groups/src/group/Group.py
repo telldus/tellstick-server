@@ -61,6 +61,12 @@ class GroupDevice(Device):
 	def setNodeId(self, nodeId):
 		self._nodeId = nodeId
 
+	def setParameter(self, name, value):
+		if name != 'devices':
+			return
+		self.devices = [int(x) for x in value.split(',')]
+		self.paramUpdated('devices')
+
 	def setParams(self, params):
 		self.devices = params.setdefault('devices', [])
 
