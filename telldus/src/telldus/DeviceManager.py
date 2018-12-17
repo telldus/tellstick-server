@@ -131,7 +131,11 @@ class DeviceManager(Plugin):
 	def deviceMetadataUpdated(self, device, param):
 		self.save()
 		if param and param != '':
-			self.__sendDeviceParameterReport(device, sendParameters=False, sendMetadata=True)
+			sendParameters = False
+			if param == 'devicetype':
+				# This effects device parameters also
+				sendParameters = True
+			self.__sendDeviceParameterReport(device, sendParameters=sendParameters, sendMetadata=True)
 
 	def deviceParamUpdated(self, device, param):
 		self.save()
