@@ -413,6 +413,13 @@ class Device(object):
 		self._name = name
 		self.paramUpdated('name')
 
+	def setParameter(self, name, value):
+		"""
+		Set a device specific parameter. What kind of paramters to set is dependent on the device
+		type
+		"""
+		pass
+
 	def setParams(self, params):
 		pass
 

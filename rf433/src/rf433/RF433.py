@@ -193,6 +193,12 @@ class DeviceNode(RF433Node):
 	def protocol(self):
 		return self._protocol
 
+	def setParameter(self, name, value):
+		if name not in ('code', 'fade', 'house', 'system', 'unit', 'units'):
+			return
+		self._protocolParams[name] = value
+		self.paramUpdated(name)
+
 	def setParams(self, params):
 		self._protocol = params.setdefault('protocol', '')
 		self._model = params.setdefault('model', '')
