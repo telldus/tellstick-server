@@ -141,11 +141,16 @@ class Device(object):
 			# parameters() must return a dict
 			params = {}
 
-		try:
-			params['devicetype'] = self.deviceType()
-		except Exception as error:
-			params['devicetype'] = Device.TYPE_UNKNOWN
-			Application.printException(error)
+		devicetype = self.metadata('devicetype', None)
+		if devicetype is not None:
+			# Devicetype in metadata overrides the devicetype
+			params['devicetype'] = devicetype
+		else:
+			try:
+				params['devicetype'] = self.deviceType()
+			except Exception as error:
+				params['devicetype'] = Device.TYPE_UNKNOWN
+				Application.printException(error)
 		if self._room is None:
 			# Make sure it's removed
 			params.pop('room', None)
