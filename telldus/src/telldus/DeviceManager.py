@@ -136,7 +136,8 @@ class DeviceManager(Plugin):
 				self.__sendDeviceReport()
 			if device.isSensor:
 				self.__sendSensorReport()
-		if param == 'room':
+			return
+		if param and param != '':
 			self.__sendDeviceParameterReport(device, sendParameters=True, sendMetadata=False)
 
 	def findByName(self, name):
@@ -381,9 +382,11 @@ class DeviceManager(Plugin):
 				return
 			name = args.get('name', '')
 			value = args.get('value', '')
-			if name == 'room':
-				device.setRoom(value)
-				return
+			if args['action'] == 'setParameter':
+				if name == 'room':
+					device.setRoom(value)
+				else:
+					device.setParameter(name, value)
 
 	@TelldusLive.handler('device-requestdata')
 	def __handleDeviceParametersRequest(self, msg):
