@@ -128,6 +128,11 @@ class DeviceManager(Plugin):
 				return device
 		return None
 
+	def deviceMetadataUpdated(self, device, param):
+		self.save()
+		if param and param != '':
+			self.__sendDeviceParameterReport(device, sendParameters=False, sendMetadata=True)
+
 	def deviceParamUpdated(self, device, param):
 		self.save()
 		self.__deviceUpdated(device, [param])
@@ -372,7 +377,7 @@ class DeviceManager(Plugin):
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
 				return
-		elif args['action'] == 'setParameter':
+		elif args['action'] in ('setParameter', 'setMetadata'):
 			device = None
 			for dev in self.devices:
 				if dev.id() == args['device']:
@@ -387,6 +392,8 @@ class DeviceManager(Plugin):
 					device.setRoom(value)
 				else:
 					device.setParameter(name, value)
+			else:
+				device.setMetadata(name, value)
 
 	@TelldusLive.handler('device-requestdata')
 	def __handleDeviceParametersRequest(self, msg):
@@ -542,6 +549,7 @@ class DeviceManager(Plugin):
 				"type": device.typeString(),
 				"name": device.name(),
 				"params": device.params(),
+				"metadata": device.metadata(),
 				"methods": device.methods(),
 				"state": state,
 				"stateValue": stateValue,
