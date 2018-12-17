@@ -40,6 +40,11 @@ class GroupDevice(Device):
 	def localId(self):
 		return self._nodeId
 
+	def parameters(self):
+		return {
+			'devices': ','.join([str(x) for x in self.devices]),
+		}
+
 	def params(self):
 		return {
 			'devices': self.devices,
@@ -106,7 +111,7 @@ class Group(Plugin):
 					device.setParams({
 						'devices': data['devices'],
 					})
-					device.paramUpdated('')
+					device.paramUpdated('devices')
 					break
 
 		elif action == 'groupInfo':
