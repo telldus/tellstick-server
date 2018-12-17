@@ -463,6 +463,27 @@ class DeviceManager(Plugin):
 			self.settings['rooms'] = self.rooms
 			return
 
+		if data['action'] == 'edit':
+			room = self.rooms.get(data['id'], None)
+			if not room:
+				logging.warning('Room %s was not found', data['id'])
+				return
+			name = data.get('name', '')
+			if name != '':
+				room['name'] = name
+			color = data.get('color', '')
+			if color != '':
+				room['color'] = color
+			icon = data.get('icon', '')
+			if icon != '':
+				room['icon'] = icon
+			if self.live.registered and room['isOwner']:
+				msg = LiveMessage('RoomAdded')
+				msg.append(room)
+				self.live.send(msg)
+			self.settings['rooms'] = self.rooms
+			return
+
 	def liveRegistered(self, __msg):
 		self.registered = True
 		self.__sendDeviceReport()
