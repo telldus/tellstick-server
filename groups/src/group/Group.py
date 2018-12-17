@@ -30,6 +30,10 @@ class GroupDevice(Device):
 		return self.devices
 
 	@staticmethod
+	def deviceType():
+		return Device.TYPE_CONTAINER
+
+	@staticmethod
 	def isDevice():
 		return True
 
