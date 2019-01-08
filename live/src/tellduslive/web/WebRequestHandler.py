@@ -39,7 +39,7 @@ class WebRequestHandler(Plugin):
 		oidconsumer = consumer.Consumer({}, self.store)
 		if path == 'login':
 			try:
-				authrequest = oidconsumer.begin('http://login.telldus.com')
+				authrequest = oidconsumer.begin('https://login.telldus.com')
 			except consumer.DiscoveryFailure as exc:
 				logging.error(str(exc[0]))
 				return None  # TODO(micke): Error
