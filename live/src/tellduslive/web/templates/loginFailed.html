@@ -7,6 +7,9 @@
 	<body>
 		<div id="content">
 			<p py:if="reason == 1">
+				You tried to log in as ${loginEmail} but this TellStick ZNet is not activated.
+			</p>
+			<p py:if="reason == 2">
 				You tried to log in as ${loginEmail} but this TellStick ZNet is activated to ${registeredEmail}
 			</p>
 		</div>
