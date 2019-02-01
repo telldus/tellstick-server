@@ -61,8 +61,10 @@ class WebRequestHandler(Plugin):
 				if 'email' not in data:
 					return None  # TODO(micke): Error
 				tellduslive = TelldusLive(self.context)
+				if not tellduslive.registered or tellduslive.email == '':
+					return 'loginFailed.html', {'reason': 1, 'loginEmail': data['email']}
 				if data['email'] != tellduslive.email:
-					return 'loginFailed.html', {'reason': 1, 'loginEmail': data['email'], 'registeredEmail': tellduslive.email}
+					return 'loginFailed.html', {'reason': 2, 'loginEmail': data['email'], 'registeredEmail': tellduslive.email}
 				request.setSession('loggedIn', True)
 				return request.loggedIn()
 			else:
