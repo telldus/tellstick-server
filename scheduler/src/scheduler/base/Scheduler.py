@@ -240,7 +240,7 @@ class Scheduler(Plugin):
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
-		if len(msg.argument(0).toNative()) != 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) != 0:  # pylint disable=C1801
 			scheduleDict = msg.argument(0).toNative()
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
@@ -250,7 +250,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
 		"""Receive list of jobs from server, saves to settings and calculate nextRunTimes"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
 			jobs = []
 		else:
 			scheduleDict = msg.argument(0).toNative()
@@ -261,7 +261,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-update')
 	def receiveOneJobFromServer(self, msg):
 		"""Receive one job from server, add or edit, save to settings and calculate nextRunTime"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
 			return
 		scheduleDict = msg.argument(0).toNative()
 		job = scheduleDict['job']
@@ -314,7 +314,7 @@ class Scheduler(Plugin):
 
 			jobsToRun = [] # jobs to run in a separate list, to avoid deadlocks (necessary?)
 			# Iterating using .keys(9 since we are modifiyng the dict while iterating
-			for runningJobId in self.runningJobs.keys():  # pylint: disable=C0201
+			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():
