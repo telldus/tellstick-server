@@ -213,8 +213,8 @@ class Scheduler(Plugin):
 	def deviceRemoved(self, deviceId):
 		jobsToDelete = []
 		for job in self.jobs:
-			if job['id'] == deviceId:
-				jobsToDelete.append[job['id']]
+			if job['client_device_id'] == deviceId:
+				jobsToDelete.append(job['id'])
 		for jobId in jobsToDelete:
 			self.deleteJob(jobId)
 
