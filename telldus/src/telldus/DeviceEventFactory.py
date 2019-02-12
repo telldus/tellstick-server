@@ -2,7 +2,7 @@
 
 from threading import Timer
 
-from base import Plugin, implements
+from base import Plugin, implements, ISignalObserver, slot
 from events.base import IEventFactory, Action, Condition, Trigger
 from .Device import Device
 from .DeviceManager import DeviceManager, IDeviceChange
@@ -10,14 +10,17 @@ from .DeviceManager import DeviceManager, IDeviceChange
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
 	implements(IDeviceChange)
+	implements(ISignalObserver)
 
 	def __init__(self):
 		self.deviceTriggers = []
+		self.modeTriggers = []
 		self.sensorTriggers = []
 		self.deviceManager = DeviceManager(self.context)  # pylint: disable=E1121
 
 	def clearAll(self):
 		self.deviceTriggers = []
+		self.modeTriggers = []
 		self.sensorTriggers = []
 
 	def createAction(self, type, params, **kwargs):  # pylint: disable=W0622
@@ -41,6 +44,10 @@ class DeviceEventFactory(Plugin):
 			deviceTrigger = DeviceTrigger(self, **kwargs)
 			self.deviceTriggers.append(deviceTrigger)
 			return deviceTrigger
+		if type == 'mode':
+			modeTrigger = ModeTrigger(**kwargs)
+			self.modeTriggers.append(modeTrigger)
+			return modeTrigger
 		if type == 'sensor':
 			sensorTrigger = SensorTrigger(self, **kwargs)
 			self.sensorTriggers.append(sensorTrigger)
@@ -67,6 +74,20 @@ class DeviceEventFactory(Plugin):
 					'clientdeviceid': device.id(),
 					'method': int(method)
 				})
+
+	@slot('modeChanged')
+	def __modeChanged(self, objectId, mode, objectType, objectName):
+		for trigger in self.modeTriggers:
+			if trigger.objectId != objectId:
+				continue
+			if trigger.mode != mode:
+				continue
+			trigger.triggered({
+				'objectId': objectId,
+				'mode': mode,
+				'objectType': objectType,
+				'objectName': objectName,
+			})
 
 class DeviceActionExecutor(object):
 	def __init__(self, device, method, value, repeats, description):
@@ -175,6 +196,18 @@ class DeviceTrigger(Trigger):
 			self.deviceId = int(value)
 		elif name == 'method':
 			self.method = int(value)
+
+class ModeTrigger(Trigger):
+	def __init__(self, **kwargs):
+		super(ModeTrigger, self).__init__(**kwargs)
+		self.objectId = None
+		self.mode = None
+
+	def parseParam(self, name, value):
+		if name == 'modeId':
+			self.mode = value
+		elif name == 'objectId':
+			self.objectId = value
 
 class SensorCondition(Condition):
 	def __init__(self, manager, **kwargs):

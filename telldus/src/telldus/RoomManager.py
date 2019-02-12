@@ -21,6 +21,13 @@ class RoomManager(Plugin):
 		self.settings = Settings('telldus.rooms')
 		self.rooms = self.settings.get('rooms', {})
 
+	@signal('modeChanged')
+	def __modeChanged(self, objectId, modeId, objectType, objectName):
+		"""
+		Called every time the mode changes for a room
+		"""
+		pass
+
 	@TelldusLive.handler('room')
 	def __handleRoom(self, msg):
 		data = msg.argument(0).toNative()
@@ -71,4 +78,14 @@ class RoomManager(Plugin):
 				msg.append({'id': data['id']})
 				live.send(msg)
 			self.settings['rooms'] = self.rooms
+			return
+
+		if data['action'] == 'setMode':
+			room = self.rooms.get(data['id'], None)
+			if not room:
+				return
+			room['mode'] = data.get('mode', '')
+			self.settings['rooms'] = self.rooms
+			self.__modeChanged(data['id'], data['mode'], 'room', data.get('name', ''))
+			# TODO, notify live
 			return
