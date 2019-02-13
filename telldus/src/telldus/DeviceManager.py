@@ -52,7 +52,6 @@ class DeviceManager(Plugin):
 
 	def __init__(self):
 		self.devices = []
-		self.rooms = {}
 		self.settings = Settings('telldus.devicemanager')
 		self.nextId = self.settings.get('nextId', 0)
 		self.live = TelldusLive(self.context)
@@ -440,54 +439,12 @@ class DeviceManager(Plugin):
 			# cleaned up
 			self.__sendSensorReport()
 
-	@TelldusLive.handler('room')
-	def handleRoom(self, msg):
-		data = msg.argument(0).toNative()
-		if 'name' in data:
-			if isinstance(data['name'], int):
-				data['name'] = str(data['name'])
-			else:
-				data['name'] = data['name'].decode('UTF-8')
-		if data['action'] == 'set':
-			oldResponsible = ''
-			if data['id'] in self.rooms:
-				oldResponsible = self.rooms[data['id']]['responsible']
-			self.rooms[data['id']] = {
-				'name': data.get('name', ''),
-				'parent': data.get('parent', ''),
-				'color': data.get('color', ''),
-				'content': data.get('content', ''),
-				'icon': data.get('icon', ''),
-				'responsible': data['responsible'],
-				'mode': data.get('mode', ''),
-			}
-			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
-				msg = LiveMessage('RoomSet')
-				msg.append({'id': data['id']})
-				msg.append(self.rooms[data['id']])
-				self.live.send(msg)
-			self.settings['rooms'] = self.rooms
-			return
-
-		if data['action'] == 'remove':
-			room = self.rooms.pop(data['id'], None)
-			if room is None:
-				logging.warning('Room %s was not found', data['id'])
-				return
-			if self.live.registered and room['responsible'] == self.live.uuid:
-				msg = LiveMessage('RoomRemoved')
-				msg.append({'id': data['id']})
-				self.live.send(msg)
-			self.settings['rooms'] = self.rooms
-			return
-
 	def liveRegistered(self, __msg):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()
 
 	def __load(self):
-		self.rooms = self.settings.get('rooms', {})
 		self.store = self.settings.get('devices', [])
 		for dev in self.store:
 			if 'type' not in dev or 'localId' not in dev:
