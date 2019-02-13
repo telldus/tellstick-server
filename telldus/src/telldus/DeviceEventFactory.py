@@ -34,6 +34,8 @@ class DeviceEventFactory(Plugin):
 			if 'local' in params and params['local'] == 1:
 				return DeviceCondition(manager=self.deviceManager, **kwargs)
 			return None
+		if type == 'mode':
+			return ModeCondition(manager=self.deviceManager, **kwargs)
 		if type == 'sensor':
 			if 'local' in params and params['local'] == 1:
 				return SensorCondition(manager=self.deviceManager, **kwargs)
@@ -208,6 +210,29 @@ class ModeTrigger(Trigger):
 			self.mode = value
 		elif name == 'objectId':
 			self.objectId = value
+
+class ModeCondition(Condition):
+	def __init__(self, manager, **kwargs):
+		super(ModeCondition, self).__init__(**kwargs)
+		self.objectId = None
+		self.manager = manager
+		self.modeId = None
+
+	def parseParam(self, name, value):
+		if name == 'modeId':
+			self.modeId = value
+		elif name == 'objectId':
+			self.objectId = value
+
+	def validate(self, success, failure):
+		room = self.manager.rooms.get(self.objectId, None)
+		if not room:
+			failure()
+			return
+		if room.get('mode', '') == self.modeId:
+			success()
+			return
+		failure()
 
 class SensorCondition(Condition):
 	def __init__(self, manager, **kwargs):
