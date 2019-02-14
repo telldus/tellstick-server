@@ -28,8 +28,9 @@ class RoomManager(Plugin):
 		room = self.rooms.get(roomId, None)
 		if not room:
 			return
-		room['mode'] = mode
-		self.settings['rooms'] = self.rooms
+		if room['mode'] != mode:
+			room['mode'] = mode
+			self.settings['rooms'] = self.rooms
 		self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
 		# TODO, notify live
 
