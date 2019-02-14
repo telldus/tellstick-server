@@ -31,8 +31,16 @@ class RoomManager(Plugin):
 		if room['mode'] != mode:
 			room['mode'] = mode
 			self.settings['rooms'] = self.rooms
+			live = TelldusLive(self.context)
+			if live.registered and room.get('isOwner', False):
+				# Notify live if we are the owner
+				msg = LiveMessage('RoomModeSet')
+				msg.append({
+					'id': roomId,
+					'mode': mode
+				})
+				live.send(msg)
 		self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
-		# TODO, notify live
 
 	@signal('modeChanged')
 	def __modeChanged(self, objectId, modeId, objectType, objectName):
