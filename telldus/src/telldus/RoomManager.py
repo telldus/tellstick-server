@@ -21,6 +21,18 @@ class RoomManager(Plugin):
 		self.settings = Settings('telldus.rooms')
 		self.rooms = self.settings.get('rooms', {})
 
+	def setMode(self, roomId, mode):
+		"""
+		Set a room to a new mode
+		"""
+		room = self.rooms.get(roomId, None)
+		if not room:
+			return
+		room['mode'] = mode
+		self.settings['rooms'] = self.rooms
+		self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
+		# TODO, notify live
+
 	@signal('modeChanged')
 	def __modeChanged(self, objectId, modeId, objectType, objectName):
 		"""
@@ -81,11 +93,5 @@ class RoomManager(Plugin):
 			return
 
 		if data['action'] == 'setMode':
-			room = self.rooms.get(data['id'], None)
-			if not room:
-				return
-			room['mode'] = data.get('mode', '')
-			self.settings['rooms'] = self.rooms
-			self.__modeChanged(data['id'], data['mode'], 'room', data.get('name', ''))
-			# TODO, notify live
+			self.setMode(data.get('id', None), data.get('mode', ''))
 			return

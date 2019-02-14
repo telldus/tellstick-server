@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from threading import Timer
 
 from base import Plugin, implements, ISignalObserver, slot
 from events.base import IEventFactory, Action, Condition, Trigger
 from .Device import Device
 from .DeviceManager import DeviceManager, IDeviceChange
+from .RoomManager import RoomManager
 
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
@@ -27,6 +29,9 @@ class DeviceEventFactory(Plugin):
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
 				return DeviceAction(manager=self.deviceManager, **kwargs)
+		if type == 'mode':
+			roomManager = RoomManager(self.context)  # pylint: disable=E1121
+			return ModeAction(manager=roomManager, **kwargs)
 		return None
 
 	def createCondition(self, type, params, **kwargs):  # pylint: disable=W0622
@@ -198,6 +203,29 @@ class DeviceTrigger(Trigger):
 			self.deviceId = int(value)
 		elif name == 'method':
 			self.method = int(value)
+
+class ModeAction(Action):
+	def __init__(self, manager, **kwargs):
+		self.objectId = ''
+		self.objectType = ''
+		self.modeId = ''
+		self.roomManager = manager
+		super(ModeAction, self).__init__(**kwargs)
+
+	def parseParam(self, name, value):
+		if name == 'objectId':
+			self.objectId = value
+		elif name == 'objectType':
+			self.objectType = value
+		elif name == 'modeId':
+			self.modeId = value
+
+	def execute(self, triggerInfo=None):
+		del triggerInfo
+		if self.objectType == 'room':
+			self.roomManager.setMode(self.objectId, self.modeId)
+		else:
+			logging.error('Cannot handle mode change for type %s', self.objectType)
 
 class ModeTrigger(Trigger):
 	def __init__(self, **kwargs):
