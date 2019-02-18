@@ -443,6 +443,11 @@ class DeviceManager(Plugin):
 	@TelldusLive.handler('room')
 	def handleRoom(self, msg):
 		data = msg.argument(0).toNative()
+		if 'name' in data:
+			if isinstance(data['name'], int):
+				data['name'] = str(data['name'])
+			else:
+				data['name'] = data['name'].decode('UTF-8')
 		if data['action'] == 'set':
 			oldResponsible = ''
 			if data['id'] in self.rooms:
