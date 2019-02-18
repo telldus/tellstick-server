@@ -443,17 +443,19 @@ class DeviceManager(Plugin):
 	@TelldusLive.handler('room')
 	def handleRoom(self, msg):
 		data = msg.argument(0).toNative()
-			isOwner = bool(data.get('isOwner', False))
 		if data['action'] == 'set':
+			oldResponsible = ''
+			if data['id'] in self.rooms:
+				oldResponsible = self.rooms[data['id']]['responsible']
 			self.rooms[data['id']] = {
 				'name': data.get('name', ''),
 				'parent': data.get('parent', ''),
 				'color': data.get('color', ''),
 				'icon': data.get('icon', ''),
-				'isOwner': isOwner,
 				'mode': '',  # Not implemented yet
+				'responsible': data['responsible'],
 			}
-			if self.live.registered and isOwner:
+			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
 				msg = LiveMessage('RoomSet')
 				msg.append(self.rooms[data['id']])
 				self.live.send(msg)
@@ -465,9 +467,7 @@ class DeviceManager(Plugin):
 			if room is None:
 				logging.warning('Room %s was not found', data['id'])
 				return
-			if not room['isOwner']:
-				return
-			if self.live.registered:
+			if self.live.registered and room['responsible'] == self.live.uuid:
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
 				self.live.send(msg)
