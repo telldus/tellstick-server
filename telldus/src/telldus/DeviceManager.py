@@ -463,6 +463,7 @@ class DeviceManager(Plugin):
 			}
 			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
 				msg = LiveMessage('RoomSet')
+				msg.append({'id': data['id']})
 				msg.append(self.rooms[data['id']])
 				self.live.send(msg)
 			self.settings['rooms'] = self.rooms
