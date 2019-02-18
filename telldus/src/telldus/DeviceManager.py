@@ -456,9 +456,10 @@ class DeviceManager(Plugin):
 				'name': data.get('name', ''),
 				'parent': data.get('parent', ''),
 				'color': data.get('color', ''),
+				'content': data.get('content', ''),
 				'icon': data.get('icon', ''),
-				'mode': '',  # Not implemented yet
 				'responsible': data['responsible'],
+				'mode': data.get('mode', ''),
 			}
 			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
 				msg = LiveMessage('RoomSet')
