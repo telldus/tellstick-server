@@ -443,8 +443,8 @@ class DeviceManager(Plugin):
 	@TelldusLive.handler('room')
 	def handleRoom(self, msg):
 		data = msg.argument(0).toNative()
-		if data['action'] == 'add':
 			isOwner = bool(data.get('isOwner', False))
+		if data['action'] == 'set':
 			self.rooms[data['id']] = {
 				'name': data.get('name', ''),
 				'parent': data.get('parent', ''),
@@ -454,7 +454,7 @@ class DeviceManager(Plugin):
 				'mode': '',  # Not implemented yet
 			}
 			if self.live.registered and isOwner:
-				msg = LiveMessage('RoomAdded')
+				msg = LiveMessage('RoomSet')
 				msg.append(self.rooms[data['id']])
 				self.live.send(msg)
 			self.settings['rooms'] = self.rooms
@@ -470,27 +470,6 @@ class DeviceManager(Plugin):
 			if self.live.registered:
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
-				self.live.send(msg)
-			self.settings['rooms'] = self.rooms
-			return
-
-		if data['action'] == 'edit':
-			room = self.rooms.get(data['id'], None)
-			if not room:
-				logging.warning('Room %s was not found', data['id'])
-				return
-			name = data.get('name', '')
-			if name != '':
-				room['name'] = name
-			color = data.get('color', '')
-			if color != '':
-				room['color'] = color
-			icon = data.get('icon', '')
-			if icon != '':
-				room['icon'] = icon
-			if self.live.registered and room['isOwner']:
-				msg = LiveMessage('RoomAdded')
-				msg.append(room)
 				self.live.send(msg)
 			self.settings['rooms'] = self.rooms
 			return
