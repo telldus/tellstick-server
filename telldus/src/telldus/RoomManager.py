@@ -45,8 +45,16 @@ class RoomManager(Plugin):
 			}
 			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
 				msg = LiveMessage('RoomSet')
-				msg.append({'id': data['id']})
-				msg.append(self.rooms[data['id']])
+				msg.append({
+					'id': data['id'],
+					'name': data.get('name', ''),
+					'parent': data.get('parent', ''),
+					'color': data.get('color', ''),
+					'content': data.get('content', ''),
+					'icon': data.get('icon', ''),
+					'responsible': data.get('responsible', ''),
+					'mode': data.get('mode', ''),
+				})
 				live.send(msg)
 			self.settings['rooms'] = self.rooms
 			return
