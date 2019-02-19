@@ -44,16 +44,19 @@ class RoomManager(Plugin):
 				'mode': '',
 			}
 			if self.live.registered and (data['responsible'] == self.live.uuid or oldResponsible  == self.live.uuid):
+				room = self.rooms[data['id']]
 				msg = LiveMessage('RoomSet')
 				msg.append({
+					# No need to call get() on room here since we know every value has at least a
+					# default value above
 					'id': data['id'],
-					'name': data.get('name', ''),
-					'parent': data.get('parent', ''),
-					'color': data.get('color', ''),
-					'content': data.get('content', ''),
-					'icon': data.get('icon', ''),
-					'responsible': data.get('responsible', ''),
-					'mode': data.get('mode', ''),
+					'name': room['name'],
+					'parent': room['parent'],
+					'color': room['color'],
+					'content': room['content'],
+					'icon': room['icon'],
+					'responsible': room['responsible'],
+					'mode': room['mode'],
 				})
 				live.send(msg)
 			self.settings['rooms'] = self.rooms
