@@ -32,7 +32,7 @@ class RoomManager(Plugin):
 			room['mode'] = mode
 			self.settings['rooms'] = self.rooms
 			live = TelldusLive(self.context)
-			if live.registered and room.get('responsible', '') == self.live.uuid:
+			if live.registered and room.get('responsible', '') == live.uuid:
 				# Notify live if we are the owner
 				msg = LiveMessage('RoomModeSet')
 				msg.append({
@@ -71,8 +71,8 @@ class RoomManager(Plugin):
 				'responsible': data['responsible'],
 				'mode': '',
 			}
-			if self.live.registered and \
-			    (data['responsible'] == self.live.uuid or oldResponsible == self.live.uuid):
+			if live.registered and \
+			    (data['responsible'] == live.uuid or oldResponsible == live.uuid):
 				room = self.rooms[data['id']]
 				msg = LiveMessage('RoomSet')
 				msg.append({
@@ -95,7 +95,8 @@ class RoomManager(Plugin):
 			room = self.rooms.pop(data['id'], None)
 			if room is None:
 				return
-			if live.registered and room['responsible'] == self.live.uuid:
+			live = TelldusLive(self.context)
+			if live.registered and room['responsible'] == live.uuid:
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
 				live.send(msg)
