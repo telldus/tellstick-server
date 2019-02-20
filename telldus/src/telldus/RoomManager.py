@@ -32,7 +32,7 @@ class RoomManager(Plugin):
 			room['mode'] = mode
 			self.settings['rooms'] = self.rooms
 			live = TelldusLive(self.context)
-			if live.registered and room.get('isOwner', False):
+			if live.registered and room.get('responsible', '') == self.live.uuid:
 				# Notify live if we are the owner
 				msg = LiveMessage('RoomModeSet')
 				msg.append({
