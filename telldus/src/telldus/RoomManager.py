@@ -61,16 +61,25 @@ class RoomManager(Plugin):
 		if data['action'] == 'set':
 			oldResponsible = ''
 			if data['id'] in self.rooms:
-				oldResponsible = self.rooms[data['id']]['responsible']
-			self.rooms[data['id']] = {
-				'name': data.get('name', ''),
-				'parent': data.get('parent', ''),
-				'color': data.get('color', ''),
-				'content': data.get('content', ''),
-				'icon': data.get('icon', ''),
-				'responsible': data['responsible'],
-				'mode': '',
-			}
+				# existing room
+				room = self.rooms[data['id']]
+				oldResponsible = room['responsible']
+				validKeys = ['name', 'color', 'content', 'icon', 'responsible']
+				for key in validKeys:
+					if key in data:
+						room[key] = data.get(key, '')
+				self.rooms[data['id']] = room
+			else:
+				# new room
+				self.rooms[data['id']] = {
+					'name': data.get('name', ''),
+					'parent': data.get('parent', ''),
+					'color': data.get('color', ''),
+					'content': data.get('content', ''),
+					'icon': data.get('icon', ''),
+					'responsible': data['responsible'],
+					'mode': data.get('mode', ''),
+				}
 			if live.registered and \
 			    (data['responsible'] == live.uuid or oldResponsible == live.uuid):
 				room = self.rooms[data['id']]
