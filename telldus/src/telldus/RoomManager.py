@@ -68,6 +68,9 @@ class RoomManager(Plugin):
 				for key in validKeys:
 					if key in data:
 						room[key] = data.get(key, '')
+				if 'mode' in data and room['mode'] != data.get('mode', ''):
+					room['mode'] = data.get('mode', '')
+					self.__modeChanged(data['id'], room['mode'], 'room', room['name'])
 				self.rooms[data['id']] = room
 			else:
 				# new room
