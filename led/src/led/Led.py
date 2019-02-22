@@ -20,7 +20,7 @@ class Led(Plugin):
 	def liveConnected(self):
 		self.setNetworkLed()
 
-	def liveRegistered(self, msg):
+	def liveRegistered(self, msg, refreshRequired):
 		self.setNetworkLed()
 
 	def liveDisconnected(self):

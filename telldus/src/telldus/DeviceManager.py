@@ -439,7 +439,7 @@ class DeviceManager(Plugin):
 			# cleaned up
 			self.__sendSensorReport()
 
-	def liveRegistered(self, __msg):
+	def liveRegistered(self, __msg, refreshRequired):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()

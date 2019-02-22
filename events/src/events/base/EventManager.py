@@ -40,7 +40,7 @@ class EventManager(Plugin):
 		event.loadTriggers(data['triggers'])
 		self.events[eventId] = event
 
-	def liveRegistered(self, msg):
+	def liveRegistered(self, msg, refreshRequired):
 		changed = False
 		if 'latitude' in msg and msg['latitude'] != self.latitude:
 			changed = True
