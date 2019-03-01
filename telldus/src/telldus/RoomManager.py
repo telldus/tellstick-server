@@ -21,6 +21,34 @@ class RoomManager(Plugin):
 		self.settings = Settings('telldus.rooms')
 		self.rooms = self.settings.get('rooms', {})
 
+	def getResponsibleRooms(self, responsible=None):
+		if not responsible:
+			live = TelldusLive(self.context)
+			responsible = live.uuid
+		rooms = {}
+		for roomUUID in self.rooms:
+			room = self.rooms[roomUUID]
+			if room['responsible'] == responsible:
+				rooms[roomUUID] = room
+		return rooms
+
+	def liveRegistered(self, msg, refreshRequired):
+		if refreshRequired:
+			self.syncRoom()
+
+	def reportRooms(self, rooms):
+		if not rooms:
+			return
+		msg = LiveMessage('RoomReport')
+		msg.append({'rooms': rooms})
+		TelldusLive(self.context).send(msg)
+
+	def roomChanged(self, room1, room2):
+		for prop in room1:
+			if not room1[prop] == room2[prop]:
+				return True
+		return False
+
 	def setMode(self, roomId, mode):
 		"""
 		Set a room to a new mode
@@ -41,6 +69,9 @@ class RoomManager(Plugin):
 				})
 				live.send(msg)
 		self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
+
+	def syncRoom(self):
+		TelldusLive(self.context).send(LiveMessage("roomsync-request"))
 
 	@signal('modeChanged')
 	def __modeChanged(self, objectId, modeId, objectType, objectName):
@@ -107,7 +138,6 @@ class RoomManager(Plugin):
 			room = self.rooms.pop(data['id'], None)
 			if room is None:
 				return
-			live = TelldusLive(self.context)
 			if live.registered and room['responsible'] == live.uuid:
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
@@ -118,3 +148,27 @@ class RoomManager(Plugin):
 		if data['action'] == 'setMode':
 			self.setMode(data.get('id', None), data.get('mode', ''))
 			return
+
+		if data['action'] == 'sync':
+			rooms = data['rooms']
+			responsibleRooms = self.getResponsibleRooms()
+			if not rooms and responsibleRooms:
+				# list from server was completely empty but we have rooms locally,
+				# this might be an error in the fetching, or we have added rooms locally
+				# when offline. In any case, don't sync this time, just post our rooms
+				# for next time
+				self.reportRooms(responsibleRooms)
+				return
+			changedRooms = {}
+			for roomUUID in rooms:
+				room = rooms[roomUUID]
+				if room['responsible'] == live.uuid:
+					# we are responsible for this room
+					localRoom = self.rooms[roomUUID]
+					if self.roomChanged(room, localRoom):
+						changedRooms[roomUUID] = localRoom
+				else:
+					self.rooms[roomUUID] = room
+
+			self.reportRooms(changedRooms)
+			self.settings['rooms'] = self.rooms
