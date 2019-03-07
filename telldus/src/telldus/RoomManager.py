@@ -20,6 +20,7 @@ class RoomManager(Plugin):
 		self.rooms = {}
 		self.settings = Settings('telldus.rooms')
 		self.rooms = self.settings.get('rooms', {})
+		self.roomlistEmpty = self.settings.get('roomlistEmpty', False)
 
 	def getResponsibleRooms(self, responsible=None):
 		if not responsible:
@@ -37,7 +38,9 @@ class RoomManager(Plugin):
 			self.syncRoom()
 
 	def reportRooms(self, rooms):
-		if not rooms:
+		if not rooms and not self.roomlistEmpty:
+			# only allow empty room reports if we know it has been
+			# explicitly emptied
 			return
 		msg = LiveMessage('RoomReport')
 		msg.append({'rooms': rooms})
@@ -142,6 +145,10 @@ class RoomManager(Plugin):
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
 				live.send(msg)
+			if len(self.rooms) == 0:
+				self.settings['roomlistEmpty'] = True
+				self.roomlistEmpty = True
+
 			self.settings['rooms'] = self.rooms
 			return
 
