@@ -37,13 +37,18 @@ class RoomManager(Plugin):
 		if refreshRequired:
 			self.syncRoom()
 
-	def reportRooms(self, rooms):
-		if not rooms and not self.roomlistEmpty:
+	def reportRooms(self, rooms, removedRooms = None):
+		report = {}
+		if not rooms and not self.roomlistEmpty and not removedRooms:
 			# only allow empty room reports if we know it has been
 			# explicitly emptied
 			return
+		if rooms or self.roomlistEmpty:
+			report['rooms'] = rooms
+		if removedRooms:
+			report['removedRooms'] = removedRooms
 		msg = LiveMessage('RoomReport')
-		msg.append({'rooms': rooms})
+		msg.append(report)
 		TelldusLive(self.context).send(msg)
 
 	def roomChanged(self, room1, room2):
@@ -145,7 +150,7 @@ class RoomManager(Plugin):
 				msg = LiveMessage('RoomRemoved')
 				msg.append({'id': data['id']})
 				live.send(msg)
-			if len(self.rooms) == 0:
+			if len(self.getResponsibleRooms()) == 0:
 				self.settings['roomlistEmpty'] = True
 				self.roomlistEmpty = True
 
@@ -167,15 +172,23 @@ class RoomManager(Plugin):
 				self.reportRooms(responsibleRooms)
 				return
 			changedRooms = {}
+			newRooms = {}
+			removedRooms = []
 			for roomUUID in rooms:
 				room = rooms[roomUUID]
 				if room['responsible'] == live.uuid:
 					# we are responsible for this room
+					if roomUUID not in self.rooms:
+						# this room does not exist locally anymore
+						removedRooms.append(roomUUID)
+						continue
 					localRoom = self.rooms[roomUUID]
 					if self.roomChanged(room, localRoom):
 						changedRooms[roomUUID] = localRoom
 				else:
-					self.rooms[roomUUID] = room
+					newRooms[roomUUID] = room
 
-			self.reportRooms(changedRooms)
+			newRooms.update(responsibleRooms)
+			self.rooms = newRooms
+			self.reportRooms(changedRooms, removedRooms)
 			self.settings['rooms'] = self.rooms
