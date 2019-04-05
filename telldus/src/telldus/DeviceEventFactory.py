@@ -8,6 +8,7 @@ from events.base import IEventFactory, Action, Condition, Trigger
 from .Device import Device
 from .DeviceManager import DeviceManager, IDeviceChange
 from .RoomManager import RoomManager
+from tellduslive.base import LiveMessage, TelldusLive
 
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
@@ -226,7 +227,13 @@ class ModeAction(Action):
 	def execute(self, triggerInfo=None):
 		del triggerInfo
 		if self.objectType == 'room':
-			self.roomManager.setMode(self.objectId, self.modeId)
+			room = self.roomManager.rooms.get(self.objectId, None)
+			if room and room.get('responsible', '') == TelldusLive(self.roomManager.context).uuid:
+				self.roomManager.setMode(self.objectId, self.modeId, self.setAlways)
+			else:
+				msg = LiveMessage('RequestRoomModeSet')
+				msg.append({'id': self.objectId, 'mode': self.modeId, 'setAlways': self.setAlways})
+				TelldusLive(self.roomManager.context).send(msg)
 		else:
 			logging.error('Cannot handle mode change for type %s', self.objectType)
 
