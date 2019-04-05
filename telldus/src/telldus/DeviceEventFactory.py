@@ -41,7 +41,8 @@ class DeviceEventFactory(Plugin):
 				return DeviceCondition(manager=self.deviceManager, **kwargs)
 			return None
 		if type == 'mode':
-			return ModeCondition(manager=self.deviceManager, **kwargs)
+			roomManager = RoomManager(self.context)  # pylint: disable=E1121
+			return ModeCondition(manager=roomManager, **kwargs)
 		if type == 'sensor':
 			if 'local' in params and params['local'] == 1:
 				return SensorCondition(manager=self.deviceManager, **kwargs)
