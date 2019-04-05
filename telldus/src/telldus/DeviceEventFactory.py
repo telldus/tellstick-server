@@ -206,6 +206,7 @@ class DeviceTrigger(Trigger):
 
 class ModeAction(Action):
 	def __init__(self, manager, **kwargs):
+		self.setAlways = True
 		self.objectId = ''
 		self.objectType = ''
 		self.modeId = ''
@@ -213,7 +214,9 @@ class ModeAction(Action):
 		super(ModeAction, self).__init__(**kwargs)
 
 	def parseParam(self, name, value):
-		if name == 'objectId':
+		if name == 'setAlways':
+			self.setAlways = value
+		elif name == 'objectId':
 			self.objectId = value
 		elif name == 'objectType':
 			self.objectType = value

@@ -57,16 +57,18 @@ class RoomManager(Plugin):
 				return True
 		return False
 
-	def setMode(self, roomId, mode):
+	def setMode(self, roomId, mode, setAlways = 1):
 		"""
 		Set a room to a new mode
 		"""
 		room = self.rooms.get(roomId, None)
 		if not room:
 			return
-		if room['mode'] != mode:
-			room['mode'] = mode
-			self.settings['rooms'] = self.rooms
+		setAlways = int(setAlways)
+		if setAlways or room['mode'] != mode:
+			if room['mode'] != mode:
+				room['mode'] = mode
+				self.settings['rooms'] = self.rooms
 			live = TelldusLive(self.context)
 			if live.registered and room.get('responsible', '') == live.uuid:
 				# Notify live if we are the owner
@@ -76,7 +78,7 @@ class RoomManager(Plugin):
 					'mode': mode
 				})
 				live.send(msg)
-		self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
+			self.__modeChanged(roomId, mode, 'room', room.get('name', ''))
 
 	def syncRoom(self):
 		TelldusLive(self.context).send(LiveMessage("roomsync-request"))
@@ -158,7 +160,7 @@ class RoomManager(Plugin):
 			return
 
 		if data['action'] == 'setMode':
-			self.setMode(data.get('id', None), data.get('mode', ''))
+			self.setMode(data.get('id', None), data.get('mode', ''), data.get('setAlways', 1))
 			return
 
 		if data['action'] == 'sync':
