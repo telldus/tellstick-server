@@ -253,12 +253,15 @@ class ModeTrigger(Trigger):
 class ModeCondition(Condition):
 	def __init__(self, manager, **kwargs):
 		super(ModeCondition, self).__init__(**kwargs)
+		self.equalTo = True
 		self.objectId = None
 		self.manager = manager
 		self.modeId = None
 
 	def parseParam(self, name, value):
-		if name == 'modeId':
+		if name == 'equalTo':
+			self.equalTo = int(value)
+		elif name == 'modeId':
 			self.modeId = value
 		elif name == 'objectId':
 			self.objectId = value
@@ -268,7 +271,7 @@ class ModeCondition(Condition):
 		if not room:
 			failure()
 			return
-		if room.get('mode', '') == self.modeId:
+		if (self.equalTo and room.get('mode', '') == self.modeId) or (not self.equalTo and room.get('mode', '') != self.modeId):
 			success()
 			return
 		failure()
