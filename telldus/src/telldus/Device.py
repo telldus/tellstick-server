@@ -115,7 +115,9 @@ class Device(object):
 		self._ignored = None
 		self._loadCount = 0
 		self._name = None
+		self._metadata = {}
 		self._manager = None
+		self._room = None
 		self._state = Device.TURNOFF
 		self._stateValues = {}
 		self._sensorValues = {}
@@ -129,7 +131,7 @@ class Device(object):
 
 	def allParameters(self):
 		"""
-		Similar as parameters() but this returnes more values such as the device type
+		Similar as parameters() but this returnes more values such as the device type and the room
 		"""
 		params = self.parameters()
 		if isinstance(params, dict):
@@ -139,11 +141,21 @@ class Device(object):
 			# parameters() must return a dict
 			params = {}
 
-		try:
-			params['devicetype'] = self.deviceType()
-		except Exception as error:
-			params['devicetype'] = Device.TYPE_UNKNOWN
-			Application.printException(error)
+		devicetype = self.metadata('devicetype', None)
+		if devicetype is not None:
+			# Devicetype in metadata overrides the devicetype
+			params['devicetype'] = devicetype
+		else:
+			try:
+				params['devicetype'] = self.deviceType()
+			except Exception as error:
+				params['devicetype'] = Device.TYPE_UNKNOWN
+				Application.printException(error)
+		if self._room is None:
+			# Make sure it's removed
+			params.pop('room', None)
+		else:
+			params['room'] = self._room
 		return params
 
 	def battery(self):  # pylint: disable=R0201
@@ -261,6 +273,8 @@ class Device(object):
 		self._loadCount = 0
 		self.setParams(olddevice.params())
 		(state, __stateValue) = olddevice.state()
+		self._metadata = olddevice._metadata
+		self._room = olddevice._room
 		self._state = state
 		self._stateValues = olddevice.stateValues()
 		self._ignored = olddevice._ignored
@@ -272,10 +286,14 @@ class Device(object):
 	def load(self, settings):
 		if 'id' in settings:
 			self._id = settings['id']
+		if 'metadata' in settings:
+			self._metadata = settings['metadata']
 		if 'name' in settings:
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
+		if 'room' in settings:
+			self._room = settings['room']
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
 
@@ -310,8 +328,8 @@ class Device(object):
 		a dictionary.
 		"""
 		if key is None:
-			return {}
-		return default
+			return self._metadata.copy()
+		return self._metadata.get(key, default)
 
 	def methods(self):
 		"""
@@ -349,6 +367,12 @@ class Device(object):
 
 	def protocol(self):
 		return self.typeString()
+
+	def room(self):
+		"""
+		:returns: The current room this device belongs to
+		"""
+		return self._room
 
 	def sensorElement(self, valueType, scale):
 		"""
@@ -394,12 +418,43 @@ class Device(object):
 	def setManager(self, manager):
 		self._manager = manager
 
+	def setMetadata(self, name, value):
+		if self._metadata.get(name, None) == value:
+			# Identical, do nothing
+			return
+		if value is None or value == '':
+			# Remove it
+			self._metadata.pop(name, None)
+		else:
+			self._metadata[name] = value
+		if self._manager:
+			self._manager.deviceMetadataUpdated(self, name)
+
 	def setName(self, name):
 		self._name = name
 		self.paramUpdated('name')
 
+	def setParameter(self, name, value):
+		"""
+		Set a device specific parameter. What kind of paramters to set is dependent on the device
+		type
+		"""
+		pass
+
 	def setParams(self, params):
 		pass
+
+	def setRoom(self, room):
+		"""
+		Adds the device to a room.
+		Set to None or empty string to remove from room
+		"""
+		room = None if room == '' else room
+		if self._room == room:
+			# Don't fire update if not changed
+			return
+		self._room = room
+		self.paramUpdated('room')
 
 	def setSensorValue(self, valueType, value, scale):
 		self.setSensorValues([{'type': valueType, 'value':value, 'scale': scale}])

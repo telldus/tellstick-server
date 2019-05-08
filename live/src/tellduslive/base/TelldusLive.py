@@ -37,7 +37,7 @@ class ITelldusLiveObserver(IInterface):
 	"""
 	def liveConnected():
 		"""This method is called when we have succesfully connected to a Live! server"""
-	def liveRegistered(params):
+	def liveRegistered(params, refreshRequired):
 		"""This method is called when we have succesfully registered with a Live! server"""
 	def liveDisconnected():
 		"""This method is call when we are disconnected"""
@@ -51,6 +51,7 @@ class TelldusLive(Plugin):
 		self.email = ''
 		self.supportedMethods = 0
 		self.connected = False
+		self.refreshRequired = True
 		self.registered = False
 		self.running = False
 		self.serverList = ServerList()
@@ -108,7 +109,8 @@ class TelldusLive(Plugin):
 			if 'uuid' in data and data['uuid'] != self.uuid:
 				self.uuid = data['uuid']
 				self.settings['uuid'] = self.uuid
-			self.liveRegistered(data)
+			self.liveRegistered(data, self.refreshRequired)
+			self.refreshRequired = False
 			return
 
 		if (message.name() == "command"):
@@ -155,9 +157,9 @@ class TelldusLive(Plugin):
 		self.observers.liveDisconnected()
 
 	@signal
-	def liveRegistered(self, options):
+	def liveRegistered(self, options, refreshRequired):
 		"""This signal is sent when we have succesfully registered with a Live! server"""
-		self.observers.liveRegistered(options)
+		self.observers.liveRegistered(options, refreshRequired)
 
 	def run(self):
 		self.running = True
@@ -181,6 +183,9 @@ class TelldusLive(Plugin):
 					logging.warning("Could not connect, retry in %i seconds", wait)
 
 			elif state == ServerConnection.CONNECTED:
+				if (pongTimer + 43200) < time.time():
+					# 12 hours since last online
+					self.refreshRequired = True
 				pongTimer, self.pingTimer = (time.time(), time.time())
 				self.__sendRegisterMessage()
 

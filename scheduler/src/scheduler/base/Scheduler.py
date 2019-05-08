@@ -32,7 +32,6 @@ class Scheduler(Plugin):
 		self.latitude = self.settings.get('latitude', '55.699592')
 		self.longitude = self.settings.get('longitude', '13.187836')
 		self.jobs = []
-		self.jobsFetchedFromServer = False
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
 		self.deviceManager = DeviceManager(self.context)
@@ -227,7 +226,7 @@ class Scheduler(Plugin):
 			print("WARNING: Could not fetch schedules from local storage")
 		self.calculateJobs(jobs)
 
-	def liveRegistered(self, msg):
+	def liveRegistered(self, msg, refreshRequired):
 		if 'latitude' in msg:
 			self.latitude = msg['latitude']
 		if 'longitude' in msg:
@@ -235,7 +234,7 @@ class Scheduler(Plugin):
 		if 'tz' in msg:
 			self.timezone = msg['tz']
 
-		if not self.jobsFetchedFromServer:
+		if refreshRequired:
 			self.requestJobsFromServer()
 
 	@TelldusLive.handler('scheduler-remove')
@@ -279,7 +278,6 @@ class Scheduler(Plugin):
 		# self.live.pushToWeb('scheduler', 'updated', job['id'])
 
 	def requestJobsFromServer(self):
-		self.jobsFetchedFromServer = True
 		self.live.send(LiveMessage("scheduler-requestjob"))
 
 	def run(self):
