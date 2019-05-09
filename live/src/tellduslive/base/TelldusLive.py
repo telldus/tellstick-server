@@ -11,7 +11,6 @@ import time
 
 from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
-import netifaces
 import requests
 
 from base import \
@@ -80,7 +79,7 @@ class TelldusLive(Plugin):
 		fileData = TelldusLive.deviceSpecificEncrypt(fileData)  # Encrypt it
 		requests.post(
 			uploadPath,
-			data={'mac': TelldusLive.getMacAddr(Board.networkInterface())},
+			data={'mac': Board.getMacAddr()},
 			files={'Telldus.conf.bz2': fileData}
 		)
 
@@ -249,7 +248,7 @@ class TelldusLive(Plugin):
 		msg = LiveMessage('Register')
 		msg.append({
 			'key': self.conn.publicKey,
-			'mac': TelldusLive.getMacAddr(Board.networkInterface()),
+			'mac': Board.getMacAddr(),
 			'secret': Board.secret(),
 			'hash': 'sha1'
 		})
@@ -260,15 +259,6 @@ class TelldusLive(Plugin):
 			'os-version': 'telldus'
 		})
 		self.conn.send(msg)
-
-	@staticmethod
-	def getMacAddr(ifname):
-		addrs = netifaces.ifaddresses(ifname)
-		try:
-			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except (IndexError, KeyError) as __error:
-			return ''
-		return mac.upper().replace(':', '')
 
 	@staticmethod
 	def deviceSpecificEncrypt(payload):

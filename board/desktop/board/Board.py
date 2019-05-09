@@ -2,12 +2,25 @@
 
 # Board config for desktop
 
-import os, subprocess, netifaces
+import os
+import subprocess
+import netifaces
 
 class Board(object):
 	@staticmethod
 	def configDir():
 		return os.environ['HOME'] + '/.config/Telldus'
+
+	@staticmethod
+	def getMacAddr():
+		try:
+			with open(Board.configDir() + '/boardinfo.conf', 'r') as f:
+				for line in f:
+					if line.startswith('mac'):
+						return line.split('=')[1].rstrip()
+		except:
+			pass
+		return "000000000000"
 
 	@staticmethod
 	def firmwareVersion():
@@ -33,6 +46,17 @@ class Board(object):
 			'status:red': {'type': 'none'},
 			'zwave:reset': {'type': 'none'},
 		}
+
+	@staticmethod
+	def hw():
+		try:
+			with open(Board.configDir() + '/boardinfo.conf', 'r') as f:
+				for line in f:
+					if line.startswith('hw'):
+						return line.split('=')[1].rstrip()
+		except:
+			pass
+		return "Dev-hardware"
 
 	@staticmethod
 	def liveServer():

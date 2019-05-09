@@ -2,6 +2,7 @@
 
 # Board config for OpenWRT-based boards
 import os
+import netifaces
 
 class Board(object):
 	cfgs = {
@@ -34,6 +35,15 @@ class Board(object):
 	def firmwareVersion():
 		with open('/etc/builddate') as f:
 			return f.readline().strip()
+
+	@staticmethod
+	def getMacAddr():
+		addrs = netifaces.ifaddresses(Board.networkInterface())
+		try:
+			mac = addrs[netifaces.AF_LINK][0]['addr']
+		except (IndexError, KeyError):
+			return ''
+		return mac.upper().replace(':', '')
 
 	@staticmethod
 	def gpioConfig():

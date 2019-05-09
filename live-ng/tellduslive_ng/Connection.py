@@ -6,7 +6,6 @@ from base import Settings
 from board import Board
 from sleekxmpp import ClientXMPP
 from sleekxmpp.exceptions import IqError, IqTimeout
-import netifaces
 
 __name__ = 'tellduslive-ng'  # pylint: disable=W0622
 
@@ -16,7 +15,7 @@ class Connection(object):
 		uuid = settings['uuid']
 		self.xmpp = ClientXMPP(
 			'%s@gateway.telldus.com' % uuid,
-			'%s:%s' % (self.getMacAddr(), Board.secret())
+			'%s:%s' % (Board.getMacAddr(), Board.secret())
 		)
 		self.xmpp.add_event_handler("session_start", self.sessionStart)
 		self.xmpp.add_event_handler("register", self.register)
@@ -59,11 +58,3 @@ class Connection(object):
 		if self.shuttingDown:
 			self.xmpp.disconnect()
 
-	@staticmethod
-	def getMacAddr():
-		addrs = netifaces.ifaddresses(Board.networkInterface())
-		try:
-			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except (IndexError, KeyError):
-			return ''
-		return mac.upper().replace(':', '')

@@ -2,7 +2,6 @@
 
 import logging, time
 from six.moves import http_client
-import netifaces
 import xml.parsers.expat
 from board import Board
 
@@ -29,7 +28,7 @@ class ServerList():
 
 	def retrieveServerList(self):
 		conn = http_client.HTTPConnection('%s:80' % Board.liveServer())
-		conn.request('GET', "/server/assign?protocolVersion=3&mac=%s" % ServerList.getMacAddr(Board.networkInterface()))
+		conn.request('GET', "/server/assign?protocolVersion=3&mac=%s" % Board.getMacAddr())
 		response = conn.getresponse()
 
 		p = xml.parsers.expat.ParserCreate()
@@ -41,12 +40,3 @@ class ServerList():
 	def _startElement(self, name, attrs):
 		if (name == 'server'):
 			self.list.append(attrs)
-
-	@staticmethod
-	def getMacAddr(ifname):
-		addrs = netifaces.ifaddresses(ifname)
-		try:
-			mac = addrs[netifaces.AF_LINK][0]['addr']
-		except (IndexError, KeyError) as e:
-			return ''
-		return mac.upper().replace(':', '')
