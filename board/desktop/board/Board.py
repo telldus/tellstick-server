@@ -29,6 +29,8 @@ class Board(object):
 	@staticmethod
 	def networkInterface():
 		for ifname in netifaces.interfaces():
+			if ifname == 'lo':
+				continue
 			addresses = netifaces.ifaddresses(ifname)
 			if netifaces.AF_INET not in addresses:
 				continue
