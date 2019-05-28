@@ -290,6 +290,12 @@ class BlockheaterTrigger(TimeTrigger):
 			datetime(currentDate.year, currentDate.month, currentDate.day, self.departureHour, self.departureMinute)
 		)
 		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+		if currentDate > utc_datetime:
+			# departure time already passed today
+			local_datetime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day+1, self.departureHour, self.departureMinute)
+			)
+			utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		return currentDate < (utc_datetime - timedelta(hours=self.maxRunTime/3600))
 
 	def parseParam(self, name, value):
