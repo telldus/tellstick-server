@@ -8,6 +8,7 @@ except ImportError:
 import threading
 import time
 import traceback
+import types
 import signal
 import sys
 from .Plugin import Plugin, PluginContext
@@ -152,6 +153,8 @@ class Application(object):
 					logging.error("Could not load %s", str(moduleClass))
 					logging.error(str(e))
 					Application.printBacktrace(traceback.extract_tb(exc_traceback))
+		fd = open('/tmp/telldus-tasks.log', 'w', 0)  # Unbuffered
+		timer = time.time()
 		while 1:
 			with self.lock:
 				if not self.running:
@@ -160,11 +163,22 @@ class Application(object):
 			if task == None:
 				continue
 			try:
+				fd.write('%.02f\n' % (time.time() - timer))
+				timer = time.time()
+				if isinstance(task, types.MethodType):
+					fd.write('Method %s::%s: ' % (task.__self__.__class__.__name__, task.__name__))
+				else:
+					fd.write('Func %s: ' % task.__name__)
 				task(*args, **kwargs)
+				fd.write('%.05f\n' % (time.time() - timer))
 			except Exception as e:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
 				logging.error(e)
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
+				fd.write('Excepted after: %.05f\n' % (time.time() - timer))
+			timer = time.time()  # Reset timer
+			fd.write('Idle: ')
+		fd.close()
 		for fn in self.shutdown:
 			logging.warning("Running shutdown handler %s", fn)
 			fn()
