@@ -98,6 +98,17 @@ class DeviceApiManager(Plugin):
 		"""
 		return self.deviceCommand(id, Device.LEARN, **kwargs)
 
+	@apicall('device', 'rgb')
+	def deviceRGB(self, id, r, g, b, **kwargs):
+		"""
+		Send a command to change color on a device
+		"""
+		r = (int(r) & 0xFF) << 16;
+		g = (int(g) & 0xFF) << 8;
+		b = int(b) & 0xFF;
+		color = r | g | b;
+		return self.deviceCommand(id, Device.RGB, color)
+
 	@apicall('device', 'setName')
 	def deviceSetName(self, id, name, **__kwargs):  # pylint: disable=C0103,W0622
 		"""
