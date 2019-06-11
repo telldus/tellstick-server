@@ -524,10 +524,14 @@ class Device(object):
 				# No need to update
 				return
 		self.lastUpdated = time.time()
-		self._state = state
 		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT) \
 		   and stateValue is not None and stateValue is not '':
 			self._stateValues[str(state)] = stateValue
+
+		if state not in (Device.EXECUTE, Device.LEARN, Device.RGB):
+			# don't change the state itself for some types
+			self._state = state
+
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
