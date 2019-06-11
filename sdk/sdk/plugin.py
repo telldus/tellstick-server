@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import os
 import sys
 import zipfile
 from distutils.core import Command, run_setup
 from distutils.errors import DistutilsSetupError
+from distutils.log import info, warn
 
 import pkg_resources
 import yaml
@@ -172,7 +172,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 					packages.insert(0, prebuiltPackages[req.req.name].location)
 					continue
 				if req.req.name in self.skip_dependencies:
-					logging.info("Do not include dependency %s", req.req.name)
+					info("Do not include dependency %s", req.req.name)
 					continue
 				with chdir(req.source_dir):
 					# Save sys.path
@@ -209,7 +209,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 				# Check signature to see if we should resign
 				signature = gpg.verify_file(open(sigFile, 'rb'), egg)
 				if signature.valid is True:
-					logging.warning("Signaure valid for %s, skip signing", egg)
+					warn("Signaure valid for %s, skip signing", egg)
 					continue
 			signature = gpg.sign_file(open(egg, "rb"), keyid=self.key_id, output=sigFile, detach=True)
 			if not signature:
