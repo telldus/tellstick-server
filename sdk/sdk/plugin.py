@@ -138,12 +138,24 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		if attr == 'compatible_platforms':
 			if not isinstance(value, list):
 				raise DistutilsSetupError('Attribute "compatible_platforms" must be a list')
+		if attr == 'ports':
+			if not isinstance(value, dict):
+				raise DistutilsSetupError('Attribute "ports" must be a dictionary')
 		if attr == 'required_features':
 			if not isinstance(value, list):
 				raise DistutilsSetupError('Attribute "required_features" must be a list')
 		if attr == 'icon':
 			if not os.path.exists(value):
 				raise DistutilsSetupError('File %s does not exists' % value)
+
+	@staticmethod
+	def write_metadata(cmd, basename, filename):
+		what = os.path.splitext(basename)[0]
+		metadata = {}
+		ports = getattr(cmd.distribution, 'ports', None)
+		if ports is not None:
+			metadata['ports'] = ports
+		cmd.write_or_delete_file(what, filename, yaml.dump(metadata))
 
 	def __buildPackage(self, files):
 		if not os.path.exists(self.dest_dir):
