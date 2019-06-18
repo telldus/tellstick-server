@@ -103,6 +103,7 @@ class DeviceManager(Plugin):
 					'methods': device.methods(),
 					'state': state,
 					'stateValue': stateValue,
+					'stateValues': device.stateValues(),
 					'protocol': device.protocol(),
 					'model': device.model(),
 					'parameters': parameters,
@@ -127,6 +128,15 @@ class DeviceManager(Plugin):
 				return device
 		return None
 
+	def deviceMetadataUpdated(self, device, param):
+		self.save()
+		if param and param != '':
+			sendParameters = False
+			if param == 'devicetype':
+				# This effects device parameters also
+				sendParameters = True
+			self.__sendDeviceParameterReport(device, sendParameters=sendParameters, sendMetadata=True)
+
 	def deviceParamUpdated(self, device, param):
 		self.save()
 		self.__deviceUpdated(device, [param])
@@ -135,6 +145,9 @@ class DeviceManager(Plugin):
 				self.__sendDeviceReport()
 			if device.isSensor:
 				self.__sendSensorReport()
+			return
+		if param and param != '':
+			self.__sendDeviceParameterReport(device, sendParameters=True, sendMetadata=False)
 
 	def findByName(self, name):
 		for device in self.devices:
@@ -281,7 +294,9 @@ class DeviceManager(Plugin):
 	def stateUpdated(self, device, ackId=None, origin=None):
 		if device.isDevice() is False:
 			return
-		extras = {}
+		extras = {
+			'stateValues': device.stateValues()
+		}
 		if ackId:
 			extras['ACK'] = ackId
 		if origin:
@@ -368,6 +383,23 @@ class DeviceManager(Plugin):
 				else:
 					dev.setName(args['name'].decode('UTF-8'))
 				return
+		elif args['action'] in ('setParameter', 'setMetadata'):
+			device = None
+			for dev in self.devices:
+				if dev.id() == args['device']:
+					device = dev
+					break
+			if device is None:
+				return
+			name = args.get('name', '')
+			value = args.get('value', '')
+			if args['action'] == 'setParameter':
+				if name == 'room':
+					device.setRoom(value)
+				else:
+					device.setParameter(name, value)
+			else:
+				device.setMetadata(name, value)
 
 	@TelldusLive.handler('device-requestdata')
 	def __handleDeviceParametersRequest(self, msg):
@@ -375,28 +407,9 @@ class DeviceManager(Plugin):
 		device = self.device(args.get('id', 0))
 		if not device:
 			return
-		reply = LiveMessage('device-datareport')
-		data = {
-			'id': args['id']
-		}
-		if args.get('parameters', 0) == 1:
-			parameters = json.dumps(
-				device.allParameters(),
-				separators=(',', ':'),
-				sort_keys=True
-			)
-			data['parameters'] = parameters
-			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
-		if args.get('metadata', 0) == 1:
-			metadata = json.dumps(
-				device.metadata(),
-				separators=(',', ':'),
-				sort_keys=True
-			)
-			data['metadata'] = metadata
-			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
-		reply.append(data)
-		self.live.send(reply)
+		sendParameters = True if args.get('parameters', 0) == 1 else False
+		sendMetadata = True if args.get('metadata', 0) == 1 else False
+		self.__sendDeviceParameterReport(device, sendParameters, sendMetadata)
 
 	@TelldusLive.handler('reload')
 	def __handleSensorUpdate(self, msg):
@@ -429,7 +442,7 @@ class DeviceManager(Plugin):
 			# cleaned up
 			self.__sendSensorReport()
 
-	def liveRegistered(self, __msg):
+	def liveRegistered(self, __msg, refreshRequired):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()
@@ -478,7 +491,8 @@ class DeviceManager(Plugin):
 	def save(self):
 		data = []
 		for device in self.devices:
-			(state, stateValue) = device.state()
+			(state, __stateValue) = device.state()
+			stateValues = device.stateValues()
 			dev = {
 				"id": device.id(),
 				"loadCount": device.loadCount(),
@@ -486,9 +500,10 @@ class DeviceManager(Plugin):
 				"type": device.typeString(),
 				"name": device.name(),
 				"params": device.params(),
+				"metadata": device.metadata(),
 				"methods": device.methods(),
 				"state": state,
-				"stateValue": stateValue,
+				"stateValues": stateValues,
 				"ignored": device.ignored(),
 				"isSensor": device.isSensor()
 			}
@@ -528,6 +543,7 @@ class DeviceManager(Plugin):
 				'methods': device.methods(),
 				'state': state,
 				'stateValue': str(stateValue),
+				'stateValues': device.stateValues(),
 				'protocol': device.protocol(),
 				'model': device.model(),
 				'parametersHash': parametersHash.hexdigest(),
@@ -561,6 +577,30 @@ class DeviceManager(Plugin):
 		msg.append(valueType)
 		msg.append(value)
 		self.live.send(msg)
+
+	def __sendDeviceParameterReport(self, device, sendParameters, sendMetadata):
+		reply = LiveMessage('device-datareport')
+		data = {
+			'id': device.id()
+		}
+		if sendParameters:
+			parameters = json.dumps(
+				device.allParameters(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['parameters'] = parameters
+			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
+		if sendMetadata:
+			metadata = json.dumps(
+				device.metadata(),
+				separators=(',', ':'),
+				sort_keys=True
+			)
+			data['metadata'] = metadata
+			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
+		reply.append(data)
+		self.live.send(reply)
 
 	def __sendSensorReport(self):
 		if not self.live.registered:

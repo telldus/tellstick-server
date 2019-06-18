@@ -290,6 +290,12 @@ class BlockheaterTrigger(TimeTrigger):
 			datetime(currentDate.year, currentDate.month, currentDate.day, self.departureHour, self.departureMinute)
 		)
 		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
+		if currentDate > utc_datetime:
+			# departure time already passed today
+			local_datetime = local_timezone.localize(
+				datetime(currentDate.year, currentDate.month, currentDate.day+1, self.departureHour, self.departureMinute)
+			)
+			utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		return currentDate < (utc_datetime - timedelta(hours=self.maxRunTime/3600))
 
 	def parseParam(self, name, value):
@@ -319,7 +325,7 @@ class BlockheaterTrigger(TimeTrigger):
 				# this fetched value was received too long ago, don't use this to set the blockheater
 				return False
 			self.temp = temp
-		if self.temp > 10 and self.moreThan2HoursToDeparture():
+		if (self.temp > 10 and self.moreThan2HoursToDeparture()) or self.temp > 13:
 			self.active = False
 			return True
 		self.active = True

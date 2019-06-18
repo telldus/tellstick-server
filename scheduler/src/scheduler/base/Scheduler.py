@@ -32,7 +32,6 @@ class Scheduler(Plugin):
 		self.latitude = self.settings.get('latitude', '55.699592')
 		self.longitude = self.settings.get('longitude', '13.187836')
 		self.jobs = []
-		self.jobsFetchedFromServer = False
 		self.fetchLocalJobs()
 		self.live = TelldusLive(self.context)
 		self.deviceManager = DeviceManager(self.context)
@@ -213,8 +212,8 @@ class Scheduler(Plugin):
 	def deviceRemoved(self, deviceId):
 		jobsToDelete = []
 		for job in self.jobs:
-			if job['id'] == deviceId:
-				jobsToDelete.append[job['id']]
+			if job['client_device_id'] == deviceId:
+				jobsToDelete.append(job['id'])
 		for jobId in jobsToDelete:
 			self.deleteJob(jobId)
 
@@ -227,7 +226,7 @@ class Scheduler(Plugin):
 			print("WARNING: Could not fetch schedules from local storage")
 		self.calculateJobs(jobs)
 
-	def liveRegistered(self, msg):
+	def liveRegistered(self, msg, refreshRequired):
 		if 'latitude' in msg:
 			self.latitude = msg['latitude']
 		if 'longitude' in msg:
@@ -235,12 +234,12 @@ class Scheduler(Plugin):
 		if 'tz' in msg:
 			self.timezone = msg['tz']
 
-		if not self.jobsFetchedFromServer:
+		if refreshRequired:
 			self.requestJobsFromServer()
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
-		if len(msg.argument(0).toNative()) != 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) != 0:  # pylint disable=C1801
 			scheduleDict = msg.argument(0).toNative()
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
@@ -250,7 +249,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
 		"""Receive list of jobs from server, saves to settings and calculate nextRunTimes"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
 			jobs = []
 		else:
 			scheduleDict = msg.argument(0).toNative()
@@ -261,7 +260,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-update')
 	def receiveOneJobFromServer(self, msg):
 		"""Receive one job from server, add or edit, save to settings and calculate nextRunTime"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
 			return
 		scheduleDict = msg.argument(0).toNative()
 		job = scheduleDict['job']
@@ -279,7 +278,6 @@ class Scheduler(Plugin):
 		# self.live.pushToWeb('scheduler', 'updated', job['id'])
 
 	def requestJobsFromServer(self):
-		self.jobsFetchedFromServer = True
 		self.live.send(LiveMessage("scheduler-requestjob"))
 
 	def run(self):
@@ -314,7 +312,7 @@ class Scheduler(Plugin):
 
 			jobsToRun = [] # jobs to run in a separate list, to avoid deadlocks (necessary?)
 			# Iterating using .keys(9 since we are modifiyng the dict while iterating
-			for runningJobId in self.runningJobs.keys():  # pylint: disable=C0201
+			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():

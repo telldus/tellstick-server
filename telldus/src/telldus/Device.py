@@ -115,9 +115,11 @@ class Device(object):
 		self._ignored = None
 		self._loadCount = 0
 		self._name = None
+		self._metadata = {}
 		self._manager = None
+		self._room = None
 		self._state = Device.TURNOFF
-		self._stateValue = ''
+		self._stateValues = {}
 		self._sensorValues = {}
 		self._confirmed = True
 		self.valueChangedTime = {}
@@ -129,7 +131,7 @@ class Device(object):
 
 	def allParameters(self):
 		"""
-		Similar as parameters() but this returnes more values such as the device type
+		Similar as parameters() but this returnes more values such as the device type and the room
 		"""
 		params = self.parameters()
 		if isinstance(params, dict):
@@ -139,11 +141,21 @@ class Device(object):
 			# parameters() must return a dict
 			params = {}
 
-		try:
-			params['devicetype'] = self.deviceType()
-		except Exception as error:
-			params['devicetype'] = Device.TYPE_UNKNOWN
-			Application.printException(error)
+		devicetype = self.metadata('devicetype', None)
+		if devicetype is not None:
+			# Devicetype in metadata overrides the devicetype
+			params['devicetype'] = devicetype
+		else:
+			try:
+				params['devicetype'] = self.deviceType()
+			except Exception as error:
+				params['devicetype'] = Device.TYPE_UNKNOWN
+				Application.printException(error)
+		if self._room is None:
+			# Make sure it's removed
+			params.pop('room', None)
+		else:
+			params['room'] = self._room
 		return params
 
 	def battery(self):  # pylint: disable=R0201
@@ -260,9 +272,11 @@ class Device(object):
 		self._name = olddevice._name
 		self._loadCount = 0
 		self.setParams(olddevice.params())
-		(state, stateValue) = olddevice.state()
+		(state, __stateValue) = olddevice.state()
+		self._metadata = olddevice._metadata
+		self._room = olddevice._room
 		self._state = state
-		self._stateValue = stateValue
+		self._stateValues = olddevice.stateValues()
 		self._ignored = olddevice._ignored
 		self._sensorValues = olddevice._sensorValues
 
@@ -272,10 +286,14 @@ class Device(object):
 	def load(self, settings):
 		if 'id' in settings:
 			self._id = settings['id']
+		if 'metadata' in settings:
+			self._metadata = settings['metadata']
 		if 'name' in settings:
 			self._name = settings['name']
 		if 'params' in settings:
 			self.setParams(settings['params'])
+		if 'room' in settings:
+			self._room = settings['room']
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
 
@@ -310,8 +328,8 @@ class Device(object):
 		a dictionary.
 		"""
 		if key is None:
-			return {}
-		return default
+			return self._metadata.copy()
+		return self._metadata.get(key, default)
 
 	def methods(self):
 		"""
@@ -349,6 +367,12 @@ class Device(object):
 
 	def protocol(self):
 		return self.typeString()
+
+	def room(self):
+		"""
+		:returns: The current room this device belongs to
+		"""
+		return self._room
 
 	def sensorElement(self, valueType, scale):
 		"""
@@ -394,12 +418,43 @@ class Device(object):
 	def setManager(self, manager):
 		self._manager = manager
 
+	def setMetadata(self, name, value):
+		if self._metadata.get(name, None) == value:
+			# Identical, do nothing
+			return
+		if value is None or value == '':
+			# Remove it
+			self._metadata.pop(name, None)
+		else:
+			self._metadata[name] = value
+		if self._manager:
+			self._manager.deviceMetadataUpdated(self, name)
+
 	def setName(self, name):
 		self._name = name
 		self.paramUpdated('name')
 
+	def setParameter(self, name, value):
+		"""
+		Set a device specific parameter. What kind of paramters to set is dependent on the device
+		type
+		"""
+		pass
+
 	def setParams(self, params):
 		pass
+
+	def setRoom(self, room):
+		"""
+		Adds the device to a room.
+		Set to None or empty string to remove from room
+		"""
+		room = None if room == '' else room
+		if self._room == room:
+			# Don't fire update if not changed
+			return
+		self._room = room
+		self.paramUpdated('room')
 
 	def setSensorValue(self, valueType, value, scale):
 		self.setSensorValues([{'type': valueType, 'value':value, 'scale': scale}])
@@ -460,7 +515,7 @@ class Device(object):
 		"""
 		if stateValue is None:
 			stateValue = ''
-		if self._state == state and self._stateValue == stateValue:
+		if self._state == state and self._stateValues.get(state, None) == stateValue:
 			if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
 				# Same state/statevalue and less than one second ago, most probably
 				# just the same value being resent, ignore
@@ -470,11 +525,13 @@ class Device(object):
 				return
 		self.lastUpdated = time.time()
 		self._state = state
-		self._stateValue = stateValue
+		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT) \
+		   and stateValue is not None and stateValue is not '':
+			self._stateValues[str(state)] = stateValue
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
-	def setStateFailed(self, state, stateValue='', reason=0, origin=None):
+	def setStateFailed(self, state, stateValue=None, reason=0, origin=None):
 		if self._manager:
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
 
@@ -488,7 +545,27 @@ class Device(object):
 
 		     state, stateValue = device.state()
 		"""
-		return (self._state, self._stateValue)
+		return (self._state, self.stateValue())
+
+	def stateValue(self, state=None):
+		"""
+		.. versionadded:: 1.2
+
+		:returns: The statevalue for the specified state.
+		:param state: The state to request the value for. If no state is specified the current state
+		              is used
+		:type state: int or None
+		"""
+		state = state or self._state
+		return self._stateValues.get(str(state), '')
+
+	def stateValues(self):
+		"""
+		.. versionadded:: 1.2
+
+		:returns: a dict of all state values for the device
+		"""
+		return self._stateValues
 
 	def typeString(self):
 		"""
@@ -599,8 +676,10 @@ class CachedDevice(Device):  # pylint: disable=R0902
 			self.storedmethods = settings['methods']
 		if 'state' in settings:
 			self._state = settings['state']
-		if 'stateValue' in settings:
-			self._stateValue = settings['stateValue']
+		if 'stateValues' in settings:
+			self._stateValues = settings['stateValues']
+		if 'stateValue' in settings and settings['stateValue'] is not None:
+			self._stateValues[str(self._state)] = settings['stateValue']
 		if 'battery' in settings:
 			self.batteryLevel = settings['battery']
 		if 'ignored' in settings:

@@ -305,12 +305,11 @@ class UpgradeManager(UpgradeManagerBase):
 	def check(self):
 		conn = http_client.HTTPConnection('fw.telldus.com:80')
 		try:
-			conn.request('GET', '/versions.xml')
+			conn.request('GET', "/versions.xml?mac=%s&hw=%s&product=%s" % (Board.getMacAddr(), self.hw(), Board.product()))
 			response = conn.getresponse()
 		except Exception as error:
 			logging.warning("Could not get version info: %s", error)
 			return False
-
 		parser = xml.parsers.expat.ParserCreate()
 
 		parser.StartElementHandler = self._startElement

@@ -1,29 +1,38 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from threading import Timer
 
-from base import Plugin, implements
+from base import Plugin, implements, ISignalObserver, slot
 from events.base import IEventFactory, Action, Condition, Trigger
 from .Device import Device
 from .DeviceManager import DeviceManager, IDeviceChange
+from .RoomManager import RoomManager
+from tellduslive.base import LiveMessage, TelldusLive
 
 class DeviceEventFactory(Plugin):
 	implements(IEventFactory)
 	implements(IDeviceChange)
+	implements(ISignalObserver)
 
 	def __init__(self):
 		self.deviceTriggers = []
+		self.modeTriggers = []
 		self.sensorTriggers = []
 		self.deviceManager = DeviceManager(self.context)  # pylint: disable=E1121
 
 	def clearAll(self):
 		self.deviceTriggers = []
+		self.modeTriggers = []
 		self.sensorTriggers = []
 
 	def createAction(self, type, params, **kwargs):  # pylint: disable=W0622
 		if type == 'device':
 			if 'local' in params and params['local'] == 1:
 				return DeviceAction(manager=self.deviceManager, **kwargs)
+		if type == 'mode':
+			roomManager = RoomManager(self.context)  # pylint: disable=E1121
+			return ModeAction(manager=roomManager, **kwargs)
 		return None
 
 	def createCondition(self, type, params, **kwargs):  # pylint: disable=W0622
@@ -31,6 +40,9 @@ class DeviceEventFactory(Plugin):
 			if 'local' in params and params['local'] == 1:
 				return DeviceCondition(manager=self.deviceManager, **kwargs)
 			return None
+		if type == 'mode':
+			roomManager = RoomManager(self.context)  # pylint: disable=E1121
+			return ModeCondition(manager=roomManager, **kwargs)
 		if type == 'sensor':
 			if 'local' in params and params['local'] == 1:
 				return SensorCondition(manager=self.deviceManager, **kwargs)
@@ -41,6 +53,10 @@ class DeviceEventFactory(Plugin):
 			deviceTrigger = DeviceTrigger(self, **kwargs)
 			self.deviceTriggers.append(deviceTrigger)
 			return deviceTrigger
+		if type == 'mode':
+			modeTrigger = ModeTrigger(**kwargs)
+			self.modeTriggers.append(modeTrigger)
+			return modeTrigger
 		if type == 'sensor':
 			sensorTrigger = SensorTrigger(self, **kwargs)
 			self.sensorTriggers.append(sensorTrigger)
@@ -67,6 +83,20 @@ class DeviceEventFactory(Plugin):
 					'clientdeviceid': device.id(),
 					'method': int(method)
 				})
+
+	@slot('modeChanged')
+	def __modeChanged(self, objectId, mode, objectType, objectName):
+		for trigger in self.modeTriggers:
+			if trigger.objectId != objectId:
+				continue
+			if trigger.mode != mode:
+				continue
+			trigger.triggered({
+				'objectId': objectId,
+				'mode': mode,
+				'objectType': objectType,
+				'objectName': objectName,
+			})
 
 class DeviceActionExecutor(object):
 	def __init__(self, device, method, value, repeats, description):
@@ -119,7 +149,7 @@ class DeviceAction(Action):
 		elif name == 'repeats':
 			self.repeats = min(10, max(1, int(value)))
 		elif name == 'value':
-			self.value = int(value)
+			self.value = value
 
 	def execute(self, triggerInfo=None):
 		del triggerInfo
@@ -175,6 +205,76 @@ class DeviceTrigger(Trigger):
 			self.deviceId = int(value)
 		elif name == 'method':
 			self.method = int(value)
+
+class ModeAction(Action):
+	def __init__(self, manager, **kwargs):
+		self.setAlways = True
+		self.objectId = ''
+		self.objectType = ''
+		self.modeId = ''
+		self.roomManager = manager
+		super(ModeAction, self).__init__(**kwargs)
+
+	def parseParam(self, name, value):
+		if name == 'setAlways':
+			self.setAlways = value
+		elif name == 'objectId':
+			self.objectId = value
+		elif name == 'objectType':
+			self.objectType = value
+		elif name == 'modeId':
+			self.modeId = value
+
+	def execute(self, triggerInfo=None):
+		del triggerInfo
+		if self.objectType == 'room':
+			room = self.roomManager.rooms.get(self.objectId, None)
+			if room and room.get('responsible', '') == TelldusLive(self.roomManager.context).uuid:
+				self.roomManager.setMode(self.objectId, self.modeId, self.setAlways)
+			else:
+				msg = LiveMessage('RequestRoomModeSet')
+				msg.append({'id': self.objectId, 'mode': self.modeId, 'setAlways': self.setAlways})
+				TelldusLive(self.roomManager.context).send(msg)
+		else:
+			logging.error('Cannot handle mode change for type %s', self.objectType)
+
+class ModeTrigger(Trigger):
+	def __init__(self, **kwargs):
+		super(ModeTrigger, self).__init__(**kwargs)
+		self.objectId = None
+		self.mode = None
+
+	def parseParam(self, name, value):
+		if name == 'modeId':
+			self.mode = value
+		elif name == 'objectId':
+			self.objectId = value
+
+class ModeCondition(Condition):
+	def __init__(self, manager, **kwargs):
+		super(ModeCondition, self).__init__(**kwargs)
+		self.equalTo = True
+		self.objectId = None
+		self.manager = manager
+		self.modeId = None
+
+	def parseParam(self, name, value):
+		if name == 'equalTo':
+			self.equalTo = int(value)
+		elif name == 'modeId':
+			self.modeId = value
+		elif name == 'objectId':
+			self.objectId = value
+
+	def validate(self, success, failure):
+		room = self.manager.rooms.get(self.objectId, None)
+		if not room:
+			failure()
+			return
+		if (self.equalTo and room.get('mode', '') == self.modeId) or (not self.equalTo and room.get('mode', '') != self.modeId):
+			success()
+			return
+		failure()
 
 class SensorCondition(Condition):
 	def __init__(self, manager, **kwargs):

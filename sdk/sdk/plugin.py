@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import os
 import sys
 import zipfile
 from distutils.core import Command, run_setup
 from distutils.errors import DistutilsSetupError
+from distutils.log import info, warn
 
 import pkg_resources
 import yaml
 import gnupg
-from pip._internal.commands.download import DownloadCommand
-from pip._internal.utils.temp_dir import TempDirectory
+from pip._internal.commands.download import DownloadCommand  # pylint: disable=E0611
+from pip._internal.utils.temp_dir import TempDirectory  # pylint: disable=E0611
 
 class chdir(object):  # pylint: disable=C0103
 	def __init__(self, newDir):
@@ -138,12 +138,24 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		if attr == 'compatible_platforms':
 			if not isinstance(value, list):
 				raise DistutilsSetupError('Attribute "compatible_platforms" must be a list')
+		if attr == 'ports':
+			if not isinstance(value, dict):
+				raise DistutilsSetupError('Attribute "ports" must be a dictionary')
 		if attr == 'required_features':
 			if not isinstance(value, list):
 				raise DistutilsSetupError('Attribute "required_features" must be a list')
 		if attr == 'icon':
 			if not os.path.exists(value):
 				raise DistutilsSetupError('File %s does not exists' % value)
+
+	@staticmethod
+	def write_metadata(cmd, basename, filename):
+		what = os.path.splitext(basename)[0]
+		metadata = {}
+		ports = getattr(cmd.distribution, 'ports', None)
+		if ports is not None:
+			metadata['ports'] = ports
+		cmd.write_or_delete_file(what, filename, yaml.dump(metadata))
 
 	def __buildPackage(self, files):
 		if not os.path.exists(self.dest_dir):
@@ -172,7 +184,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 					packages.insert(0, prebuiltPackages[req.req.name].location)
 					continue
 				if req.req.name in self.skip_dependencies:
-					logging.info("Do not include dependency %s", req.req.name)
+					info("Do not include dependency %s", req.req.name)
 					continue
 				with chdir(req.source_dir):
 					# Save sys.path
@@ -209,7 +221,7 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 				# Check signature to see if we should resign
 				signature = gpg.verify_file(open(sigFile, 'rb'), egg)
 				if signature.valid is True:
-					logging.warning("Signaure valid for %s, skip signing", egg)
+					warn("Signaure valid for %s, skip signing", egg)
 					continue
 			signature = gpg.sign_file(open(egg, "rb"), keyid=self.key_id, output=sigFile, detach=True)
 			if not signature:

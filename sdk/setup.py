@@ -19,6 +19,10 @@ setup(
 			'compatible_platforms = sdk.plugin:telldus_plugin.validate_attribute',
 			'icon = sdk.plugin:telldus_plugin.validate_attribute',
 			'required_features = sdk.plugin:telldus_plugin.validate_attribute',
+			'ports = sdk.plugin:telldus_plugin.validate_attribute',
+		],
+		'egg_info.writers': [
+			'metadata.yml = sdk.plugin:telldus_plugin.write_metadata',
 		],
 	},
 )

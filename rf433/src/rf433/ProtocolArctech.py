@@ -34,14 +34,14 @@ class ProtocolArctech(Protocol):
 			return (Device.TURNON | Device.TURNOFF | Device.DIM | Device.LEARN)
 		elif self.model == 'selflearning-bell':
 			return (Device.BELL | Device.LEARN)
-		elif self.model == Device.BELL:
+		elif self.model == 'bell':
 			return Device.BELL
 		return 0
 
 	def stringForMethod(self, method, data=None):
 		if self.model == 'codeswitch':
 			return self.stringForCodeSwitch(method)
-		elif self.model == Device.BELL:
+		elif self.model == 'bell':
 			return self.stringForBell()
 		elif self.model == 'selflearning-bell':
 			return self.stringForSelflearning(method, data, 1)
