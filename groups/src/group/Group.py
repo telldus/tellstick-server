@@ -46,7 +46,7 @@ class GroupDevice(Device):
 
 	def parameters(self):
 		return {
-			'devices': ','.join([str(x) for x in self.devices]),
+			'devices': list(self.devices),  # Return copy
 		}
 
 	def params(self):
