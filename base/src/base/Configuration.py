@@ -16,7 +16,7 @@ class configuration(object):  # pylint: disable=C0103
 		def config(self, key):
 			return ConfigurationManager(self.context).value(self, key)
 		def setConfig(self, key, value):
-			ConfigurationManager(self.context).setValue(self, key, value)
+			ConfigurationManager(self.context).setValue(cls, key, value)
 		cls.configuration = self.config
 		cls.config = config
 		cls.setConfig = setConfig
