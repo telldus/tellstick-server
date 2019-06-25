@@ -158,7 +158,7 @@ class ConfigurationManager(Plugin):
 		settings = Settings(ConfigurationManager.nameForObject(callee))
 		settings[key] = value
 		if hasattr(callee, 'configWasUpdated'):
-			callee(self.context).configWasUpdated(key, value)
+			callee.configWasUpdated(key, value)
 
 	def value(self, callee, key):
 		return self.__getValue(callee.__class__, key)
