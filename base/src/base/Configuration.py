@@ -16,7 +16,7 @@ class configuration(object):  # pylint: disable=C0103
 		def config(self, key):
 			return ConfigurationManager(self.context).value(self, key)
 		def setConfig(self, key, value):
-			ConfigurationManager(self.context).setValue(self, key, value)
+			ConfigurationManager(self.context).setValue(cls, key, value)
 		cls.configuration = self.config
 		cls.config = config
 		cls.setConfig = setConfig
@@ -158,7 +158,7 @@ class ConfigurationManager(Plugin):
 		settings = Settings(ConfigurationManager.nameForObject(callee))
 		settings[key] = value
 		if hasattr(callee, 'configWasUpdated'):
-			callee.configWasUpdated(key, value)
+			callee(self.context).configWasUpdated(key, value)
 
 	def value(self, callee, key):
 		return self.__getValue(callee.__class__, key)
