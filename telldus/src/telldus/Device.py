@@ -2,6 +2,7 @@
 
 import logging
 import time
+import uuid
 
 from base import Application
 
@@ -122,6 +123,7 @@ class Device(object):
 		self._stateValues = {}
 		self._sensorValues = {}
 		self._confirmed = True
+		self._uuid = None
 		self.valueChangedTime = {}
 		self.lastUpdated = None  # internal use only, last time state was changed
 		self.lastUpdatedLive = {}
@@ -269,6 +271,7 @@ class Device(object):
 	# pylint: disable=W0212
 	def loadCached(self, olddevice):
 		self._id = olddevice._id
+		self._uuid = olddevice._uuid
 		self._name = olddevice._name
 		self._loadCount = 0
 		self.setParams(olddevice.params())
@@ -294,6 +297,10 @@ class Device(object):
 			self.setParams(settings['params'])
 		if 'room' in settings:
 			self._room = settings['room']
+		if 'uuid' in settings:
+			self._uuid = uuid.UUID(settings['uuid'])
+		else:
+			self._uuid = uuid.uuid4()
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
 
@@ -539,6 +546,9 @@ class Device(object):
 		if self._manager:
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
 
+	def setUuid(self, newUuid):
+		self._uuid = uuid.UUID(newUuid)
+
 	def state(self):
 		"""
 		:returns: a tuple of the device state and state value
@@ -577,6 +587,12 @@ class Device(object):
 		device. All devices from a plugin must have the same type.
 		"""
 		return ''
+
+	def uuid(self):
+		"""
+		:returns: The unique uuid for this device
+		"""
+		return self._uuid
 
 	# pylint: disable=R0911
 	@staticmethod

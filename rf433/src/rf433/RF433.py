@@ -250,8 +250,10 @@ class RF433(Plugin):
 		self.dev.queue(RF433Msg('H', success=self.__hwVersion, failure=self.__noHWVersion))
 		self.live = TelldusLive(self.context)
 
-	def addDevice(self, protocol, model, name, params):
+	def addDevice(self, uuid, protocol, model, name, params):
 		device = DeviceNode(self.dev)
+		if uuid:
+			device.setUuid(uuid)
 		device.setName(name)
 		device.setParams({
 			'protocol': protocol,
@@ -274,7 +276,7 @@ class RF433(Plugin):
 		data = msg.argument(0).toNative()
 		action = data['action']
 		if action == 'addDevice':
-			self.addDevice(data['protocol'], data['model'], data['name'], data['parameters'])
+			self.addDevice(data.get('id', None), data['protocol'], data['model'], data['name'], data['parameters'])
 
 		elif action == 'deviceInfo':
 			deviceId = data['device']
