@@ -653,7 +653,7 @@ class Device(object):
 			Device.LUMINANCE: 'lum',
 			Device.DEW_POINT: 'dewp',
 			Device.BAROMETRIC_PRESSURE: 'barpress',
-			Device.GENRIC_METER: 'genmeter',
+			Device.GENERIC_METER: 'genmeter',
 			Device.WEIGHT: 'weight',
 			Device.CO2: 'co2',
 			Device.VOLUME: 'volume',
