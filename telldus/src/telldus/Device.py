@@ -594,6 +594,12 @@ class Device(object):
 		"""
 		return self._uuid
 
+	def uuidAsString(self):
+		"""
+		:returns: The unique uuid for this device as a string
+		"""
+		return str(self.uuid()) if self.uuid() else None
+
 	# pylint: disable=R0911
 	@staticmethod
 	def methodStrToInt(method):

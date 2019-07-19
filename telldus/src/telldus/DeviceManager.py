@@ -99,7 +99,7 @@ class DeviceManager(Plugin):
 				)
 				deviceDict = {
 					'id': device.id(),
-					'uuid': str(device.uuid()),
+					'uuid': device.uuidAsString(),
 					'name': device.name(),
 					'methods': device.methods(),
 					'state': state,
@@ -496,7 +496,7 @@ class DeviceManager(Plugin):
 			stateValues = device.stateValues()
 			dev = {
 				"id": device.id(),
-				"uuid": str(device.uuid()),
+				"uuid": device.uuidAsString(),
 				"loadCount": device.loadCount(),
 				"localId": device.localId(),
 				"type": device.typeString(),
@@ -541,7 +541,7 @@ class DeviceManager(Plugin):
 			))
 			dev = {
 				'id': device.id(),
-				'uuid': str(device.uuid()),
+				'uuid': device.uuidAsString(),
 				'name': device.name(),
 				'methods': device.methods(),
 				'state': state,
