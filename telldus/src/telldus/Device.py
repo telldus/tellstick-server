@@ -268,6 +268,13 @@ class Device(object):
 			toCheck.extend(d.containingDevices())
 		return devices
 
+	def getOrCreateUUID(self):
+		if self.uuid():
+			return str(self.uuid())
+		else:
+			self._uuid = uuid.uuid4()
+			return str(self.uuid())
+
 	# pylint: disable=W0212
 	def loadCached(self, olddevice):
 		self._id = olddevice._id

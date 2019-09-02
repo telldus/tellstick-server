@@ -496,7 +496,7 @@ class DeviceManager(Plugin):
 			stateValues = device.stateValues()
 			dev = {
 				"id": device.id(),
-				"uuid": device.uuidAsString(),
+				"uuid": device.getOrCreateUUID(),
 				"loadCount": device.loadCount(),
 				"localId": device.localId(),
 				"type": device.typeString(),
