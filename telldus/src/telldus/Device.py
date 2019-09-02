@@ -297,9 +297,10 @@ class Device(object):
 			self.setParams(settings['params'])
 		if 'room' in settings:
 			self._room = settings['room']
-		if 'uuid' in settings:
+		try:
 			self._uuid = uuid.UUID(settings['uuid'])
-		else:
+		except:
+			# uuid might for example be none
 			self._uuid = uuid.uuid4()
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
