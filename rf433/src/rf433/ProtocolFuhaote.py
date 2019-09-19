@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import Protocol
+from .Protocol import Protocol
 from telldus import Device
 
 class ProtocolFuhaote(Protocol):

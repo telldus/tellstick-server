@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from Emc import Emc
+from .Emc import Emc

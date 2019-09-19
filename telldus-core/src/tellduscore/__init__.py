@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from TelldusCore import TelldusCore
+from .TelldusCore import TelldusCore

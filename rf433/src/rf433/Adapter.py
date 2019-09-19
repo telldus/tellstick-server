@@ -2,7 +2,7 @@
 
 from base import Application
 import fcntl, os, select, serial, threading, time
-from RF433Msg import RF433Msg
+from .RF433Msg import RF433Msg
 import logging
 try:
 	from pkg_resources import resource_filename

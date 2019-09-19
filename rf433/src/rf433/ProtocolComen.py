@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 
-from ProtocolArctech import ProtocolArctech
+from .ProtocolArctech import ProtocolArctech
 from telldus import Device
 
 class ProtocolComen(ProtocolArctech):

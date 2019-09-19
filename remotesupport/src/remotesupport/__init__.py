@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from RemoteSupport import RemoteSupport
+from .RemoteSupport import RemoteSupport

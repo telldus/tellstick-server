@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 
-from Server import Server
+from .Server import Server

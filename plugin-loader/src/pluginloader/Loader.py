@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import zipfile
 import pkg_resources
 import gnupg
@@ -301,7 +301,7 @@ class Loader(Plugin):
 		filename = '%s/staging.zip' % Board.pluginPath()
 		server = Server(self.context)
 		def downloadFile():
-			urlFd = urllib2.urlopen(url)
+			urlFd = urllib.request.urlopen(url)  # 2to3, TODO TEST
 			meta = urlFd.info()
 			fileSize = int(meta.getheaders("Content-Length")[0])
 			if size is not None and fileSize != size:

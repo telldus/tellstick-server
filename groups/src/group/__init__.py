@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from Group import Group
+from .Group import Group

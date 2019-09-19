@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from base import Application
-from Socket import Socket
+from .Socket import Socket
 from threading import Thread
 import os, select, socket
 

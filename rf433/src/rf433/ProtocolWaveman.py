@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import ProtocolArctech
+from .Protocol import ProtocolArctech
 
 class ProtocolWaveman(ProtocolArctech):
 

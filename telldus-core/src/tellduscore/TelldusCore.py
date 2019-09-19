@@ -2,7 +2,7 @@
 
 from base import Application, Plugin, implements
 from telldus import DeviceManager, Device, IDeviceChange
-from ConnectionListener import ConnectionListener
+from .ConnectionListener import ConnectionListener
 
 class TelldusCore(Plugin):
 	TELLSTICK_SUCCESS = 0

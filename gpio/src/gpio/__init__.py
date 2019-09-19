@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from Gpio import Gpio
+from .Gpio import Gpio

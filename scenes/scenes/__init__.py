@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 
-from Scenes import SceneManager
+from .Scenes import SceneManager

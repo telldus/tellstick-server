@@ -3,7 +3,7 @@
 import fcntl
 import logging
 import socket
-import SocketServer
+import socketserver
 import struct
 from threading import Thread
 
@@ -18,7 +18,7 @@ except ImportError:
 		pass
 	TelldusZWave = None
 
-class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
+class AutoDiscoveryHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		sock = self.request[1]
 		product = ''.join(x.capitalize() for x in Board.product().split('-'))
@@ -38,7 +38,7 @@ class AutoDiscoveryHandler(SocketServer.BaseRequestHandler):
 		info = fcntl.ioctl(sock.fileno(), 0x8927, struct.pack('256s', ifname[:15]))
 		return ''.join(['%02X' % ord(char) for char in info[18:24]])
 
-class CommandHandler(SocketServer.BaseRequestHandler):
+class CommandHandler(socketserver.BaseRequestHandler):
 	rf433 = None
 	context = None
 

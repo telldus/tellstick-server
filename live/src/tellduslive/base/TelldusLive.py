@@ -4,7 +4,6 @@ import bz2
 import logging
 import os
 import random
-from StringIO import StringIO
 import struct
 import threading
 import time
@@ -12,6 +11,7 @@ import time
 from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
 import requests
+from io import BytesIO
 
 from base import \
 	Application, \
@@ -268,7 +268,7 @@ class TelldusLive(Plugin):
 		key = PBKDF2(password, iv).read(32)
 		encryptor = AES.new(key, AES.MODE_CBC, iv)
 
-		buff = StringIO()
+		buff = BytesIO()
 		buff.write(struct.pack('<Q', len(payload)))
 		buff.write(iv)
 		if len(payload) % 16 != 0:

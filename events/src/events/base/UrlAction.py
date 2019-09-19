@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import httplib
+import http.client
 from threading import Thread
-import urlparse
+import urllib.parse
 
 from .Action import Action
 

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from board import Board
-import httplib
+import http.client
 import xml.parsers.expat
 
 class PluginParser(object):
 	def parse(self):
 		print "Update plugins"
-		conn = httplib.HTTPConnection('fw.telldus.com:80')
+		conn = http.client.HTTPConnection('fw.telldus.com:80')  # 2to3, TODO test
 		try:
 			conn.request('GET', '/plugins.xml')
 			response = conn.getresponse()
@@ -79,7 +79,7 @@ class PluginParser(object):
 						self.plugin['compatible'] = True
 				elif name == 'icon':
 					self.edition['icon'] = content
-		
+
 		p = xml.parsers.expat.ParserCreate()
 
 		p.StartElementHandler = startElement

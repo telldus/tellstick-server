@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 
-from Protocol import ProtocolSartano
+from .Protocol import ProtocolSartano
 
 class ProtocolYidong(ProtocolSartano):
 
