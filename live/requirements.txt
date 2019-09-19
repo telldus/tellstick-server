@@ -1,5 +1,5 @@
 netifaces
 pbkdf2
 pycrypto
-python-openid
+python3-openid
 requests
