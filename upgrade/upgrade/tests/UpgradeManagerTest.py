@@ -89,10 +89,10 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertEqual(self.__getHotFix('invalidSourceFile')['files'], [])
 
 	def testProducts(self):
-		self.assertIn('default', self.hotfixes.keys())
-		self.assertNotIn('noProduct', self.hotfixes.keys())
-		self.assertNotIn('invalidProduct', self.hotfixes.keys())
-		self.assertIn('tellstickDesktop', self.hotfixes.keys())
+		self.assertIn('default', list(self.hotfixes.keys()))
+		self.assertNotIn('noProduct', list(self.hotfixes.keys()))
+		self.assertNotIn('invalidProduct', list(self.hotfixes.keys()))
+		self.assertIn('tellstickDesktop', list(self.hotfixes.keys()))
 
 	@patch.object(UpgradeManagerBase, 'reboot', reboot)
 	def testRestart(self):
@@ -125,10 +125,10 @@ class HotFixManagerTest(unittest.TestCase):
 		self.assertFalse(self.hotfixManager.apply('invalidSignature'))
 
 	def testVersion(self):
-		self.assertIn('default', self.hotfixes.keys())
-		self.assertNotIn('version100', self.hotfixes.keys())
-		self.assertIn('version123', self.hotfixes.keys())
+		self.assertIn('default', list(self.hotfixes.keys()))
+		self.assertNotIn('version100', list(self.hotfixes.keys()))
+		self.assertIn('version123', list(self.hotfixes.keys()))
 
 	def __getHotFix(self, name):
-		self.assertIn(name, self.hotfixes.keys())
+		self.assertIn(name, list(self.hotfixes.keys()))
 		return self.hotfixes[name]

@@ -148,7 +148,7 @@ class HotFixManager(UpgradeManagerBase):
 				scripts.append(filename)
 
 			# Copy files
-			for source, target in targets.items():
+			for source, target in list(targets.items()):
 				directory = os.path.dirname(target)
 				if not os.path.exists(directory):
 					os.makedirs(directory)
@@ -174,7 +174,7 @@ class HotFixManager(UpgradeManagerBase):
 		return True
 
 	def applyAll(self):
-		for name, hotfix in self.list().items():
+		for name, hotfix in list(self.list().items()):
 			if hotfix['applied']:
 				continue
 			if hotfix['deployment'] != 'auto':
@@ -463,7 +463,7 @@ def runCli():
 	if hotfix:
 		hotfixManager = HotFixManager()
 		if hotfix == 'list':
-			for hotfixName, hfix in hotfixManager.list().items():
+			for hotfixName, hfix in list(hotfixManager.list().items()):
 				sys.stdout.write('%s %s\n' % ('*' if hfix['applied'] else ' ', hotfixName))
 			sys.stdout.flush()
 			sys.exit(0)
