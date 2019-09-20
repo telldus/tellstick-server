@@ -28,7 +28,7 @@ class Board(object):
 
 	@staticmethod
 	def firmwareVersion():
-		return subprocess.check_output(['git', 'describe'])[1:]
+		return subprocess.check_output(['git', 'describe'])[1:].decode()
 
 	@staticmethod
 	def networkInterface():
