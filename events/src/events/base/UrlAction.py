@@ -15,8 +15,6 @@ class UrlAction(Action):
 
 	def parseParam(self, name, value):
 		if name == 'url':
-			if isinstance(value, unicode):
-				value = value.encode('utf-8')
 			self.url = str(value)
 
 	def execute(self, triggerInfo=None):
@@ -27,9 +25,8 @@ class UrlAction(Action):
 
 	def __execute(self):
 		headers = {}
-		url = urlparse.urlparse(self.url)
+		url = urllib.parse.urlparse(self.url)
 		sendHost = url.netloc  #clean url
-		port = 80  # default 80
 		if url.port != '' and url.port != None:
 			self.port = int(url.port)
 
@@ -43,9 +40,9 @@ class UrlAction(Action):
 			headers['Authorization'] = 'Basic %s' % (base64.b64encode(sendHost[:atIndex]))
 			sendHost = sendHost[atIndex+1:]
 
-		if url.scheme=="http":
-			conn = httplib.HTTPConnection('%s' % (sendHost))
+		if url.scheme == "http":
+			conn = http.client.HTTPConnection('%s' % (sendHost))
 		else:
-			conn = httplib.HTTPSConnection('%s' % (sendHost))
+			conn = http.client.HTTPSConnection('%s' % (sendHost))
 		conn.request('GET', sendPath, None, headers)
 		conn.getresponse()
