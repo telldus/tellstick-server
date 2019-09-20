@@ -49,8 +49,8 @@ class ApiManager(Plugin):
 		if path == '':
 			methods = {}
 			for observer in self.observers:
-				for module, actions in getattr(observer, '_apicalls', {}).iteritems():
-					for action, func in actions.iteritems():
+				for module, actions in list(getattr(observer, '_apicalls', {}).items()):
+					for action, func in list(actions.items()):
 						methods.setdefault(module, {})[action] = {'doc': func.__doc__}
 			return 'index.html', {'methods': methods}
 		if path == 'token':
