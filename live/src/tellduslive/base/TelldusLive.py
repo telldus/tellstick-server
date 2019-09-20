@@ -36,7 +36,7 @@ class ITelldusLiveObserver(IInterface):
 	"""
 	def liveConnected():
 		"""This method is called when we have succesfully connected to a Live! server"""
-	def liveRegistered(params, refreshRequired):
+	def liveRegistered(self, params, refreshRequired):
 		"""This method is called when we have succesfully registered with a Live! server"""
 	def liveDisconnected():
 		"""This method is call when we are disconnected"""

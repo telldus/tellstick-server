@@ -5,8 +5,8 @@ import logging
 import select
 import socket
 import ssl
-from .LiveMessage import LiveMessage
 from base import Settings
+from .LiveMessage import LiveMessage
 
 class ServerConnection(object):
 	CLOSED, CONNECTING, CONNECTED, READY, MSG_RECEIVED, DISCONNECTED = list(range(6))

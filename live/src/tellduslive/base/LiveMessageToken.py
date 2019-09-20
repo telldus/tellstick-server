@@ -116,7 +116,7 @@ class LiveMessageToken(object):
 				token.intVal = int(string[start:index], 16)
 				token.valueType = LiveMessageToken.TYPE_INT
 				start = index + 1
-			except:
+			except Exception:
 				return (start, token)
 
 		elif string[start] == 'l':
@@ -159,7 +159,7 @@ class LiveMessageToken(object):
 
 			try:
 				length = int(string[start:index], 16)
-			except:
+			except Exception:
 				return (start, token)
 
 			start = index + length + 1
