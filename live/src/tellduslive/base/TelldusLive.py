@@ -273,6 +273,6 @@ class TelldusLive(Plugin):
 		buff.write(iv)
 		if len(payload) % 16 != 0:
 			# Pad payload
-			payload += ' ' * (16 - len(payload) % 16)
+			payload += ' '.encode() * (16 - len(payload) % 16)
 		buff.write(encryptor.encrypt(payload))
 		return buff.getvalue()

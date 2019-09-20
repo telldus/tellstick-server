@@ -122,7 +122,7 @@ class ServerConnection(object):
 							# data is coming or not), add some
 							# padding
 							signedMessage = signedMessage + "="
-						self.socket.write(signedMessage)
+						self.socket.write(bytes(signedMessage, 'UTF-8'))
 					except socket.error as error:
 						if isinstance(error.args, tuple):
 							if error[0] == socket.SSL_ERROR_WANT_WRITE:
@@ -130,7 +130,7 @@ class ServerConnection(object):
 								retry = True
 								continue
 			else:
-				self.socket.send(signedMessage)
+				self.socket.send(bytes(signedMessage, 'UTF-8'))
 		except Exception as error:
 			logging.error('ERROR, could not write to socket. Close and reconnect')
 			logging.error(str(error))
@@ -145,7 +145,7 @@ class ServerConnection(object):
 				data = self.socket.recv(buffSize)
 				if (len(data) < buffSize):
 					hasMoreData = False
-				resp += data
+				resp += data.decode()
 			except ssl.SSLError as error:
 				if error.args[0] == ssl.SSL_ERROR_WANT_READ:
 					pass
@@ -169,7 +169,7 @@ class ServerConnection(object):
 				packet = self.socket.recv(buffSize)
 				if (len(packet) < buffSize):
 					hasMoreData = False
-				request = request + packet
+				request = request + packet.decode()
 			except socket.error as socketException:
 				(err, errstr) = socketException.args
 				if (err == errno.EAGAIN):

@@ -4,7 +4,7 @@ import hashlib
 from .LiveMessageToken import LiveMessageToken
 
 class LiveMessage():
-	def __init__(self, name = ""):
+	def __init__(self, name=""):
 		if (name != ""):
 			self.args = [LiveMessageToken(name)]
 		else:
@@ -13,7 +13,7 @@ class LiveMessage():
 	def append(self, argument):
 		self.args.append(LiveMessageToken(argument))
 
-	def argument(self,index):
+	def argument(self, index):
 		if (len(self.args) > index+1):
 			return self.args[index+1]
 
@@ -66,6 +66,6 @@ class LiveMessage():
 		else:
 			h = hashlib.sha1()
 
-		h.update(msg)
-		h.update(privateKey)
+		h.update(msg.encode())
+		h.update(privateKey.encode())
 		return h.hexdigest().lower()

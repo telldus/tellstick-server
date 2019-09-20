@@ -98,10 +98,6 @@ class LiveMessageToken(object):
 				retval = retval + LiveMessageToken(str(key)).toByteArray() + self.dictVal[key].toByteArray()
 			return retval + 's'
 
-		if six.PY2 and isinstance(self.stringVal, unicode):
-			stringVal = base64.b64encode(self.stringVal.encode('utf-8'))
-			return 'u%X:%s' % (len(stringVal), str(stringVal),)
-
 		return '%X:%s' % (len(self.stringVal), str(self.stringVal),)
 
 	@staticmethod
@@ -154,7 +150,7 @@ class LiveMessageToken(object):
 			start += 1
 			start, token = LiveMessageToken.parseToken(string, start)
 			token.valueType = LiveMessageToken.TYPE_BASE64
-			token.stringVal = unicode(base64.decodestring(token.stringVal), 'utf-8')
+			token.stringVal = str(base64.decodestring(token.stringVal))
 
 		else: #String
 			index = string.find(':', start)
