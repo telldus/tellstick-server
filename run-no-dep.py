@@ -46,7 +46,7 @@ def watchdog():
 	while 1:
 		clientPID = os.fork()
 		if clientPID:
-			print("Child started with PID %i" % clientPID)
+			print(f"Child started with PID {clientPID}")
 			running = True
 			exitCode = 0
 			while running:
@@ -66,7 +66,7 @@ def watchdog():
 						running = False
 						exitCode = 0
 				except Exception as error:
-					print("Unknown exception", error)
+					print(f"Unknown exception {error}")
 					running = False
 					exitCode = 0
 			if exitCode == 0:

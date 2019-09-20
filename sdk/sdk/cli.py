@@ -42,10 +42,10 @@ writePluginsXml.description = 'Generate a plugins.xml file from a set of plugins
 commands = {'writePlugins': writePluginsXml}
 
 def printUsage():
-	print "Usage: %s command" % sys.argv[0]
-	print "Available commands:"
+	print(f"Usage: {sys.argv[0]} command")
+	print("Available commands:")
 	for command in commands:
-		print "  %s - %s" % (command, commands[command].description)
+		print(f"  {command} - {commands[command].description}")
 
 def main():
 	if len(sys.argv) < 2:
@@ -53,6 +53,6 @@ def main():
 		sys.exit(1)
 	if sys.argv[1] not in commands:
 		printUsage()
-		print "Unknown command: %s" % sys.argv[1]
+		print(f"Unknown command: {sys.argv[1]}")
 		sys.exit(1)
 	sys.exit(commands[sys.argv[1]](sys.argv[2:]))

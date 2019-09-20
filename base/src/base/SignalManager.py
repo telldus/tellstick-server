@@ -18,7 +18,7 @@ class Signal(object):
 		return doc.strip()
 
 	def args(self):
-		return list(self.func.func_code.co_varnames)[1:self.func.func_code.co_argcount]
+		return list(self.func.__code__.co_varnames)[1:self.func.__code__.co_argcount]
 
 class SignalManager(Plugin):
 	observers = ObserverCollection(ISignalObserver)

@@ -226,7 +226,7 @@ if __name__ == '__main__':
 		s = SunCalculator()
 		r = s.nextRiseSet(date, lat, lon)
 		ok = 'OK' if r['sunrise'] == sunrise and r['sunset'] == sunset else 'NOT OK'
-		print("%s - %s==%s, %s==%s" % (ok, str(r['sunrise']), str(sunrise), str(r['sunset']), str(sunset)))
+		print(f"{ok} - {str(r['sunrise'])}=={str(sunrise)}, {str(r['sunset'])}=={str(sunset)}")
 	test(1396316636, 55.69, 13.18, 1396327140, 1396374300)
 	test(1410755983, 55.69, 13.18, 1410842460, 1410801900)
 	test(1403490211, 55.69, 13.18, 1403576640, 1403553360)

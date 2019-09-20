@@ -6,7 +6,7 @@ import xml.parsers.expat
 
 class PluginParser(object):
 	def parse(self):
-		print "Update plugins"
+		print("Update plugins")
 		conn = http.client.HTTPConnection('fw.telldus.com:80')  # 2to3, TODO test
 		try:
 			conn.request('GET', '/plugins.xml')
