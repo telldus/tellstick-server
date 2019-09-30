@@ -6,29 +6,48 @@ from tellduslive.base import TelldusLive, ITelldusLiveObserver
 
 class GroupDevice(Device):
 	def __init__(self):
-		super(GroupDevice,self).__init__()
+		super(GroupDevice, self).__init__()
 		self._nodeId = 0
 		self.devices = []
 
-	def _command(self, action, value, success, failure, ignore, **kwargs):
+	def _command(self, action, value, success, failure, ignore, **__kwargs):
+		del failure
 		for deviceId in self.devices:
 			device = self.manager().device(deviceId)
 			if not device:
 				continue
-			device.command(action, value, origin='Group %s' % self.name(), success=None, failure=None, ignore=ignore)
+			device.command(
+				action,
+				value,
+				origin='Group %s' % self.name(),
+				success=None,
+				failure=None,
+				ignore=ignore
+			)
 		success()
 
 	def containingDevices(self):
 		return self.devices
 
-	def isDevice(self):
+	@staticmethod
+	def deviceType():
+		return Device.TYPE_CONTAINER
+
+	@staticmethod
+	def isDevice():
 		return True
 
-	def isSensor(self):
+	@staticmethod
+	def isSensor():
 		return False
 
 	def localId(self):
 		return self._nodeId
+
+	def parameters(self):
+		return {
+			'devices': list(self.devices),  # Return copy
+		}
 
 	def params(self):
 		return {
@@ -37,22 +56,29 @@ class GroupDevice(Device):
 
 	def setId(self, newId):
 		self._nodeId = newId
-		super(GroupDevice,self).setId(newId)
+		super(GroupDevice, self).setId(newId)
 
 	def setNodeId(self, nodeId):
 		self._nodeId = nodeId
 
+	def setParameter(self, name, value):
+		if name != 'devices':
+			return
+		self.devices = [int(x) for x in value.split(',')]
+		self.paramUpdated('devices')
+
 	def setParams(self, params):
 		self.devices = params.setdefault('devices', [])
 
-	def typeString(self):
+	@staticmethod
+	def typeString():
 		return 'group'
 
 	def methods(self):
-		m = 0
+		methods = 0
 		for device in self.flattenContainingDevices():
-			m = m | device.methods()
-		return m
+			methods = methods | device.methods()
+		return methods
 
 class Group(Plugin):
 	implements(ITelldusLiveObserver)
@@ -60,18 +86,18 @@ class Group(Plugin):
 	def __init__(self):
 		self.devices = []
 		self.deviceManager = DeviceManager(self.context)
-		for d in self.deviceManager.retrieveDevices('group'):
-			p = d.params()
+		for oldDevice in self.deviceManager.retrieveDevices('group'):
+			params = oldDevice.params()
 			device = GroupDevice()
 			self.devices.append(device)
-			device.setNodeId(d.id())
-			device.setParams(p)
+			device.setNodeId(oldDevice.id())
+			device.setParams(params)
 			self.deviceManager.addDevice(device)
 		self.deviceManager.finishedLoading('group')
 		self.live = TelldusLive(self.context)
 
 	def addDevice(self, name, devices):
-		if type(devices) != list:
+		if not isinstance(devices, list):
 			return
 		device = GroupDevice()
 		device.setName(name)
@@ -95,7 +121,7 @@ class Group(Plugin):
 					device.setParams({
 						'devices': data['devices'],
 					})
-					device.paramUpdated('')
+					device.paramUpdated('devices')
 					break
 
 		elif action == 'groupInfo':

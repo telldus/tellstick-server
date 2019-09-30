@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+import uuid
 
 from base import Application
 
@@ -123,6 +124,7 @@ class Device(object):
 		self._stateValues = {}
 		self._sensorValues = {}
 		self._confirmed = True
+		self._uuid = None
 		self.valueChangedTime = {}
 		self.lastUpdated = None  # internal use only, last time state was changed
 		self.lastUpdatedLive = {}
@@ -275,9 +277,17 @@ class Device(object):
 			toCheck.extend(d.containingDevices())
 		return devices
 
+	def getOrCreateUUID(self):
+		if self.uuid():
+			return str(self.uuid())
+		else:
+			self._uuid = uuid.uuid4()
+			return str(self.uuid())
+
 	# pylint: disable=W0212
 	def loadCached(self, olddevice):
 		self._id = olddevice._id
+		self._uuid = olddevice._uuid
 		self._name = olddevice._name
 		self._loadCount = 0
 		self.setParams(olddevice.params())
@@ -303,6 +313,11 @@ class Device(object):
 			self.setParams(settings['params'])
 		if 'room' in settings:
 			self._room = settings['room']
+		try:
+			self._uuid = uuid.UUID(settings['uuid'])
+		except:
+			# uuid might for example be none
+			self._uuid = uuid.uuid4()
 		#if 'state' in settings and 'stateValue' in settings:
 		#	self.setState(settings['state'], settings['stateValue'])
 
@@ -562,12 +577,19 @@ class Device(object):
 				state = Device.TURNON
 		self._state = state
 
+		if state not in (Device.EXECUTE, Device.LEARN, Device.RGB):
+			# don't change the state itself for some types
+			self._state = state
+
 		if self._manager:
 			self._manager.stateUpdated(self, ackId=ack, origin=origin)
 
 	def setStateFailed(self, state, stateValue=None, reason=0, origin=None):
 		if self._manager:
 			self._manager.stateUpdatedFail(self, state, stateValue, reason, origin)
+
+	def setUuid(self, newUuid):
+		self._uuid = uuid.UUID(newUuid)
 
 	def state(self):
 		"""
@@ -607,6 +629,18 @@ class Device(object):
 		device. All devices from a plugin must have the same type.
 		"""
 		return ''
+
+	def uuid(self):
+		"""
+		:returns: The unique uuid for this device
+		"""
+		return self._uuid
+
+	def uuidAsString(self):
+		"""
+		:returns: The unique uuid for this device as a string
+		"""
+		return str(self.uuid()) if self.uuid() else None
 
 	# pylint: disable=R0911
 	@staticmethod
@@ -667,7 +701,7 @@ class Device(object):
 			Device.LUMINANCE: 'lum',
 			Device.DEW_POINT: 'dewp',
 			Device.BAROMETRIC_PRESSURE: 'barpress',
-			Device.GENRIC_METER: 'genmeter',
+			Device.GENERIC_METER: 'genmeter',
 			Device.WEIGHT: 'weight',
 			Device.CO2: 'co2',
 			Device.VOLUME: 'volume',

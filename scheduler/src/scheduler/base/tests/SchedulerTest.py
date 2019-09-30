@@ -567,6 +567,34 @@ class SchedulerTest(unittest.TestCase):
 			self.resetTrigger(10, timezone=self.usertimezone, lastUpdated=time.time()-7199)
 			self.checkTime(7, 40)
 
+		with freeze_time(self.freezeTimeSimplifier("2018-10-01 15:00")):
+			# check if already triggered today, that morethan2hourstodeparture is not negative
+			self.resetTrigger(-5, timezone=self.usertimezone, lastUpdated=time.time())
+			self.assertEqual(self.blockHeaterTrigger.moreThan2HoursToDeparture(), True)
+
+		with freeze_time(self.freezeTimeSimplifier("2018-10-02 01:30")):
+			# test incoming value before midnight, that morethan2hourstodeparture is still valid
+			self.resetTrigger(9, timezone=self.usertimezone)
+			self.blockHeaterTrigger.parseParam('hour', 3)
+			self.blockHeaterTrigger.parseParam('minute', 0)
+			self.assertEqual(self.blockHeaterTrigger.moreThan2HoursToDeparture(), False)
+
+		with freeze_time(self.freezeTimeSimplifier("2018-10-02 07:00")):
+			# test incoming value before midnight, that morethan2hourstodeparture is still valid
+			self.resetTrigger(14, timezone=self.usertimezone)
+			self.assertEqual(self.blockHeaterTrigger.setHour, None)
+			self.assertEqual(self.blockHeaterTrigger.minute, None)
+			self.resetTrigger(12, timezone=self.usertimezone)  # close to departure, 12 is OK
+			self.assertEqual(self.blockHeaterTrigger.setHour, 7)
+			self.assertEqual(self.blockHeaterTrigger.minute, 52)
+			self.assertEqual(self.blockHeaterTrigger.active, True)
+			self.blockHeaterTrigger.setTemp(14) # no change, but inactive...
+			self.assertEqual(self.blockHeaterTrigger.active, False)
+			self.assertEqual(self.blockHeaterTrigger.setHour, 7)
+			self.assertEqual(self.blockHeaterTrigger.minute, 52)
+			self.blockHeaterTrigger.setTemp(9)
+			self.assertEqual(self.blockHeaterTrigger.active, True)
+
 	def testTimeTrigger(self):
 		self.usertimezone = 'Europe/Stockholm'
 		with freeze_time(self.freezeTimeSimplifier("2018-10-01 05:05")):

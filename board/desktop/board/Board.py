@@ -12,15 +12,19 @@ class Board(object):
 		return os.environ['HOME'] + '/.config/Telldus'
 
 	@staticmethod
-	def getMacAddr():
+	def getConfigValue(key, default=None):
 		try:
 			with open(Board.configDir() + '/boardinfo.conf', 'r') as f:
 				for line in f:
-					if line.startswith('mac'):
+					if line.startswith(key):
 						return line.split('=')[1].rstrip()
 		except:
 			pass
-		return "000000000000"
+		return default
+
+	@staticmethod
+	def getMacAddr():
+		return Board.getConfigValue('mac', '000000000000')
 
 	@staticmethod
 	def firmwareVersion():
@@ -51,14 +55,7 @@ class Board(object):
 
 	@staticmethod
 	def hw():
-		try:
-			with open(Board.configDir() + '/boardinfo.conf', 'r') as f:
-				for line in f:
-					if line.startswith('hw'):
-						return line.split('=')[1].rstrip()
-		except:
-			pass
-		return "Dev-hardware"
+		return Board.getConfigValue('hw', 'Dev-hardware')
 
 	@staticmethod
 	def liveServer():
@@ -82,7 +79,7 @@ class Board(object):
 
 	@staticmethod
 	def secret():
-		return ''
+		return Board.getConfigValue('secret', '')
 
 	@staticmethod
 	def zwavePort():

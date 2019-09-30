@@ -2,6 +2,7 @@
 
 import base64
 import six
+import uuid
 
 class LiveMessageToken(object):
 	TYPE_INVALID, TYPE_INT, TYPE_STRING, TYPE_BASE64, TYPE_LIST, TYPE_DICTIONARY = list(range(6))
@@ -35,6 +36,9 @@ class LiveMessageToken(object):
 				self.dictVal[key] = LiveMessageToken(value[key])
 
 		elif isinstance(value, float):
+			self.valueType = self.TYPE_STRING
+			self.stringVal = str(value)
+		elif isinstance(value, uuid.UUID):
 			self.valueType = self.TYPE_STRING
 			self.stringVal = str(value)
 
