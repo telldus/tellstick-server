@@ -25,17 +25,17 @@ class LiveMessage():
 	def name(self):
 		return self.argument(-1).stringVal.lower()
 
-	def toByteArray(self):
-		retval = ''
+	def toByteArray(self, base64encode=True):
+		retval = bytearray()
 		for arg in self.args:
-			retval = retval + arg.toByteArray()
+			retval.extend(arg.toByteArray(base64encode))
 		return retval
 
 	def toSignedMessage(self, hashMethod, privateKey):
 		message = self.toByteArray()
 		envelope = LiveMessage(LiveMessage.signatureForMessage(message, hashMethod, privateKey))
 		envelope.append(message)
-		return envelope.toByteArray()
+		return envelope.toByteArray(False)  # don't want to base64-encode the already base64-encoded data again
 
 	def verifySignature(self, hashMethod, privateKey):
 		signature = self.name()
@@ -43,11 +43,11 @@ class LiveMessage():
 		return (self.signatureForMessage(rawMessage, hashMethod, privateKey) == signature)
 
 	@staticmethod
-	def fromByteArray(rawString):
+	def fromByteArray(bArray):
 		list = []
 		start = 0
-		while (start < len(rawString)):
-			start, token = LiveMessageToken.parseToken(rawString, start)
+		while (start < len(bArray)):
+			start, token = LiveMessageToken.parseToken(bArray, start)
 			if (token.valueType == LiveMessageToken.TYPE_INVALID):
 				break
 			list.append(token)
@@ -66,6 +66,9 @@ class LiveMessage():
 		else:
 			h = hashlib.sha1()
 
-		h.update(msg.encode())
+		if isinstance(msg, str):
+			h.update(msg.encode())
+		else:
+			h.update(msg)
 		h.update(privateKey.encode())
 		return h.hexdigest().lower()

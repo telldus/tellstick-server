@@ -73,7 +73,6 @@ class ServerConnection(object):
 			return ServerConnection.READY
 		if len(self.msgs):
 			return ServerConnection.MSG_RECEIVED
-
 		try:
 			fileno = self.socket.fileno()
 			readlist, __writelist, __xlist = select.select([fileno], [], [], 5)
@@ -90,7 +89,7 @@ class ServerConnection(object):
 
 		if resp is None:
 			return ServerConnection.READY
-		if (resp == ''):
+		if (resp == b''):
 			logging.warning("Empty response, disconnected? %s", str(self.state))
 			if self.state == ServerConnection.CLOSED:
 				return ServerConnection.CLOSED
@@ -101,7 +100,7 @@ class ServerConnection(object):
 		if (not envelope.verifySignature('sha1', self.privateKey)):
 			logging.warning("Signature failed")
 			return ServerConnection.READY
-		self.msgs.insert(0, LiveMessage.fromByteArray(envelope.argument(0).stringVal))
+		self.msgs.insert(0, LiveMessage.fromByteArray(envelope.argument(0).byteVal))
 		return ServerConnection.MSG_RECEIVED
 
 	def send(self, msg):
@@ -121,8 +120,8 @@ class ServerConnection(object):
 							# is no sure way of knowing if more
 							# data is coming or not), add some
 							# padding
-							signedMessage = signedMessage + "="
-						self.socket.write(bytes(signedMessage, 'UTF-8'))
+							signedMessage = signedMessage + b'='
+						self.socket.write(signedMessage)
 					except socket.error as error:
 						if isinstance(error.args, tuple):
 							if error[0] == socket.SSL_ERROR_WANT_WRITE:
@@ -130,7 +129,7 @@ class ServerConnection(object):
 								retry = True
 								continue
 			else:
-				self.socket.send(bytes(signedMessage, 'UTF-8'))
+				self.socket.send(signedMessage)
 		except Exception as error:
 			logging.error('ERROR, could not write to socket. Close and reconnect')
 			logging.error(str(error))
@@ -138,14 +137,14 @@ class ServerConnection(object):
 
 	def _readSSL(self):
 		hasMoreData = True
-		resp = ''
+		resp = bytearray()
 		buffSize = 1024
 		while (hasMoreData):
 			try:
 				data = self.socket.recv(buffSize)
 				if (len(data) < buffSize):
 					hasMoreData = False
-				resp += data.decode()
+				resp = resp + data
 			except ssl.SSLError as error:
 				if error.args[0] == ssl.SSL_ERROR_WANT_READ:
 					pass
@@ -162,17 +161,17 @@ class ServerConnection(object):
 
 	def _read(self):
 		hasMoreData = True
-		request = ''
+		request = bytearray()
 		buffSize = 1024
 		while (hasMoreData):
 			try:
 				packet = self.socket.recv(buffSize)
 				if (len(packet) < buffSize):
 					hasMoreData = False
-				request = request + packet.decode()
+				request = request + packet
 			except socket.error as socketException:
 				(err, errstr) = socketException.args
 				if (err == errno.EAGAIN):
 					return None
-				return ''  # is not alive
+				return b''  # is not alive
 		return request
