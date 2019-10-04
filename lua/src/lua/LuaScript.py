@@ -258,7 +258,7 @@ class LuaScript(object):
 				args = list(args)
 				for i, arg in enumerate(args):
 					args[i] = self.wrapPyToLua(arg)
-				if isinstance(name, (str, unicode)):
+				if isinstance(name, str):
 					func = getattr(self.lua.globals(), name)
 					self.runningLuaThread = func.coroutine(*args)
 				elif lua_type(name) == 'thread':
@@ -370,7 +370,7 @@ class LuaScript(object):
 			raise AttributeError('object has no attribute "%s"' % attrName)
 		else:
 			attribute = getattr(obj, attrName)
-		if isinstance(attribute, (int, str, unicode, float, types.NoneType)):
+		if isinstance(attribute, (int, str, float, type(None))):
 			# Allow primitive attributes directly
 			return attribute
 		if isinstance(attribute, types.MethodType):
@@ -443,7 +443,7 @@ class LuaScript(object):
 			return self.lua.table_from(arg)
 		elif arg in (True, False, None):
 			return arg
-		elif isinstance(arg, (int, float, long, str, unicode, list, tuple)):
+		elif isinstance(arg, (int, float, str, list, tuple)):
 			# Return primitiva types directly
 			return arg
 		return PythonObjectWrapper(arg)
