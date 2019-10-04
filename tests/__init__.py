@@ -5,3 +5,4 @@
 
 from telldus.tests import TelldusTest
 from upgrade.tests import HotFixManagerTest
+from rf433.tests import RF433Test
