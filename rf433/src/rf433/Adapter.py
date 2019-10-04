@@ -13,6 +13,11 @@ except ImportError:
 
 class Adapter(threading.Thread):
 	BOOTLOADER_START = 0x7A00
+	WAIT = b'w'
+	INCOMING_START = '+'
+	INCOMING_ALMOST_LAST = '\r'
+	INCOMING_LAST = '\n'
+	EMPTY_BUFFER = ''
 
 	def __init__(self, handler, dev):
 		super(Adapter,self).__init__()
@@ -32,12 +37,12 @@ class Adapter(threading.Thread):
 		self.__queue.append(msg)
 		if self.waitingForData:
 			# Abort current read
-			os.write(self.writePipe, 'w')
+			os.write(self.writePipe, Adapter.WAIT)
 
 	def run(self):
 		self.running = True
 		app = Application()
-		buffer = ''
+		buffer = Adapter.EMPTY_BUFFER
 		ttl = None
 		state = 0
 
@@ -52,20 +57,20 @@ class Adapter(threading.Thread):
 
 			if state == 0:
 				x = self.__readByte(interruptable=True)
-				if x == '':
+				if x == Adapter.EMPTY_BUFFER:
 					if self.__waitForResponse is not None and self.__waitForResponse.queued + 5 < time.time():
 						self.__waitForResponse.timeout()
 						self.__waitForResponse = None
 					if len(self.__queue) and self.__waitForResponse is None:
 						state = 1
 					continue
-				if x == '\r':
+				if x == Adapter.INCOMING_ALMOST_LAST:
 					continue
-				if x == '+':
+				if x == Adapter.INCOMING_START:
 					# Start of data
-					buffer = ''
+					buffer = Adapter.EMPTY_BUFFER
 					continue
-				if x == '\n':
+				if x == Adapter.INCOMING_LAST:
 					(cmd, params) = RF433Msg.parseResponse(buffer)
 					if cmd is None:
 						continue
@@ -83,7 +88,7 @@ class Adapter(threading.Thread):
 					state = 0
 					continue
 				self.__waitForResponse = self.__queue.pop(0)
-				self.__send(self.__waitForResponse.commandString())
+				self.__send(self.__waitForResponse.commandBytes())
 				self.__waitForResponse.queued = time.time()
 				state = 0
 
@@ -91,7 +96,7 @@ class Adapter(threading.Thread):
 		self.running = False
 		if self.waitingForData:
 			# Abort current read
-			os.write(self.writePipe, 'w')
+			os.write(self.writePipe, Adapter.WAIT)
 
 	def __readByte(self, interruptable = False):
 		try:
@@ -103,22 +108,22 @@ class Adapter(threading.Thread):
 			r, w, e = select.select(i, [], [], 1)
 			if self.dev.fileno() in r:
 				try:
-					return self.dev.read()
+					return self.dev.read().decode()
 				except serial.SerialException as e:
 					self.dev.close()
 					self.dev = None
 					logging.warning('Serial port lost')
 					logging.exception(e)
-					return ''
+					return Adapter.EMPTY_BUFFER
 			if self.readPipe in r:
 				try:
 					while True:
 						t = os.read(self.readPipe, 1)
 				except Exception as e:
 					pass
-			return ''
+			return Adapter.EMPTY_BUFFER
 		finally:
 			self.waitingForData = False
 
 	def __send(self, msg):
-		self.dev.write(bytearray(msg))
+		self.dev.write(msg)

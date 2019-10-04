@@ -3,6 +3,10 @@
 from base import Application
 
 class RF433Msg(object):
+
+	START = b'S'
+	END = b'+'
+
 	def __init__(self, cmd, args = '', prefixes = {}, success=None, failure=None):
 		self._cmd = cmd
 		self._args = args
@@ -14,11 +18,19 @@ class RF433Msg(object):
 	def cmd(self):
 		return self._cmd
 
-	def commandString(self):
+	def commandBytes(self):
+		if type(self._args) == bytearray:
+			# new way using bytearrays, migrate one protocol at a time
+			if self._cmd == 'S':
+				cmdType = RF433Msg.START
+			retval = cmdType + self._args + RF433Msg.END
+			for p in self._prefixes:
+				retval = p + self._prefixes[p] + retval  # TODO, not tested
+			return retval
 		retval = '%s%s+' % (self._cmd, self._args)
 		for p in self._prefixes:
 			retval = '%s%s%s' % (p, chr(self._prefixes[p]), retval)
-		return retval
+		return bytearray(retval, 'iso-8859-1')
 
 	def response(self, params):
 		if self._success:
@@ -32,19 +44,20 @@ class RF433Msg(object):
 	def parseResponse(data):
 		if len(data) < 1:
 			return (None, None)
-		if data[0] == 'S':
+		dataCommand = data[0]
+		if dataCommand == 'S':
 			return ('S', None)
-		if data[0] == 'N':
+		if dataCommand == 'N':
 			return ('N', None)
-		if data[0] == 'V':
+		if dataCommand == 'V':
 			try:
 				version = int(data[1:])
 			except:
 				return (None, None)
 			return ('V', version)
-		if data[0] == 'H':
+		if dataCommand == 'H':
 			return ('H', data[1:])
-		if data[0] == 'W':
+		if dataCommand == 'W':
 			# Incoming
 			lines = data[1:]
 			msg = {}
