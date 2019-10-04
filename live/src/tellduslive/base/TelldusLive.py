@@ -8,10 +8,10 @@ import struct
 import threading
 import time
 
+from io import BytesIO
 from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
 import requests
-from io import BytesIO
 
 from base import \
 	Application, \
@@ -34,10 +34,13 @@ class ITelldusLiveObserver(IInterface):
 	.. deprecated:: 1.2
 	   Use signals/slots instead to avoid hard dependencies
 	"""
+	# pylint: disable=E0211
 	def liveConnected():
 		"""This method is called when we have succesfully connected to a Live! server"""
-	def liveRegistered(self, params, refreshRequired):
+	# pylint: disable=E0213
+	def liveRegistered(params, refreshRequired):
 		"""This method is called when we have succesfully registered with a Live! server"""
+	# pylint: disable=E0211
 	def liveDisconnected():
 		"""This method is call when we are disconnected"""
 
