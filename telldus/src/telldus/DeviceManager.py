@@ -108,7 +108,7 @@ class DeviceManager(Plugin):
 					'protocol': device.protocol(),
 					'model': device.model(),
 					'parameters': parameters,
-					'parametersHash': hashlib.sha1(parameters).hexdigest(),
+					'parametersHash': hashlib.sha1(parameters.encode()).hexdigest(),
 					'transport': device.typeString()
 				}
 				msg = LiveMessage("DeviceAdded")
@@ -382,7 +382,7 @@ class DeviceManager(Plugin):
 				if isinstance(args['name'], int):
 					dev.setName(str(args['name']))
 				else:
-					dev.setName(args['name'].decode('UTF-8'))
+					dev.setName(args['name'])
 				return
 		elif args['action'] in ('setParameter', 'setMetadata'):
 			device = None
@@ -533,12 +533,12 @@ class DeviceManager(Plugin):
 				device.allParameters(),
 				separators=(',', ':'),
 				sort_keys=True
-			))
+			).encode())
 			metadataHash = hashlib.sha1(json.dumps(
 				device.metadata(),
 				separators=(',', ':'),
 				sort_keys=True
-			))
+			).encode())
 			dev = {
 				'id': device.id(),
 				'uuid': device.uuidAsString(),
@@ -593,7 +593,7 @@ class DeviceManager(Plugin):
 				sort_keys=True
 			)
 			data['parameters'] = parameters
-			data['parametersHash'] = hashlib.sha1(parameters).hexdigest()
+			data['parametersHash'] = hashlib.sha1(parameters.encode()).hexdigest()
 		if sendMetadata:
 			metadata = json.dumps(
 				device.metadata(),
@@ -601,7 +601,7 @@ class DeviceManager(Plugin):
 				sort_keys=True
 			)
 			data['metadata'] = metadata
-			data['metadataHash'] = hashlib.sha1(metadata).hexdigest()
+			data['metadataHash'] = hashlib.sha1(metadata.encode()).hexdigest()
 		reply.append(data)
 		self.live.send(reply)
 

@@ -18,7 +18,7 @@ class React(Plugin):
 		retval = {}
 		for o in self.observers:
 			components = o.getReactComponents()
-			if type(components) != dict:
+			if not isinstance(components, dict):
 				continue
 				# Make sure defaults exists
 			for name in components:

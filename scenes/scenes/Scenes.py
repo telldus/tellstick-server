@@ -23,7 +23,7 @@ class SceneDevice(Device):
 		success()
 
 	def containingDevices(self):
-		return self.devices.keys()
+		return list(self.devices.keys())
 
 	def isDevice(self):
 		return True
@@ -66,7 +66,7 @@ class SceneManager(Plugin):
 		self.deviceManager.finishedLoading('scene')
 
 	def addDevice(self, name, devices):
-		if type(devices) != dict:
+		if not isinstance(devices, dict):
 			return
 		sceneId = str(uuid.uuid4())
 		device = SceneDevice(sceneId)

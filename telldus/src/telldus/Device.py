@@ -186,7 +186,7 @@ class Device(object):
 		if self.id() in ignore:
 			return
 		ignore.append(self.id())
-		if isinstance(action, str) or isinstance(action, unicode):
+		if isinstance(action, str):
 			method = Device.methodStrToInt(action)
 		else:
 			method = action

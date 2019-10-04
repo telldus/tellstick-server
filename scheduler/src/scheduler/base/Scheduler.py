@@ -312,7 +312,7 @@ class Scheduler(Plugin):
 
 			jobsToRun = [] # jobs to run in a separate list, to avoid deadlocks (necessary?)
 			# Iterating using .keys(9 since we are modifiyng the dict while iterating
-			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
+			for runningJobId in list(self.runningJobs.keys()):  # pylint disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if runningJob['maxRunTime'] > time.time():

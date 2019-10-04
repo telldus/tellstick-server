@@ -24,12 +24,9 @@ class Socket(object):
 	def respond(self, *args):
 		msg = ''
 		for value in args:
-			if type(value) is int:
+			if isinstance(value, int):
 				msg = msg + 'i%is' % value
-			elif type(value) is str:
-				msg = msg + '%i:%s' % (len(value), value)
-			elif type(value) is unicode:
-				value = value.encode('utf-8')
+			elif isinstance(value, str):  # TODO, not tested in python3
 				msg = msg + '%i:%s' % (len(value), value)
 			else:
 				logging.warning("Unknown type to encode %s", type(value))
