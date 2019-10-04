@@ -4,6 +4,9 @@ from telldus import Device
 from .Protocol import Protocol
 
 class ProtocolArctech(Protocol):
+
+	HOUSE_CHAR_PADDING = 65  # Human readable code switch house codes begins with A
+
 	def deviceType(self):
 		models = {
 			'selflearning-switch:nexa-dusk': Device.TYPE_ON_OFF_SENSOR,
@@ -52,102 +55,95 @@ class ProtocolArctech(Protocol):
 		return self.stringForSelflearning(method, data)
 
 	def stringForBell(self):
-		strReturn = ''
-
-		house = self.stringParameter('house', 'A')
-		intHouse = ord(house[0]) - ord('A')
-		strReturn = strReturn + self.codeSwitchTuple(intHouse)
-		strReturn = strReturn + '$kk$$kk$$kk$$k$k'  # Unit 7
-		strReturn = strReturn + '$kk$$kk$$kk$$kk$$k'  # Bell
-		return {'S': strReturn}
+		house = ord(self.stringParameter('house', 'A')[0]) - ProtocolArctech.HOUSE_CHAR_PADDING
+		retVal = self.codeSwitchTuple(house)
+		retVal = retVal + b'$kk$$kk$$kk$$k$k'  # Unit 7
+		retVal = retVal + b'$kk$$kk$$kk$$kk$$k'  # Bell
+		return {'S': retVal}
 
 	def stringForCodeSwitch(self, method):
-		strHouse = self.stringParameter('house', 'A')
-		intHouse = ord(strHouse[0]) - ord('A')
-		strReturn = self.codeSwitchTuple(intHouse)
-		strReturn = strReturn + self.codeSwitchTuple(self.intParameter('unit', 1, 16)-1)
+		house = ord(self.stringParameter('house', 'A')[0]) - ProtocolArctech.HOUSE_CHAR_PADDING
+		retVal = self.codeSwitchTuple(house)
+		retVal = retVal + self.codeSwitchTuple(self.intParameter('unit', 1, 16)-1)
 
 		if method == Device.TURNON:
-			strReturn = strReturn + '$k$k$kk$$kk$$kk$$k'
+			retVal = retVal + b'$k$k$kk$$kk$$kk$$k'
 		elif method == Device.TURNOFF:
-			strReturn = strReturn + self.offCode()
+			retVal = retVal + self.offCode()
 		else:
 			return None
-		return {'S': strReturn}
+		return {'S': retVal}
 
 	def stringForSelflearning(self, method, level, group=0):
-		intHouse = self.intParameter('house', 1, 67108863)
-		intCode = self.intParameter('unit', 1, 16)-1
+		house = self.intParameter('house', 1, 67108863)
+		unit = self.intParameter('unit', 1, 16)-1
 		if method == Device.DIM and level == 0:
 			method = Device.TURNOFF
-		return self.stringSelflearningForCode(intHouse, intCode, method, level, group)
+		return self.stringSelflearningForCode(house, unit, method, level, group)
 
 	@staticmethod
-	def codeSwitchTuple(intCode):
-		strReturn = ''
-		for __i in range(4):
-			if intCode & 1:  # Convert 1
-				strReturn = strReturn + '$kk$'
-			else:  # Convert 0
-				strReturn = strReturn + '$k$k'
-			intCode = intCode >> 1
-		return strReturn
+	def codeSwitchTuple(code):
+		retVal = bytearray()
+		for _ in range(4):
+			if code & 1:  # Convert 1
+				retVal = retVal + b'$kk$'
+			else:
+				retVal = retVal + b'$k$k'
+			code = code >> 1
+		return retVal
 
 	@staticmethod
 	def offCode():
-		return '$k$k$kk$$kk$$k$k$k'
+		return b'$k$k$kk$$kk$$k$k$k'
 
 	@staticmethod
-	def stringSelflearningForCode(intHouse, intCode, method, level, group):
+	def stringSelflearningForCode(house, unit, method, level, group):
 		retval = {}
-		SHORT = chr(24)  # pylint: disable=C0103
-		LONG = chr(127)  # pylint: disable=C0103
+		shortPulse = b'\x18'
+		longPulse = b'\x7f'
+		bitOne = shortPulse + longPulse + shortPulse + shortPulse
+		bitZero = shortPulse + shortPulse + shortPulse + longPulse
 
-		ONE = SHORT + LONG + SHORT + SHORT  # pylint: disable=C0103
-		ZERO = SHORT + SHORT + SHORT + LONG  # pylint: disable=C0103
-
-		code = SHORT + chr(255)
-
+		code = shortPulse + b'\xff'
 		for i in range(25, -1, -1):
-			if intHouse & (1 << i):
-				code = code + ONE
+			if house & (1 << i):
+				code = code + bitOne
 			else:
-				code = code + ZERO
+				code = code + bitZero
 
 		if group == 1:
-			code = code + ONE  # Group (for selflearning bell)
+			code = code + bitOne  # Group (for selflearning bell)
 		else:
-			code = code + ZERO  # Group
+			code = code + bitZero  # Group
 
 		# On/off
 		if method == Device.DIM:
-			code = code + SHORT + SHORT + SHORT + SHORT
+			code = code + shortPulse + shortPulse + shortPulse + shortPulse
 		elif method == Device.TURNOFF:
-			code = code  + ZERO
+			code = code  + bitZero
 		elif method == Device.TURNON or method == Device.BELL:
-			code = code + ONE
+			code = code + bitOne
 		elif method == Device.LEARN:
-			code = code + ONE
-			#retval['R'] = 25
+			code = code + bitOne
 		else:
 			return None
 
 		for i in range(3, -1, -1):
-			if intCode & (1 << i):
-				code = code + ONE
+			if unit & (1 << i):
+				code = code + bitOne
 			else:
-				code = code + ZERO
+				code = code + bitZero
 
 		if method == Device.DIM:
-			newLevel = level/16
+			newLevel = int(level/16)
 			for i in range(3, -1, -1):
 				if newLevel & (1 << i):
-					code = code + ONE
+					code = code + bitOne
 				else:
-					code = code + ZERO
+					code = code + bitZero
 
-		code = code + SHORT
-		retval['S'] = code
+		code = code + shortPulse
+		retval['S'] = bytearray(code)
 		return retval
 
 	@staticmethod
@@ -207,7 +203,7 @@ class ProtocolArctech(Protocol):
 		else:
 			return None
 
-		houseString = chr(ord('A') + house)
+		houseString = chr(ProtocolArctech.HOUSE_CHAR_PADDING + house)
 		unitString = str(unit + 1)
 		retval = {}
 		retval['class'] = 'command'
