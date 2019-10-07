@@ -127,13 +127,13 @@ setup() {
 }
 
 setupVirtualEnv() {
-	if [ -d $BASEDIR/build/env ]; then
-		source $BASEDIR/build/env/bin/activate
+	if [ -d $BASEDIR/build/env-python3 ]; then
+		source $BASEDIR/build/env-python3/bin/activate
 		return
 	fi
 	echo "Create virtualenv"
-	virtualenv --python=python2.7 build/env
-	source $BASEDIR/build/env/bin/activate
+	virtualenv --python=python3 build/env-python3
+	source $BASEDIR/build/env-python3/bin/activate
 	pip install -U pip
 }
 
