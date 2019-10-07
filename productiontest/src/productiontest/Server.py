@@ -30,13 +30,13 @@ class AutoDiscoveryHandler(socketserver.BaseRequestHandler):
 			Board.firmwareVersion(),
 			live.uuid,
 		)
-		sock.sendto(msg, self.client_address)
+		sock.sendto(msg.encode(), self.client_address)
 
 	@staticmethod
 	def getMacAddr(ifname):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		info = fcntl.ioctl(sock.fileno(), 0x8927, struct.pack('256s', ifname[:15]))
-		return ''.join(['%02X' % ord(char) for char in info[18:24]])
+		info = fcntl.ioctl(sock.fileno(), 0x8927, struct.pack('256s', bytes(ifname[:15], 'utf-8')))
+		return ''.join(['%02X' % char for char in info[18:24]])
 
 class CommandHandler(socketserver.BaseRequestHandler):
 	rf433 = None
@@ -45,7 +45,7 @@ class CommandHandler(socketserver.BaseRequestHandler):
 	def handle(self):
 		data = self.request[0].strip()
 		self.socket = self.request[1]
-		if data == "B:reglistener":
+		if data == b"B:reglistener":
 			server = Server(CommandHandler.context)  # pylint: disable=E1121
 			server.reglistener(self.socket, self.client_address)
 
@@ -79,8 +79,8 @@ class Server(Plugin):
 		if TelldusZWave is not None:
 			self.zwave = TelldusZWave(self.context)
 		Application().registerShutdown(self.__stop)
-		self.autoDiscovery = SocketServer.UDPServer(('0.0.0.0', 30303), AutoDiscoveryHandler)
-		self.commandSocket = SocketServer.UDPServer(('0.0.0.0', 42314), CommandHandler)
+		self.autoDiscovery = socketserver.UDPServer(('0.0.0.0', 30303), AutoDiscoveryHandler)
+		self.commandSocket = socketserver.UDPServer(('0.0.0.0', 42314), CommandHandler)
 		Thread(target=self.__autoDiscoveryStart).start()
 		Thread(target=self.__commandSocketStart).start()
 
@@ -96,7 +96,8 @@ class Server(Plugin):
 		msg = LiveMessage("RawData")
 		msg.append(data)
 		try:
-			self.listener.sendto(msg.toByteArray(), self.clientAddress)
+			# nettester does not understand base64-encoding
+			self.listener.sendto(msg.toByteArray(False), self.clientAddress)
 		except Exception as __error:
 			# for example if listener isn't set
 			pass
@@ -114,7 +115,8 @@ class Server(Plugin):
 			'version': self.zwave.controller.version()
 		})
 		try:
-			self.listener.sendto(msg.toByteArray(), self.clientAddress)
+			# nettester does not understand base64-encoding
+			self.listener.sendto(msg.toByteArray(False), self.clientAddress)
 		except Exception as __error:
 			# for example if listener isn't set
 			pass
