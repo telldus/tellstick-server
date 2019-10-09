@@ -59,7 +59,8 @@ class Device(object):
 	WINDAVERAGE	= 32            #: Sensor type flag for wind average
 	WINDGUST = 64               #: Sensor type flag for wind gust
 	UV = 128                    #: Sensor type flag for uv
-	WATT = 256                  #: Sensor type flag for watt
+	POWER = 256                 #: Sensor type flag for power
+	WATT = 256                  #: Sensor type flag for power, this is depricated, use POWER
 	LUMINANCE = 512             #: Sensor type flag for luminance
 	DEW_POINT = 1024            #: Sensor type flag for dew point
 	BAROMETRIC_PRESSURE = 2048  #: Sensor type flag for barometric pressure
