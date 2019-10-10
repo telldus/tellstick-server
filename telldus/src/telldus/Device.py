@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import logging
 import time
 import uuid
@@ -205,7 +206,15 @@ class Device(object):
 				# For backwards compatibility, remove white component
 				value = value >> 8
 		elif method == Device.THERMOSTAT:
-			pass
+			if isinstance(value, str):
+				# It could be a json-string. Try to decode it
+				try:
+					value = json.loads(value)
+				except ValueError:
+					# Could not decode, fallback to empty value
+					value = {}  # pylint: disable=R0204
+			if not isinstance(value, dict):
+				value = {}
 		else:
 			value = None
 		def triggerFail(reason):
@@ -540,9 +549,34 @@ class Device(object):
 				# No need to update
 				return
 		self.lastUpdated = time.time()
-		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT) \
-		   and stateValue is not None and stateValue is not '':
+
+		# Make sure the value follows correct format
+		if state == Device.DIM:
+			if not isinstance(stateValue, int):
+				stateValue = int(stateValue)  # pylint: disable=R0204
+			# Only 0-255 allowed
+			stateValue = max(0, min(255, stateValue))
+		elif state == Device.RGB:
+			# TODO
+			pass
+		elif state == Device.THERMOSTAT:
+			if not isinstance(stateValue, dict):
+				stateValue = {}
+			# Make sure only allowed keys exists
+			allowedKeys = ('setpoint', 'mode')
+			stateValue = {key: stateValue[key] for key in stateValue if key in allowedKeys}
+		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT):
+			# Only set the statevalue for these states
 			self._stateValues[str(state)] = stateValue
+
+		if state == Device.THERMOSTAT:
+			# We never go to this state. We use on or off instead
+			mode = stateValue.get('mode', '')
+			if mode == 'off':
+				state = Device.TURNOFF
+			else:
+				state = Device.TURNON
+		self._state = state
 
 		if state not in (Device.EXECUTE, Device.LEARN, Device.RGB):
 			# don't change the state itself for some types
@@ -689,6 +723,88 @@ class Sensor(Device):
 
 	def name(self):
 		return self._name if self._name is not None else 'Sensor %i' % self._id
+
+class Thermostat(Device):
+	"""
+	.. versionadded:: 1.2
+
+	A convenience class for thermostats.
+	"""
+	MODE_AUTO = 'auto'
+	"""Mode constant auto switching between heating and cooling."""
+	MODE_AWAY = 'away'
+	"""Mode constant for away mode, e.g. preventing water from freezing in forced water systems."""
+	MODE_COOL = 'cool'
+	"""Mode constant for cooling."""
+	MODE_DRY = 'dry'
+	"""Mode constant for dehumidification."""
+	MODE_ECO_COOL = 'eco-cool'
+	"""Mode constant for energy saving cooling."""
+	MODE_ECO_HEAT = 'eco-heat'
+	"""Mode constant for energy saving heating."""
+	MODE_FAN = 'fan'
+	"""Mode constant for fan only."""
+	MODE_HEAT = 'heat'
+	"""Mode constant for heating."""
+	MODE_MAX = 'max'
+	"""Mode constant for continuously heating or cooling."""
+	MODE_OFF = 'off'
+	"""
+	Mode constant for off.
+
+	.. note::
+	  This is a pseudomode. State :attr:`Device.TURNOFF <telldus.Device.TURNOFF>` will be used
+	  instead.
+	"""
+
+	def _command(self, action, value, success, failure, **kwargs):
+		if action is not Device.THERMOSTAT:
+			return Device._command(self, action, value, success, failure, **kwargs)
+		mode = value.get('mode', None)
+		if not Thermostat.isValidThermostatMode(mode):
+			failure(Device.FAILED_STATUS_UNKNOWN)
+			return
+		temperature = value.get('temperature', None)
+		scale = value.get('scale', 0)
+		changeMode = value.get('changeMode', True)
+		self.commandThermostat(mode, temperature, scale, changeMode, success, failure)
+
+	@staticmethod
+	def commandThermostat(mode, temperature, scale, changeMode, success, failure):
+		"""Reimplement this function to change and/or update the mode"""
+		del mode, temperature, scale, changeMode, success
+		failure(0)
+
+	def deviceType(self):
+		return Device.TYPE_THERMOSTAT
+
+	def isSensor(self):
+		return True
+
+	def setpointValue(self, mode):
+		"""
+		Request the setpoint value for a specific mode
+
+		:param str mode: One of the available modes
+		:returns: The temperature for the setpoint mode or `None` is it's not available
+		"""
+		stateValue = self.stateValue(Device.THERMOSTAT) or {}
+		return stateValue.get('setpoint', {}).get(mode, None)
+
+	@staticmethod
+	def isValidThermostatMode(thermostatMode):
+		return thermostatMode in (
+			Thermostat.MODE_AUTO,
+			Thermostat.MODE_AWAY,
+			Thermostat.MODE_COOL,
+			Thermostat.MODE_DRY,
+			Thermostat.MODE_ECO_COOL,
+			Thermostat.MODE_ECO_HEAT,
+			Thermostat.MODE_FAN,
+			Thermostat.MODE_HEAT,
+			Thermostat.MODE_MAX,
+			Thermostat.MODE_OFF,
+		)
 
 class CachedDevice(Device):  # pylint: disable=R0902
 	def __init__(self, settings):
