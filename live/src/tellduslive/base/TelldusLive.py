@@ -137,7 +137,7 @@ class TelldusLive(Plugin):
 				func(observer, message)
 				handled = True
 		if not handled:
-			logging.warning("Did not understand: %s", message.toByteArray())
+			logging.warning("Did not understand: %s", message.name())
 
 	def isConnected(self):
 		return self.connected
