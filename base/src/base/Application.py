@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
+import functools
+import inspect
 import logging
 try:
 	import pkg_resources
@@ -65,11 +68,11 @@ class Application(object):
 		self.maintenanceJobHandler = None
 		self.pluginContext = PluginContext()
 		self.__isJoining = False
-		self.__tasks = []
-		self.__taskLock = threading.Condition(threading.Lock())
 		signal.signal(signal.SIGINT, self.__signal)
 		signal.signal(signal.SIGTERM, self.__signal)
 		Application._mainThread = threading.currentThread()
+		self.loop = asyncio.get_event_loop()
+		self.shutdownEvent = asyncio.Event()
 		if run:
 			self.run()
 
@@ -135,7 +138,18 @@ class Application(object):
 
 		:param func fn: A function callback to call when the server shuts down
 		"""
+		if not inspect.iscoroutinefunction(fn):
+			logging.warning('Shutdown function %s is not a coroutine', fn)
 		self.shutdown.append(fn)
+
+	async def eventLoop(self):
+		await self.shutdownEvent.wait()
+		for fn in self.shutdown:
+			if inspect.iscoroutinefunction(fn):
+				await fn()
+			else:
+				fn()
+		asyncio.get_event_loop().stop()
 
 	def run(self, startup=None):
 		if startup is None:
@@ -152,24 +166,9 @@ class Application(object):
 					logging.error("Could not load %s", str(moduleClass))
 					logging.error(str(e))
 					Application.printBacktrace(traceback.extract_tb(exc_traceback))
-		while 1:
-			with self.lock:
-				if not self.running:
-					break
-			(task, args, kwargs) = self.__nextTask()
-			if task == None:
-				continue
-			try:
-				task(*args, **kwargs)
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
-				logging.error(e)
-				Application.printBacktrace(traceback.extract_tb(exc_traceback))
-		for fn in self.shutdown:
-			logging.warning("Running shutdown handler %s", fn)
-			fn()
-			logging.warning("Done")
-		logging.warning("Run sys.exit")
+		self.loop.create_task(self.eventLoop())
+		self.loop.run_forever()
+		self.loop.close()
 		return self.exitCode
 		return sys.exit(self.exitCode)
 
@@ -177,33 +176,33 @@ class Application(object):
 		"""
 		Queue a function to be executed later. All tasks in this queue will be
 		run by the main thread. This is a thread safe function and can safely be
-		used to syncronize with the main thread
+		used to syncronize with the main thread.
+		The function myst be async. Currenly a warning will be thrown but this will be threated
+		as an error in a future version.
 
 		:returns: True if the task was queued
 		:returns: False if the server is shutting down
 		"""
 		if self.__isJoining == True:
 			return False
-		self.__taskLock.acquire()
-		try:
-			self.__tasks.append((fn, args, kwargs))
-			self.__taskLock.notify()
-			return True
-		finally:
-			self.__taskLock.release()
-		return False
+		self.loop.call_soon_threadsafe(self.__queue, fn, args, kwargs)
+		return True
+
+	def __queue(self, fn, args, kwargs):
+		if inspect.iscoroutinefunction(fn):
+			#self.loop.create_task()  # From Python 3.7
+			asyncio.ensure_future(fn(*args, **kwargs))
+		else:
+			logging.warning('Function %s is not a coroutine', fn)
+			syncWrapper = self.loop.run_in_executor(None, functools.partial(fn, *args, **kwargs))
+			asyncio.ensure_future(syncWrapper)
 
 	def quit(self, exitCode = 0):
 		with self.lock:
 			self.running = False
 			self.exitCode = exitCode
 			self.__isJoining = True
-
-		self.__taskLock.acquire()
-		try:
-			self.__taskLock.notifyAll()
-		finally:
-			self.__taskLock.release()
+		self.loop.call_soon_threadsafe(self.shutdownEvent.set)
 
 	@staticmethod
 	def printBacktrace(bt):
