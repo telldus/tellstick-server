@@ -92,7 +92,7 @@ class Adapter(threading.Thread):
 				self.__waitForResponse.queued = time.time()
 				state = 0
 
-	def __stop(self):
+	async def __stop(self):
 		self.running = False
 		if self.waitingForData:
 			# Abort current read

@@ -146,7 +146,7 @@ class Server(Plugin):
 		}))
 
 	@staticmethod
-	def stop():
+	async def stop():
 		cherrypy.engine.exit()
 
 class RequestHandler(object):

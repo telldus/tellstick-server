@@ -69,7 +69,7 @@ class TelldusLive(Plugin):
 			self.thread.start()
 
 	@slot('configurationWritten')
-	def configurationWritten(self, path):
+	async def configurationWritten(self, path):
 		if time.time() - self.lastBackedUpConfig < 86400:
 			# Only send the backup once per day
 			return
@@ -214,7 +214,7 @@ class TelldusLive(Plugin):
 					self.conn.send(LiveMessage("Ping"))
 					self.pingTimer = time.time()
 
-	def stop(self):
+	async def stop(self):
 		self.running = False
 
 	def send(self, message):
@@ -232,7 +232,7 @@ class TelldusLive(Plugin):
 		self.email = ''
 		self.connected = False
 		self.registered = False
-		def sendNotification():
+		async def sendNotification():
 			self.liveDisconnected()
 		# Syncronize signal with main thread
 		Application().queue(sendNotification)

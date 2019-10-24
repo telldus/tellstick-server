@@ -61,7 +61,7 @@ class Developer(Plugin):
 					print(f)
 			time.sleep(1)
 
-	def stop(self):
+	async def stop(self):
 		self.running = False
 
 	def sysfiles(self):
