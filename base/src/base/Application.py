@@ -144,12 +144,7 @@ class Application(object):
 			fn = asyncio.coroutine(fn)
 		self.shutdown.append(fn)
 
-	async def eventLoop(self):
-		await self.shutdownEvent.wait()
-		await asyncio.wait([fn() for fn in self.shutdown], timeout=120)
-		asyncio.get_event_loop().stop()
-
-	def run(self, startup=None):
+	async def eventLoop(self, startup):
 		if startup is None:
 			self.__loadPkgResourses()
 		else:
@@ -164,7 +159,13 @@ class Application(object):
 					logging.error("Could not load %s", str(moduleClass))
 					logging.error(str(e))
 					Application.printBacktrace(traceback.extract_tb(exc_traceback))
-		self.loop.create_task(self.eventLoop())
+		# Everything loaded. Wait for shutdown
+		await self.shutdownEvent.wait()
+		await asyncio.wait([fn() for fn in self.shutdown], timeout=120)
+		asyncio.get_event_loop().stop()
+
+	def run(self, startup=None):
+		self.loop.create_task(self.eventLoop(startup))
 		self.loop.run_forever()
 		self.loop.close()
 		return self.exitCode
