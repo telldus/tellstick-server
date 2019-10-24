@@ -78,7 +78,7 @@ class Settings(object):
 		Settings._config = ConfigObj()
 		Settings._config.filename = path
 
-	def __shutdown(self):
+	async def __shutdown(self):
 		if Settings._writeTimer is not None:
 			Settings._writeTimer.cancel()
 			self.__writeTimeout()

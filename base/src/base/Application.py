@@ -141,15 +141,12 @@ class Application(object):
 		"""
 		if not inspect.iscoroutinefunction(fn):
 			logging.warning('Shutdown function %s is not a coroutine', fn)
+			fn = asyncio.coroutine(fn)
 		self.shutdown.append(fn)
 
 	async def eventLoop(self):
 		await self.shutdownEvent.wait()
-		for fn in self.shutdown:
-			if inspect.iscoroutinefunction(fn):
-				await fn()
-			else:
-				fn()
+		await asyncio.wait([fn() for fn in self.shutdown], timeout=120)
 		asyncio.get_event_loop().stop()
 
 	def run(self, startup=None):
