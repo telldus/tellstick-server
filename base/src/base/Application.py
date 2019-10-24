@@ -116,21 +116,30 @@ class Application(object):
 		    one minute depending on the server load.
 		"""
 		seconds = seconds + (minutes*60) + (hours*3600) + (days*86400)
-		nextRuntime = int(time.time())
+		nextRuntime = int(self.loop.time())
 		if not runAtOnce:
 			nextRuntime = nextRuntime + seconds
 		if args is None:
 			args = []
 		if kwargs is None:
 			kwargs = {}
-		self.scheduledTasks.append({
-			'interval': seconds,
-			'strictInterval': strictInterval,
-			'nextRuntime': nextRuntime,
-			'fn': fn,
-			'args': args,
-			'kwargs': kwargs,
-		})
+		if not inspect.iscoroutinefunction(fn):
+			logging.warning('Scheduler function %s is not a coroutine', fn)
+			fn = asyncio.coroutine(fn)
+		fn = functools.partial(fn, *args, **kwargs)
+		asyncio.ensure_future(self.scheduledTaskExecutor(fn, seconds, strictInterval, nextRuntime))
+
+	async def scheduledTaskExecutor(self, fn, interval, strictInterval, nextRuntime):
+		while self.running:
+			ts = self.loop.time()
+			if (ts >= nextRuntime):
+				await fn()
+				if strictInterval:
+					while nextRuntime < ts:
+						nextRuntime += interval
+				else:
+					nextRuntime = ts + interval
+			await asyncio.sleep(nextRuntime - self.loop.time())
 
 	def registerShutdown(self, fn):
 		"""
@@ -252,34 +261,5 @@ class Application(object):
 				logging.error("Could not load %s", str(entry))
 				logging.error(str(e))
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
-
-	def __nextTask(self):
-		self.__taskLock.acquire()
-		try:
-			while True:
-				if (self.__isJoining == True):
-					break
-				# Check scheduled tasks first
-				ts = time.time()
-				for job in self.scheduledTasks:
-					if ts >= job['nextRuntime']:
-						if job['strictInterval']:
-							while job['nextRuntime'] < ts:
-								job['nextRuntime'] = job['nextRuntime'] + job['interval']
-						else:
-							job['nextRuntime'] = ts + job['interval']
-						return (job['fn'], job['args'], job['kwargs'])
-				if len(self.__tasks) > 0:
-					# There is a task. Return
-					break
-				# Wait for new task. If no new task, timeout after 60s to check scheduled tasks
-				self.__taskLock.wait(60)
-
-			if self.__tasks == []:
-				return (None, None, None)
-			else:
-				return self.__tasks.pop(0)
-		finally:
-			self.__taskLock.release()
 
 from .SignalManager import SignalManager
