@@ -111,14 +111,13 @@ class Application(object):
 		:param list args: Any args to be supplied to the function. Supplied as \*args.
 		:param dict kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
 
-		.. note::
-		    The interval in which this task is run is not exact and can be delayed
-		    one minute depending on the server load.
+		:returns: A task object that can be used to cancel the scheduled task
 		"""
 		seconds = seconds + (minutes*60) + (hours*3600) + (days*86400)
 		nextRuntime = int(self.loop.time())
 		if not runAtOnce:
 			nextRuntime = nextRuntime + seconds
+
 		if args is None:
 			args = []
 		if kwargs is None:
@@ -127,10 +126,10 @@ class Application(object):
 			logging.warning('Scheduler function %s is not a coroutine', fn)
 			fn = asyncio.coroutine(fn)
 		fn = functools.partial(fn, *args, **kwargs)
-		asyncio.ensure_future(self.scheduledTaskExecutor(fn, seconds, strictInterval, nextRuntime))
+		return asyncio.ensure_future(self.scheduledTaskExecutor(fn, seconds, strictInterval, nextRuntime))
 
 	async def scheduledTaskExecutor(self, fn, interval, strictInterval, nextRuntime):
-		while self.running:
+		while True:
 			ts = self.loop.time()
 			if (ts >= nextRuntime):
 				await fn()
