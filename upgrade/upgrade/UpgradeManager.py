@@ -217,7 +217,7 @@ class HotFixManager(UpgradeManagerBase):
 		for fileInfo in hotfixInfo.get('files', []):
 			source = fileInfo.get('source', '')
 			target = fileInfo.get('target', '')
-			if source is '' or target is '':
+			if source == '' or target == '':
 				continue
 			if source[0] != '/':
 				source = '/%s' % source
@@ -237,7 +237,7 @@ class HotFixManager(UpgradeManagerBase):
 				source = fileInfo.get('source', '')
 			else:
 				source = fileInfo
-			if source is '':
+			if source == '':
 				continue
 			if source[0] != '/':
 				source = '/%s' % source
