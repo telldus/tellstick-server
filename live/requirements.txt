@@ -3,3 +3,4 @@ pbkdf2
 pycrypto
 python3-openid
 requests
+python3-urllib3
