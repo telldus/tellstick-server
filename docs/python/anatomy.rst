@@ -7,7 +7,7 @@ The metadata for a plugin is described in the file setup.py. This is a standard 
 
 .. code::
 
-  #!/usr/bin/env python
+  #!/usr/bin/env python3
   # -*- coding: utf-8 -*-
 
   try:
