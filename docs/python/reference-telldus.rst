@@ -16,3 +16,7 @@ Module: telldus
 .. autoclass:: telldus.Sensor
   :members:
   :show-inheritance:
+
+.. autoclass:: telldus.Thermostat
+  :members:
+  :show-inheritance:
