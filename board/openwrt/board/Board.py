@@ -94,7 +94,7 @@ class Board(object):
 			return ''
 		with open(cfg['part'], 'rb') as f:
 			f.seek(cfg['offset'])
-			return f.read(10)
+			return f.read(10).decode()
 		return ''
 
 	@staticmethod
