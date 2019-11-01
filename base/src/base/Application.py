@@ -4,6 +4,7 @@ import asyncio
 import functools
 import inspect
 import logging
+import os
 try:
 	import pkg_resources
 except ImportError:
@@ -73,6 +74,7 @@ class Application(object):
 		Application._mainThread = threading.currentThread()
 		self.loop = asyncio.get_event_loop()
 		self.loop.set_debug(True)
+		self.loop.set_exception_handler(self.exceptionHandler)
 		self.shutdownEvent = asyncio.Event()
 		if run:
 			self.run()
@@ -81,6 +83,21 @@ class Application(object):
 	def defaultContext():
 		""":returns: the default context used by the application"""
 		return Application().pluginContext
+
+	@staticmethod
+	def exceptionHandler(__loop, context):
+		logger = logging.getLogger(__name__)
+		logger.error('Exception happened in task: "%s", at:', str(context['exception']))
+		#print(context['future'].get_coro())  Added in python 3.8
+		for frame in reversed(context['future'].get_stack()):
+			code = frame.f_code
+			prefix = os.path.commonpath([__file__, code.co_filename])
+			logger.error(
+				'\t%s() in %s, line %s',
+				code.co_name,
+				code.co_filename[len(prefix)+1:],
+				frame.f_lineno
+			)
 
 	def registerMaintenanceJobHandler(self, fn):
 		# (there can be only one...)
