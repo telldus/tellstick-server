@@ -73,7 +73,6 @@ class Application(object):
 		signal.signal(signal.SIGTERM, self.__signal)
 		Application._mainThread = threading.currentThread()
 		self.loop = asyncio.get_event_loop()
-		self.loop.set_debug(True)
 		self.loop.set_exception_handler(self.exceptionHandler)
 		self.shutdownEvent = asyncio.Event()
 		if run:

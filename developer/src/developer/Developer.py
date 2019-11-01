@@ -5,6 +5,7 @@ from web.base import IWebRequestAuthenticationHandler
 from threading import Thread
 import os, re, sys, time, traceback
 import code, signal
+import asyncio
 
 # Get the cwd as soon as possible
 _module__file__base = os.getcwd()
@@ -17,6 +18,7 @@ class Developer(Plugin):
 		self.mtimes = {}
 		self.thread = Thread(target=self.run).start()
 		signal.signal(signal.SIGUSR1, self.debugshell)  # Register handler
+		asyncio.get_event_loop().set_debug(True)
 		Application().registerShutdown(self.stop)
 
 	def checkModifiedFiles(self):
