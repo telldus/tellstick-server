@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 
-from .Application import Application, mainthread
+from .Application import Application, callback, mainthread
 from .Configuration import \
 	configuration, \
 	ConfigurationValue, \

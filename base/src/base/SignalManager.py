@@ -3,7 +3,7 @@
 import sys
 import types
 
-from .Application import Application
+from .Application import Application, callback
 from .Plugin import IInterface, ObserverCollection, Plugin
 
 class ISignalObserver(IInterface):
@@ -36,7 +36,7 @@ class SignalManager(Plugin):
 		def call(func):
 			frame = sys._getframe(1)  # pylint: disable=W0212
 			frame.f_locals.setdefault('_applicationSlots', {}).setdefault(message, []).append(func)
-			return func
+			return callback(func)
 		return call
 
 	@staticmethod

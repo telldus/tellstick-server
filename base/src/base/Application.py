@@ -16,6 +16,9 @@ import signal
 import sys
 from .Plugin import Plugin, PluginContext
 
+async def asyncWrapper(func, *args, **kwargs):
+	return func(*args, **kwargs)
+
 class mainthread(object):
 	def __init__(self, f):
 		self.__f = f
@@ -39,6 +42,14 @@ class mainthread(object):
 			docs, indent, indent
 		)
 		return __call__
+
+def callback(func):
+	"""
+	Decorator for non async function to be safe to call from the main thread.
+	This means they will not block.
+	"""
+	func.__callbackSafe__ = True
+	return func
 
 class Application(object):
 	"""
@@ -215,8 +226,14 @@ class Application(object):
 		if inspect.iscoroutinefunction(fn):
 			#self.loop.create_task()  # From Python 3.7
 			asyncio.ensure_future(fn(*args, **kwargs))
+		elif hasattr(fn, '__callbackSafe__'):
+			# Not coroutine, but safe to be called from main thread
+			asyncio.ensure_future(asyncWrapper(fn, *args, **kwargs))
 		else:
-			logging.warning('Function %s is not a coroutine', fn)
+			logging.warning(
+				'Function %s is not a coroutine, concider wrapping it in @callback',
+				fn
+			)
 			syncWrapper = self.loop.run_in_executor(None, functools.partial(fn, *args, **kwargs))
 			asyncio.ensure_future(syncWrapper)
 
