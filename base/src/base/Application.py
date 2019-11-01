@@ -12,6 +12,7 @@ except ImportError:
 import threading
 import time
 import traceback
+from typing import Any, Callable
 import signal
 import sys
 from .Plugin import Plugin, PluginContext
@@ -88,6 +89,45 @@ class Application(object):
 		self.shutdownEvent = asyncio.Event()
 		if run:
 			self.run()
+
+	def createTask(self, cbFn: Callable[..., Any], *args, **kwargs):
+		"""Creates a task to run in the event loop.
+
+		If the target is not a coroutine this will be executed in a thread pool allowing for
+		blocking method to be used. Please make sure proper thread saftey in such metods if they
+		call functions expected to be called from the main thread. Please see
+		:func:`Application.queue()` for ways to syncronize with the main
+		event loop.
+
+		:param Callable[...,Any] cbFn: The target function to run
+		:since: 2.0
+
+		.. note::
+			Calls to this method are threadsafe.
+		"""
+		self.loop.call_soon_threadsafe(self.asyncCreateTask, cbFn, *args, **kwargs)
+
+	def asyncCreateTask(self, cbFn: Callable[..., Any], *args, **kwargs):
+		"""Creates a task to run in the event loop.
+
+		This method is not threadsafe and must be called from the main event loop.
+		See :func:`Application.createTask()` for a threadsafe version.
+
+		:since: 2.0
+		"""
+		unwrappedFn = cbFn
+		# The target may be a partial which means we cannot check the type without getting the
+		# actual function
+		while isinstance(unwrappedFn, functools.partial):
+			unwrappedFn = unwrappedFn.func
+
+		if inspect.iscoroutinefunction(unwrappedFn):
+			#self.loop.create_task()  # From Python 3.7
+			task = asyncio.ensure_future(cbFn(*args, **kwargs))
+		else:
+			# Not compatible with asyncio. May be blocking. Run in own thread.
+			syncWrapper = self.loop.run_in_executor(None, functools.partial(cbFn, *args, **kwargs))
+			task = asyncio.ensure_future(syncWrapper)
 
 	@staticmethod
 	def defaultContext():
@@ -231,7 +271,7 @@ class Application(object):
 			asyncio.ensure_future(asyncWrapper(fn, *args, **kwargs))
 		else:
 			logging.warning(
-				'Function %s is not a coroutine, concider wrapping it in @callback',
+				'Function %s is not a coroutine, concider using createTask or wrap it in @callback instead',
 				fn
 			)
 			syncWrapper = self.loop.run_in_executor(None, functools.partial(fn, *args, **kwargs))
