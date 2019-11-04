@@ -26,7 +26,7 @@ class mainthread(object):
 
 	def __get__(self, obj, objtype):
 		def __call__(*args, **kwargs):
-			if threading.currentThread() == Application._mainThread:
+			if Application.isMainThread():
 				# We are in main thread. Call it directly
 				self.__f(obj, *args, **kwargs)
 			else:
@@ -148,6 +148,16 @@ class Application(object):
 				code.co_filename[len(prefix)+1:],
 				frame.f_lineno
 			)
+
+	@staticmethod
+	def isMainThread():
+		"""
+		Query if the current thread is the main thread.
+
+		:returns: True if the call was made from the main thread, False otherwise.
+		:since: 2.0
+		"""
+		return threading.current_thread() is Application._mainThread
 
 	def registerMaintenanceJobHandler(self, fn):
 		# (there can be only one...)
