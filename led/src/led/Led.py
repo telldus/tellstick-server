@@ -51,8 +51,8 @@ class Led(Plugin):
 		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sockfd = sock.fileno()
 		SIOCGIFADDR = 0x8915  # pylint:disable=C0103
-		ifreq = struct.pack('16sH14s', str(iface), socket.AF_INET, '\x00'*14)
 		try:
+			ifreq = struct.pack('16sH14s', str(iface), socket.AF_INET, '\x00'*14)
 			res = fcntl.ioctl(sockfd, SIOCGIFADDR, ifreq)
 		except Exception as __error:
 			return None

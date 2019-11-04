@@ -10,7 +10,6 @@ try:
 except ImportError:
 	pkg_resources = None
 import threading
-import time
 import traceback
 from typing import Any, Callable
 import signal
@@ -20,7 +19,7 @@ from .Plugin import Plugin, PluginContext
 async def asyncWrapper(func, *args, **kwargs):
 	return func(*args, **kwargs)
 
-class mainthread(object):
+class mainthread():  # pylint: disable=C0103
 	def __init__(self, f):
 		self.__f = f
 
@@ -65,7 +64,7 @@ def callback(func):
 	func.__callbackSafe__ = True
 	return func
 
-class Application(object):
+class Application():
 	"""
 	This is the main application object in the server. There can only be once
 	instance of this object. The default constructor returns the instance of this
@@ -84,7 +83,7 @@ class Application(object):
 		if Application._initialized:
 			return
 		Application._initialized = True
-		super(Application,self).__init__()
+		super(Application, self).__init__()
 		self.lock = threading.RLock()
 		self.running = True
 		self.exitCode = 0
@@ -135,11 +134,10 @@ class Application(object):
 
 		if inspect.iscoroutinefunction(unwrappedFn):
 			#self.loop.create_task()  # From Python 3.7
-			task = asyncio.ensure_future(cbFn(*args, **kwargs))
-		else:
-			# Not compatible with asyncio. May be blocking. Run in own thread.
-			syncWrapper = self.loop.run_in_executor(None, functools.partial(cbFn, *args, **kwargs))
-			task = asyncio.ensure_future(syncWrapper)
+			return asyncio.ensure_future(cbFn(*args, **kwargs))
+		# Not compatible with asyncio. May be blocking. Run in own thread.
+		syncWrapper = self.loop.run_in_executor(None, functools.partial(cbFn, *args, **kwargs))
+		return asyncio.ensure_future(syncWrapper)
 
 	@staticmethod
 	def defaultContext():
@@ -171,9 +169,9 @@ class Application(object):
 		"""
 		return threading.current_thread() is Application._mainThread
 
-	def registerMaintenanceJobHandler(self, fn):
+	def registerMaintenanceJobHandler(self, func):
 		# (there can be only one...)
-		self.maintenanceJobHandler = fn
+		self.maintenanceJobHandler = func
 		for job in self.waitingMaintenanceJobs:
 			self.maintenanceJobHandler(job)
 
@@ -184,19 +182,22 @@ class Application(object):
 			self.waitingMaintenanceJobs.append(job)
 
 	@mainthread
-	def registerScheduledTask(self, fn, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False, strictInterval=False, args=None, kwargs=None):
-		"""
+	def registerScheduledTask(self, func, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False,
+		strictInterval=False, args=None, kwargs=None):
+		r"""
 		Register a semi regular scheduled task to run at a predefined interval.
 		All calls will be made by the main thread.
 
-		:param func fn: The function to be called.
+		:param func func: The function to be called.
 
 		:param integer seconds: The interval in seconds. Optional.
 		:param integer minutes: The interval in minutes. Optional.
 		:param integer hours: The interval in hours. Optional.
 		:param integer days: The interval in days. Optional.
 		:param bool runAtOnce: If the function should be called right away or wait one interval?
-		:param bool strictInterval: Set this to True if the interval should be strict. That means if the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55 seconds.
+		:param bool strictInterval: Set this to True if the interval should be strict. That means if
+		  the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55
+		  seconds.
 		:param list args: Any args to be supplied to the function. Supplied as \*args.
 		:param dict kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
 
@@ -211,35 +212,37 @@ class Application(object):
 			args = []
 		if kwargs is None:
 			kwargs = {}
-		if not inspect.iscoroutinefunction(fn):
-			logging.warning('Scheduler function %s is not a coroutine', fn)
-			fn = asyncio.coroutine(fn)
-		fn = functools.partial(fn, *args, **kwargs)
-		return asyncio.ensure_future(self.scheduledTaskExecutor(fn, seconds, strictInterval, nextRuntime))
+		if not inspect.iscoroutinefunction(func):
+			logging.warning('Scheduler function %s is not a coroutine', func)
+			func = asyncio.coroutine(func)
+		func = functools.partial(func, *args, **kwargs)
+		return asyncio.ensure_future(
+			self.scheduledTaskExecutor(func, seconds, strictInterval, nextRuntime)
+		)
 
-	async def scheduledTaskExecutor(self, fn, interval, strictInterval, nextRuntime):
+	async def scheduledTaskExecutor(self, func, interval, strictInterval, nextRuntime):
 		while True:
-			ts = self.loop.time()
-			if (ts >= nextRuntime):
-				await fn()
+			timestamp = self.loop.time()
+			if (timestamp >= nextRuntime):
+				await func()
 				if strictInterval:
-					while nextRuntime < ts:
+					while nextRuntime < timestamp:
 						nextRuntime += interval
 				else:
-					nextRuntime = ts + interval
+					nextRuntime = timestamp + interval
 			await asyncio.sleep(nextRuntime - self.loop.time())
 
-	def registerShutdown(self, fn):
+	def registerShutdown(self, func):
 		"""
-		Register shutdown method. The method fn will be called the the server
+		Register shutdown method. The method func will be called the the server
 		shuts down. Use this to clean up resources on shutdown.
 
-		:param func fn: A function callback to call when the server shuts down
+		:param func func: A function callback to call when the server shuts down
 		"""
-		if not inspect.iscoroutinefunction(fn):
-			logging.warning('Shutdown function %s is not a coroutine', fn)
-			fn = asyncio.coroutine(fn)
-		self.shutdown.append(fn)
+		if not inspect.iscoroutinefunction(func):
+			logging.warning('Shutdown function %s is not a coroutine', func)
+			func = asyncio.coroutine(func)
+		self.shutdown.append(func)
 
 	async def eventLoop(self, startup):
 		if startup is None:
@@ -248,13 +251,13 @@ class Application(object):
 			for moduleClass in startup:
 				try:
 					if issubclass(moduleClass, Plugin):
-						m = moduleClass(self.pluginContext)
+						moduleClass(self.pluginContext)
 					else:
-						m = moduleClass()
-				except Exception as e:
-					exc_type, exc_value, exc_traceback = sys.exc_info()
+						moduleClass()
+				except Exception as error:
+					__exc_type, __exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(moduleClass))
-					logging.error(str(e))
+					logging.error(str(error))
 					Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		# Everything loaded. Wait for shutdown
 		await self.shutdownEvent.wait()
@@ -265,10 +268,9 @@ class Application(object):
 		self.loop.create_task(self.eventLoop(startup))
 		self.loop.run_forever()
 		self.loop.close()
-		return self.exitCode
 		return sys.exit(self.exitCode)
 
-	def queue(self, fn, *args, **kwargs):
+	def queue(self, func, *args, **kwargs):
 		"""
 		Queue a function to be executed later. All tasks in this queue will be
 		run by the main thread. This is a thread safe function and can safely be
@@ -282,44 +284,44 @@ class Application(object):
 		.. note::
 			Calls to this method are threadsafe.
 		"""
-		if self.running == False:
+		if not self.running:
 			return False
-		self.loop.call_soon_threadsafe(self.asyncQueue, fn, args, kwargs)
+		self.loop.call_soon_threadsafe(self.asyncQueue, func, args, kwargs)
 		return True
 
-	def asyncQueue(self, fn, args, kwargs):
+	def asyncQueue(self, func, args, kwargs):
 		"""Add a job from within the event loop.
 
 		This method must be run in the event loop.
 		"""
-		if inspect.iscoroutinefunction(fn):
+		if inspect.iscoroutinefunction(func):
 			#self.loop.create_task()  # From Python 3.7
-			asyncio.ensure_future(fn(*args, **kwargs))
-		elif hasattr(fn, '__callbackSafe__'):
+			asyncio.ensure_future(func(*args, **kwargs))
+		elif hasattr(func, '__callbackSafe__'):
 			# Not coroutine, but safe to be called from main thread
-			asyncio.ensure_future(asyncWrapper(fn, *args, **kwargs))
+			asyncio.ensure_future(asyncWrapper(func, *args, **kwargs))
 		else:
 			logging.warning(
 				'Function %s is not a coroutine, concider using createTask or wrap it in @callback instead',
-				fn
+				func
 			)
-			syncWrapper = self.loop.run_in_executor(None, functools.partial(fn, *args, **kwargs))
+			syncWrapper = self.loop.run_in_executor(None, functools.partial(func, *args, **kwargs))
 			asyncio.ensure_future(syncWrapper)
 
-	def quit(self, exitCode = 0):
+	def quit(self, exitCode=0):
 		with self.lock:
 			self.running = False
 			self.exitCode = exitCode
 		self.loop.call_soon_threadsafe(self.shutdownEvent.set)
 
 	@staticmethod
-	def printBacktrace(bt):
-		for f in bt:
-			logging.getLogger(__name__).error(str(f))
+	def printBacktrace(backtrace):
+		for frame in backtrace:
+			logging.getLogger(__name__).error(str(frame))
 
 	@staticmethod
 	def printException(exception):
-		exc_type, exc_value, exc_traceback = sys.exc_info()
+		__exc_type, __exc_value, exc_traceback = sys.exc_info()
 		logging.getLogger(__name__).error(str(exception))
 		Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
@@ -334,8 +336,8 @@ class Application(object):
 		signalManager = SignalManager(Application._instance.pluginContext)
 		signalManager.sendSignal(msg, *args, **kwargs)
 
-	def __signal(self, signum, frame):
-		logging.getLogger(__name__).info("Signal %d caught" % signum)
+	def __signal(self, signum, __frame):
+		logging.getLogger(__name__).info("Signal %d caught", signum)
 		self.quit(1)
 
 	def __loadPkgResourses(self):
@@ -344,22 +346,22 @@ class Application(object):
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
 			try:
 				moduleClass = entry.load()
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
+			except Exception as error:
+				__exc_type, __exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
-				logging.error(str(e))
+				logging.error(str(error))
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
 				moduleClass = entry.load()
 				if issubclass(moduleClass, Plugin):
-					m = moduleClass(self.pluginContext)
+					moduleClass(self.pluginContext)
 				else:
-					m = moduleClass()
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
+					moduleClass()
+			except Exception as error:
+				__exc_type, __exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
-				logging.error(str(e))
+				logging.error(str(error))
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
-from .SignalManager import SignalManager
+from .SignalManager import SignalManager  # pylint: disable=C0413

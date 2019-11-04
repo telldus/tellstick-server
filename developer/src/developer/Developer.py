@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
+import code
+import logging
+import os
+import signal
+import sys
+import time
+from threading import Thread
+import traceback
+
 from base import Application, Plugin, implements
 from web.base import IWebRequestAuthenticationHandler
-from threading import Thread
-import os, re, sys, time, traceback
-import code, signal
-import asyncio
 
 # Get the cwd as soon as possible
-_module__file__base = os.getcwd()
+_module__file__base = os.getcwd()  # pylint: disable=C0103
 
 class Developer(Plugin):
 	implements(IWebRequestAuthenticationHandler)
@@ -16,13 +21,13 @@ class Developer(Plugin):
 	def __init__(self):
 		self.running = True
 		self.mtimes = {}
-		self.thread = Thread(target=self.run).start()
-		signal.signal(signal.SIGUSR1, self.debugshell)  # Register handler
-		asyncio.get_event_loop().set_debug(True)
+		self.thread = Thread(target=self.run)
+		self.thread.start()
+		signal.signal(signal.SIGUSR1, Developer.debugshell)  # Register handler
 		Application().registerShutdown(self.stop)
 
 	def checkModifiedFiles(self):
-		for filename in self.sysfiles():
+		for filename in Developer.sysfiles():
 			oldtime = self.mtimes.get(filename)
 			try:
 				mtime = os.stat(filename).st_mtime
@@ -34,53 +39,59 @@ class Developer(Plugin):
 				self.mtimes[filename] = mtime
 			elif mtime is None or mtime > oldtime:
 				# File was changed or deleted
-				print("Restarting because %s changed." % filename)
+				logging.info("Restarting because %s changed.", filename)
 				Application().quit()
 
-	def debugshell(self, sig, frame):
+	@staticmethod
+	def debugshell(sig, frame):
 		"""Interrupt running process, and provide a python prompt for
 		interactive debugging."""
-		d={'_frame':frame}         # Allow access to frame object.
-		d.update(frame.f_globals)  # Unless shadowed by global
-		d.update(frame.f_locals)
+		del sig
+		localVars = {'_frame': frame}         # Allow access to frame object.
+		localVars.update(frame.f_globals)  # Unless shadowed by global
+		localVars.update(frame.f_locals)
 
-		i = code.InteractiveConsole(d)
-		message  = "Signal received : entering python shell.\nTraceback:\n"
+		i = code.InteractiveConsole(localVars)
+		message = "Signal received : entering python shell.\nTraceback:\n"
 		message += ''.join(traceback.format_stack(frame))
 		i.interact(message)
 
-	def isUrlAuthorized(self, request):
+	def isUrlAuthorized(self, request):  # pylint: disable=R0201
+		del request
 		return True
 
 	def run(self):
 		while self.running:
 			try:
 				self.checkModifiedFiles()
-			except Exception as e:
+			except Exception as error:
 				exc_type, exc_value, exc_traceback = sys.exc_info()
-				print(e)
-				for f in traceback.extract_tb(exc_traceback):
-					print(f)
+				del exc_type
+				del exc_value
+				print(error)
+				for file in traceback.extract_tb(exc_traceback):
+					print(file)
 			time.sleep(1)
 
 	async def stop(self):
 		self.running = False
 
-	def sysfiles(self):
+	@staticmethod
+	def sysfiles():
 		files = set()
-		for k, m in list(sys.modules.items()):
-			if hasattr(m, '__loader__') and hasattr(m.__loader__, 'archive'):
-				f = m.__loader__.archive
+		for _, module in list(sys.modules.items()):
+			if hasattr(module, '__loader__') and hasattr(module.__loader__, 'archive'):
+				file = module.__loader__.archive
 			else:
-				f = getattr(m, '__file__', None)
-				if f is not None and not os.path.isabs(f):
+				file = getattr(module, '__file__', None)
+				if file is not None and not os.path.isabs(file):
 					# ensure absolute paths so a os.chdir() in the app
 					# doesn't break me
-					f = os.path.normpath(os.path.join(_module__file__base, f))
-			if f is not None:
-				files.add(f)
-				if f.endswith('.pyc'):
-					f = f[:-1]
-					if os.path.exists(f):
-						files.add(f)
+					file = os.path.normpath(os.path.join(_module__file__base, file))
+			if file is not None:
+				files.add(file)
+				if file.endswith('.pyc'):
+					file = file[:-1]
+					if os.path.exists(file):
+						files.add(file)
 		return files
