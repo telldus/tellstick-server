@@ -93,7 +93,6 @@ class Application(object):
 		self.waitingMaintenanceJobs = []
 		self.maintenanceJobHandler = None
 		self.pluginContext = PluginContext()
-		self.__isJoining = False
 		signal.signal(signal.SIGINT, self.__signal)
 		signal.signal(signal.SIGTERM, self.__signal)
 		Application._mainThread = threading.currentThread()
@@ -280,7 +279,7 @@ class Application(object):
 		:returns: True if the task was queued
 		:returns: False if the server is shutting down
 		"""
-		if self.__isJoining == True:
+		if self.running == False:
 			return False
 		self.loop.call_soon_threadsafe(self.__queue, fn, args, kwargs)
 		return True
@@ -304,7 +303,6 @@ class Application(object):
 		with self.lock:
 			self.running = False
 			self.exitCode = exitCode
-			self.__isJoining = True
 		self.loop.call_soon_threadsafe(self.shutdownEvent.set)
 
 	@staticmethod
