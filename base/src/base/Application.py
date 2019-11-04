@@ -12,19 +12,18 @@ import signal
 import sys
 from .Plugin import Plugin, PluginContext
 
-class mainthread(object):
+class mainthread(object):  # pylint: disable=C0103
 	def __init__(self, f):
 		self.__f = f
 
 	def __get__(self, obj, objtype):
 		def __call__(*args, **kwargs):
-			if threading.currentThread() == Application._mainThread:
+			if threading.currentThread() == Application._mainThread:  # pylint: disable=W0212
 				# We are in main thread. Call it directly
 				self.__f(obj, *args, **kwargs)
 			else:
 				# Queue call
 				Application().queue(self.__f, obj, *args, **kwargs)
-			return None
 		__call__.__name__ = self.__f.__name__
 		# Get the number of whitespaces in the beginning
 		docs = self.__f.__doc__ or ''
@@ -55,7 +54,7 @@ class Application(object):
 		if Application._initialized:
 			return
 		Application._initialized = True
-		super(Application,self).__init__()
+		super(Application, self).__init__()
 		self.lock = threading.RLock()
 		self.running = True
 		self.exitCode = 0
@@ -78,9 +77,9 @@ class Application(object):
 		""":returns: the default context used by the application"""
 		return Application().pluginContext
 
-	def registerMaintenanceJobHandler(self, fn):
+	def registerMaintenanceJobHandler(self, func):
 		# (there can be only one...)
-		self.maintenanceJobHandler = fn
+		self.maintenanceJobHandler = func
 		for job in self.waitingMaintenanceJobs:
 			self.maintenanceJobHandler(job)
 
@@ -91,19 +90,22 @@ class Application(object):
 			self.waitingMaintenanceJobs.append(job)
 
 	@mainthread
-	def registerScheduledTask(self, fn, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False, strictInterval=False, args=None, kwargs=None):
-		"""
+	def registerScheduledTask(self, func, seconds=0, minutes=0, hours=0, days=0, runAtOnce=False,
+		strictInterval=False, args=None, kwargs=None):
+		r"""
 		Register a semi regular scheduled task to run at a predefined interval.
 		All calls will be made by the main thread.
 
-		:param func fn: The function to be called.
+		:param func func: The function to be called.
 
 		:param integer seconds: The interval in seconds. Optional.
 		:param integer minutes: The interval in minutes. Optional.
 		:param integer hours: The interval in hours. Optional.
 		:param integer days: The interval in days. Optional.
 		:param bool runAtOnce: If the function should be called right away or wait one interval?
-		:param bool strictInterval: Set this to True if the interval should be strict. That means if the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55 seconds.
+		:param bool strictInterval: Set this to True if the interval should be strict. That means if
+		  the interval is set to 60 seconds and it was run ater 65 seconds the next run will be in 55
+		  seconds.
 		:param list args: Any args to be supplied to the function. Supplied as \*args.
 		:param dict kwargs: Any keyworded args to be supplied to the function. Supplied as \*\*kwargs.
 
@@ -123,19 +125,19 @@ class Application(object):
 			'interval': seconds,
 			'strictInterval': strictInterval,
 			'nextRuntime': nextRuntime,
-			'fn': fn,
+			'func': func,
 			'args': args,
 			'kwargs': kwargs,
 		})
 
-	def registerShutdown(self, fn):
+	def registerShutdown(self, func):
 		"""
-		Register shutdown method. The method fn will be called the the server
+		Register shutdown method. The method func will be called the the server
 		shuts down. Use this to clean up resources on shutdown.
 
-		:param func fn: A function callback to call when the server shuts down
+		:param func func: A function callback to call when the server shuts down
 		"""
-		self.shutdown.append(fn)
+		self.shutdown.append(func)
 
 	def run(self, startup=None):
 		if startup is None:
@@ -144,32 +146,32 @@ class Application(object):
 			for moduleClass in startup:
 				try:
 					if issubclass(moduleClass, Plugin):
-						m = moduleClass(self.pluginContext)
+						moduleClass(self.pluginContext)
 					else:
-						m = moduleClass()
-				except Exception as e:
-					exc_type, exc_value, exc_traceback = sys.exc_info()
+						moduleClass()
+				except Exception as error:
+					__exc_type, __exc_value, exc_traceback = sys.exc_info()
 					logging.error("Could not load %s", str(moduleClass))
-					logging.error(str(e))
+					logging.error(str(error))
 					Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		while 1:
 			with self.lock:
 				if not self.running:
 					break
 			(task, args, kwargs) = self.__nextTask()
-			if task == None:
+			if task is None:
 				continue
 			try:
 				task(*args, **kwargs)
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
-				logging.error(e)
+			except Exception as error:
+				__exc_type, __exc_value, exc_traceback = sys.exc_info()
+				logging.error(error)
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
-		for fn in self.shutdown:
-			fn()
+		for func in self.shutdown:
+			func()
 		return sys.exit(self.exitCode)
 
-	def queue(self, fn, *args, **kwargs):
+	def queue(self, func, *args, **kwargs):
 		"""
 		Queue a function to be executed later. All tasks in this queue will be
 		run by the main thread. This is a thread safe function and can safely be
@@ -178,18 +180,18 @@ class Application(object):
 		:returns: True if the task was queued
 		:returns: False if the server is shutting down
 		"""
-		if self.__isJoining == True:
+		if self.__isJoining:
 			return False
 		self.__taskLock.acquire()
 		try:
-			self.__tasks.append((fn, args, kwargs))
+			self.__tasks.append((func, args, kwargs))
 			self.__taskLock.notify()
 			return True
 		finally:
 			self.__taskLock.release()
 		return False
 
-	def quit(self, exitCode = 0):
+	def quit(self, exitCode=0):
 		with self.lock:
 			self.running = False
 			self.exitCode = exitCode
@@ -202,13 +204,13 @@ class Application(object):
 			self.__taskLock.release()
 
 	@staticmethod
-	def printBacktrace(bt):
-		for f in bt:
-			logging.error(str(f))
+	def printBacktrace(backtrace):
+		for frame in backtrace:
+			logging.error(str(frame))
 
 	@staticmethod
 	def printException(exception):
-		exc_type, exc_value, exc_traceback = sys.exc_info()
+		__exc_type, __exc_value, exc_traceback = sys.exc_info()
 		logging.error(str(exception))
 		Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
@@ -224,7 +226,8 @@ class Application(object):
 		signalManager.sendSignal(msg, *args, **kwargs)
 
 	def __signal(self, signum, frame):
-		logging.info("Signal %d caught" % signum)
+		del frame
+		logging.info("Signal %d caught", signum)
 		self.quit(1)
 
 	def __loadPkgResourses(self):
@@ -233,41 +236,41 @@ class Application(object):
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.plugins'):
 			try:
 				moduleClass = entry.load()
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
+			except Exception as error:
+				__exc_type, __exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
-				logging.error(str(e))
+				logging.error(str(error))
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for entry in pkg_resources.working_set.iter_entry_points('telldus.startup'):
 			try:
 				moduleClass = entry.load()
 				if issubclass(moduleClass, Plugin):
-					m = moduleClass(self.pluginContext)
+					moduleClass(self.pluginContext)
 				else:
-					m = moduleClass()
-			except Exception as e:
-				exc_type, exc_value, exc_traceback = sys.exc_info()
+					moduleClass()
+			except Exception as error:
+				__exc_type, __exc_value, exc_traceback = sys.exc_info()
 				logging.error("Could not load %s", str(entry))
-				logging.error(str(e))
+				logging.error(str(error))
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	def __nextTask(self):
 		self.__taskLock.acquire()
-		try:
+		try:  # pylint: disable=R1702
 			while True:
-				if (self.__isJoining == True):
+				if self.__isJoining:
 					break
 				# Check scheduled tasks first
-				ts = time.time()
+				timestamp = time.time()
 				for job in self.scheduledTasks:
-					if ts >= job['nextRuntime']:
+					if timestamp >= job['nextRuntime']:
 						if job['strictInterval']:
-							while job['nextRuntime'] < ts:
+							while job['nextRuntime'] < timestamp:
 								job['nextRuntime'] = job['nextRuntime'] + job['interval']
 						else:
-							job['nextRuntime'] = ts + job['interval']
+							job['nextRuntime'] = timestamp + job['interval']
 						return (job['fn'], job['args'], job['kwargs'])
-				if len(self.__tasks) > 0:
+				if self.__tasks:
 					# There is a task. Return
 					break
 				# Wait for new task. If no new task, timeout after 60s to check scheduled tasks
@@ -275,9 +278,8 @@ class Application(object):
 
 			if self.__tasks == []:
 				return (None, None, None)
-			else:
-				return self.__tasks.pop(0)
+			return self.__tasks.pop(0)
 		finally:
 			self.__taskLock.release()
 
-from .SignalManager import SignalManager
+from .SignalManager import SignalManager  # pylint: disable=C0413
