@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import logging.config
 import os
 import sys
 import time
