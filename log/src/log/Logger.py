@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import logging
+import os
+import sys
+import time
+
 from base import Plugin
-import logging, sys, time, os
-import logging.config, logging.handlers
 
 class PrintCollector(object):
 	def __init__(self, stream):
@@ -12,7 +15,7 @@ class PrintCollector(object):
 	def flush(self):
 		pass
 
-	def write(self, data, *args, **kwargs):
+	def write(self, data, *__args, **__kwargs):
 		if data == "\n":
 			if self.stream == 'stderr':
 				logging.error(self.buffer)
@@ -42,24 +45,31 @@ class LogFormatter(logging.Formatter):
 			formatString = '\033[1;41m'  # Bold (1) + Red backround (41)
 			record.levelname = 'CRI'
 
-		logstring =  "%s[%s] %s (%s) %s\033[0m" % (formatString, record.levelname, time.strftime("%H:%M:%S", time.localtime()), record.name, record.getMessage())
+		logstring = "%s[%s] %s (%s) %s\033[0m" % (
+			formatString,
+			record.levelname,
+			time.strftime("%H:%M:%S", time.localtime()),
+			record.name,
+			record.getMessage()
+		)
 		return logstring
 
 class Logger(Plugin):
+	def __init__(self):
 		if os.environ.get('DEFAULT_LOG_HANDLER') == 'syslog':
 			defaultLogHandler = {
-					'level':'DEBUG',
-					'class':'logging.handlers.SysLogHandler',
-					'formatter': 'standard',
-					'address': '/dev/log'
-				}
+				'level':'DEBUG',
+				'class':'logging.handlers.SysLogHandler',
+				'formatter': 'standard',
+				'address': '/dev/log'
+			}
 		else:
 			defaultLogHandler = {
-					'level':'DEBUG',
-					'class':'logging.StreamHandler',
-					'formatter': 'standard',
-					'stream': 'ext://sys.__stdout__'
-				}
+				'level':'DEBUG',
+				'class':'logging.StreamHandler',
+				'formatter': 'standard',
+				'stream': 'ext://sys.__stdout__'
+			}
 
 		logging.config.dictConfig({
 			'version': 1,
