@@ -24,7 +24,9 @@ class PrintCollector(object):
 
 class LogFormatter(logging.Formatter):
 	def format(self, record):
+		formatString = ''
 		if (record.levelno == logging.DEBUG):
+			formatString = '\033[1;32m'  # Bold (1) + White (37)
 			record.levelname = 'DBG'
 		elif (record.levelno == logging.INFO):
 			record.levelname = 'INF'
@@ -32,12 +34,15 @@ class LogFormatter(logging.Formatter):
 			record.levelname = 'LOG'
 		elif (record.levelno == logging.WARNING):
 			record.levelname = 'WRN'
+			formatString = '\033[33m'  # Yellow (33)
 		elif (record.levelno == logging.ERROR):
+			formatString = '\033[31m'  # Red (31)
 			record.levelname = 'ERR'
 		elif (record.levelno == logging.CRITICAL):
+			formatString = '\033[1;41m'  # Bold (1) + Red backround (41)
 			record.levelname = 'CRI'
 
-		logstring =  "[%s] %s (%s) %s" % (record.levelname, time.strftime("%H:%M:%S", time.localtime()), record.name, record.getMessage())
+		logstring =  "%s[%s] %s (%s) %s\033[0m" % (formatString, record.levelname, time.strftime("%H:%M:%S", time.localtime()), record.name, record.getMessage())
 		return logstring
 
 class Logger(Plugin):
