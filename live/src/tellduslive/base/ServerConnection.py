@@ -48,10 +48,16 @@ class ServerConnection(object):
 		if self.state == ServerConnection.CONNECTING:
 			try:
 				newSocket = socket.create_connection(self.server)
-				ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+				ctx = ssl.SSLContext(ssl.PROTOCOL_TLS)  # pylint: disable=E1101
+				ctx.options |= ssl.OP_NO_SSLv2
+				ctx.options |= ssl.OP_NO_SSLv3
+				# ctx.options |= ssl.OP_NO_TLSv1  # Enable this once servers allow higher version
+				ctx.options |= ssl.OP_NO_TLSv1_1
+				ctx.verify_mode = ssl.CERT_REQUIRED
+				ctx.check_hostname = True
 				ctx.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
 				if self.useSSL:
-					self.socket = ctx.wrap_socket(newSocket)
+					self.socket = ctx.wrap_socket(newSocket, server_hostname=self.server[0])
 				else:
 					self.socket = newSocket
 				self.state = ServerConnection.CONNECTED
