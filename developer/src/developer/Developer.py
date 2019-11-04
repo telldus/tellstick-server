@@ -24,6 +24,7 @@ class Developer(Plugin):
 		self.thread = Thread(target=self.run)
 		self.thread.start()
 		signal.signal(signal.SIGUSR1, Developer.debugshell)  # Register handler
+		asyncio.get_event_loop().set_debug(True)
 		Application().registerShutdown(self.stop)
 
 	def checkModifiedFiles(self):
