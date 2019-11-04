@@ -166,11 +166,7 @@ class Application(object):
 				logging.error(e)
 				Application.printBacktrace(traceback.extract_tb(exc_traceback))
 		for fn in self.shutdown:
-			logging.warning("Running shutdown handler %s", fn)
 			fn()
-			logging.warning("Done")
-		logging.warning("Run sys.exit")
-		return self.exitCode
 		return sys.exit(self.exitCode)
 
 	def queue(self, fn, *args, **kwargs):
