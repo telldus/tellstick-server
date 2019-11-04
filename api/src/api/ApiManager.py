@@ -8,18 +8,19 @@ import struct
 import time
 import uuid
 
-from base import IInterface, ObserverCollection, Plugin, Settings, implements
-from web.base import IWebRequestHandler, WebResponseJson
-from board import Board
-from tellduslive.base import ITelldusLiveObserver, TelldusLive
-
+from pkg_resources import resource_filename
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+from base import IInterface, ObserverCollection, Plugin, Settings, implements
+from web.base import IWebRequestHandler, WebResponseJson
+from board import Board
+from tellduslive.base import ITelldusLiveObserver, TelldusLive
+
 from jose import jwt, JWSError, JWTError
-from pkg_resources import resource_filename
 
 class IApiCallHandler(IInterface):
 	"""IInterface for plugin implementing API calls"""
@@ -64,7 +65,7 @@ class ApiManager(Plugin):
 					'authUrl': '%s/api/authorize?token=%s' % (request.base(), token),
 					'token': token
 				})
-			elif request.method() == 'GET':
+			if request.method() == 'GET':
 				token = params.get('token', None)
 				if token is None:
 					return WebResponseJson({'error': 'No token specified'}, statusCode=400)
@@ -126,7 +127,7 @@ class ApiManager(Plugin):
 		aud = claims['aud']
 
 		if path == 'refreshToken':
-			if 'renew' not in body or body['renew'] != True:
+			if 'renew' not in body or not body['renew']:
 				return WebResponseJson({'error': 'The token is not authorized for refresh'}, statusCode=403)
 			if 'ttl' not in body:
 				return WebResponseJson({'error': 'No TTL was specified in the token'}, statusCode=401)
@@ -172,7 +173,7 @@ class ApiManager(Plugin):
 	@staticmethod
 	def requireAuthentication(plugin, path):
 		if plugin != 'api':
-			return
+			return True
 		if path in ['', 'authorize']:
 			return True
 		return False
