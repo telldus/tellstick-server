@@ -51,6 +51,9 @@ class WebRequest(object):
 	def method(self):
 		return self.__request.method
 
+	def params(self):
+		return self.__request.body.params
+
 	def post(self, param, default=None):
 		return self.__request.body.params.get(param, default)
 

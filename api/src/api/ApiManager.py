@@ -154,7 +154,10 @@ class ApiManager(Plugin):
 				continue
 			try:
 				params['app'] = aud
-				retval = func(observer, **params)
+				if request.method() == 'POST':
+					retval = func(observer, **request.params())
+				else:
+					retval = func(observer, **params)
 			except Exception as error:
 				logging.exception(error)
 				return WebResponseJson({'error': str(error)})
