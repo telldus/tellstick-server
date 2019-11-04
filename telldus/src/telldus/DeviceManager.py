@@ -66,7 +66,7 @@ class DeviceManager(Plugin):
 		.. note::
 		    The :func:`Device.localId() <telldus.Device.localId>` function in the device must return
 		    a unique id for the transport type returned by
-		    :func:`Device.typeString() <telldus.Device.localId>`
+		    :func:`Device.typeString() <telldus.Device.typeString>`
 		"""
 		cachedDevice = None
 		for i, delDevice in enumerate(self.devices):
