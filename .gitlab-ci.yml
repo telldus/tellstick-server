@@ -2,7 +2,7 @@ stages:
   - test
 
 pylint:
-  image: python:2.7-alpine
+  image: python:3.6-alpine
   stage: test
   tags:
     - docker
@@ -12,7 +12,7 @@ pylint:
     - pylint --rcfile=.pylintrc $(git ls-tree --name-only --full-tree -r HEAD | grep '\.py' | sort | tr '\n' ' ') || RETCODE=1
 
 unittest:
-  image: python:2.7-alpine
+  image: python:3.6-alpine
   stage: test
   cache:
     paths:
