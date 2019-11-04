@@ -171,7 +171,7 @@ class ServerConnection(object):
 					hasMoreData = False
 				request = request + packet
 			except socket.error as socketException:
-				(err, errstr) = socketException.args
+				(err, __errstr) = socketException.args
 				if (err == errno.EAGAIN):
 					return None
 				return ''  # is not alive
