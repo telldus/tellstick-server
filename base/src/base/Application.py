@@ -278,13 +278,20 @@ class Application(object):
 
 		:returns: True if the task was queued
 		:returns: False if the server is shutting down
+
+		.. note::
+			Calls to this method are threadsafe.
 		"""
 		if self.running == False:
 			return False
-		self.loop.call_soon_threadsafe(self.__queue, fn, args, kwargs)
+		self.loop.call_soon_threadsafe(self.asyncQueue, fn, args, kwargs)
 		return True
 
-	def __queue(self, fn, args, kwargs):
+	def asyncQueue(self, fn, args, kwargs):
+		"""Add a job from within the event loop.
+
+		This method must be run in the event loop.
+		"""
 		if inspect.iscoroutinefunction(fn):
 			#self.loop.create_task()  # From Python 3.7
 			asyncio.ensure_future(fn(*args, **kwargs))
