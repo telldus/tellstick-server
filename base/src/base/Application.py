@@ -315,12 +315,12 @@ class Application(object):
 	@staticmethod
 	def printBacktrace(bt):
 		for f in bt:
-			logging.error(str(f))
+			logging.getLogger(__name__).error(str(f))
 
 	@staticmethod
 	def printException(exception):
 		exc_type, exc_value, exc_traceback = sys.exc_info()
-		logging.error(str(exception))
+		logging.getLogger(__name__).error(str(exception))
 		Application.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	@staticmethod
@@ -335,7 +335,7 @@ class Application(object):
 		signalManager.sendSignal(msg, *args, **kwargs)
 
 	def __signal(self, signum, frame):
-		logging.info("Signal %d caught" % signum)
+		logging.getLogger(__name__).info("Signal %d caught" % signum)
 		self.quit(1)
 
 	def __loadPkgResourses(self):
