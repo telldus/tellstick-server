@@ -24,6 +24,14 @@ class mainthread(object):
 	def __init__(self, f):
 		self.__f = f
 
+	async def __asyncWrapper(self, obj, *args, **kwargs):
+		if not Application.isMainThread():
+			logging.critical('Something went wrong when syncing call with main thread.')
+			logging.critical('This should not be possible!')
+			return None
+		# We are now in main thread. Call the function
+		self.__f(obj, *args, **kwargs)
+
 	def __get__(self, obj, objtype):
 		def __call__(*args, **kwargs):
 			if Application.isMainThread():
@@ -31,8 +39,13 @@ class mainthread(object):
 				self.__f(obj, *args, **kwargs)
 			else:
 				# Queue call
-				Application().queue(self.__f, obj, *args, **kwargs)
-			return None
+				if inspect.iscoroutinefunction(self.__f):
+					Application().queue(self.__f, obj, *args, **kwargs)
+				else:
+					# Non async function. Call blocking from main thread.
+					# To do this we must wrap it in an async function.
+					Application().queue(self.__asyncWrapper, obj, *args, **kwargs)
+
 		__call__.__name__ = self.__f.__name__
 		# Get the number of whitespaces in the beginning
 		docs = self.__f.__doc__ or ''
