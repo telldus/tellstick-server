@@ -155,6 +155,6 @@ class Gpio(Plugin):
 			return False
 		self.pins[name].setPin(state, freq, brightness)
 
-	def shutdown(self):
+	async def shutdown(self):
 		for i in self.pins:
 			self.pins[i].setPin(0)
