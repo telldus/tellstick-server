@@ -27,7 +27,7 @@ class ServerList():
 		return self.list.pop(0)
 
 	def retrieveServerList(self):
-		conn = http_client.HTTPConnection('%s:80' % Board.liveServer())
+		conn = http_client.HTTPSConnection('%s:443' % Board.liveServer())
 		conn.request('GET', "/server/assign?protocolVersion=3&mac=%s" % Board.getMacAddr())
 		response = conn.getresponse()
 
