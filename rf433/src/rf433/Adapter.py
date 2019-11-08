@@ -20,7 +20,7 @@ class Adapter(threading.Thread):
 	EMPTY_BUFFER = ''
 
 	def __init__(self, handler, dev):
-		super(Adapter,self).__init__()
+		super(Adapter, self).__init__(name='433 Adapter')
 		self.handler = handler
 		self.devUrl = dev
 		self.dev = None
