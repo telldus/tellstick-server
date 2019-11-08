@@ -4,7 +4,7 @@ import logging
 import time
 from threading import Timer
 
-from base import Application, implements, Plugin, signal
+from base import Application, callback, implements, Plugin, signal
 from board import Board
 from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
@@ -263,6 +263,7 @@ class RF433(Plugin):
 		self.devices.append(device)
 		self.deviceManager.addDevice(device)
 
+	@callback
 	def cleanupSensors(self):
 		for i, sensor in enumerate(self.sensors):
 			if not sensor.isValid():
