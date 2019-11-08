@@ -8,7 +8,9 @@ import sys
 import threading
 import time
 import traceback
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 import zipfile
 import pkg_resources
 import gnupg
@@ -26,7 +28,7 @@ def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
 
 
-class LoadedPlugin(object):
+class LoadedPlugin():
 	def __init__(self, manifest, context):
 		self.loaded = False
 		self.context = context
@@ -279,7 +281,7 @@ class Loader(Plugin):
 		return {
 			'success': True,
 			'msg': 'Plugin was imported',
-			'restartRequired': True if status == 1 else False
+			'restartRequired': status == 1
 		}
 
 	def initializeKeychain(self):
