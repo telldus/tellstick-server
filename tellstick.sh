@@ -106,6 +106,10 @@ printHelp() {
 }
 
 run() {
+	if [ "$EUID" -eq 0 ]; then
+		echo "The TellStick server should not be run as root."
+		return
+	fi
 	local EXIT_CODE=0
 	while [ $EXIT_CODE -eq 0 ]; do
 		python run.py
