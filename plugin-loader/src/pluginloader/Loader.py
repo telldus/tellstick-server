@@ -31,7 +31,7 @@ class LoadedPlugin(object):
 		self.loaded = False
 		self.context = context
 		self.verified = False
-		self.manifest = yaml.load(open(manifest, 'r').read())
+		self.manifest = yaml.safe_load(open(manifest, 'r').read())
 		self.name = self.manifest['name']
 		self.icon = self.manifest.get('icon', '')
 		self.path = os.path.dirname(manifest)
