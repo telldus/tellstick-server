@@ -116,7 +116,7 @@ class DeviceManager(Plugin):
 				self.live.send(msg)
 		else:
 			# Previously cached device is now confirmed, TODO notify Live! about this too?
-			self.observers.deviceConfirmed(device)
+			self.__deviceConfirmed(device)
 
 	def device(self, deviceId):
 		"""Retrieves a device.
@@ -469,6 +469,14 @@ class DeviceManager(Plugin):
 		Called every time a device is added/created
 		"""
 		self.observers.deviceAdded(device)
+
+	@signal('deviceConfirmed')
+	def __deviceConfirmed(self, device):
+		"""
+		This method is called when a device is confirmed on the network,
+		not only loaded from storage (not applicable to all device types)
+		"""
+		self.observers.deviceConfirmed(device)
 
 	@signal('deviceRemoved')
 	def __deviceRemoved(self, deviceId):
