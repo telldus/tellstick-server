@@ -106,7 +106,7 @@ class WebResponseJson(WebResponse):
 class WebResponseLocalFile(WebResponse):
 	def __init__(self, path):
 		super(WebResponseLocalFile, self).__init__()
-		self.data = open(path, 'r')
+		self.data = open(path, 'rb')
 		self.contentType, __encoding = mimetypes.guess_type(path, strict=False)
 
 	def output(self, response):

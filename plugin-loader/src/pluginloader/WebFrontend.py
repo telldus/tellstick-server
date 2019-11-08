@@ -189,5 +189,5 @@ class WebFrontend(Plugin):
 
 	@staticmethod
 	def uploadPlugin(fileobject):
-		with open('%s/staging.zip' % (Board.pluginPath()), 'w') as fd:
+		with open('%s/staging.zip' % (Board.pluginPath()), 'wb') as fd:
 			fd.write(fileobject.file.read())
