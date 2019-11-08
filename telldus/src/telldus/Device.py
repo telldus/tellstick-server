@@ -188,35 +188,7 @@ class Device(object):
 		if self.id() in ignore:
 			return
 		ignore.append(self.id())
-		if isinstance(action, str):
-			method = Device.methodStrToInt(action)
-		else:
-			method = action
-		if method == Device.DIM:
-			if value is None:
-				value = 0  # this is an error, but at least won't crash now
-			else:
-				value = int(value)
-		elif method == Device.RGB:
-			if isinstance(value, str):
-				value = int(value, 16)
-			elif not isinstance(value, int):
-				value = 0
-			if action == 'rgbw':
-				# For backwards compatibility, remove white component
-				value = value >> 8
-		elif method == Device.THERMOSTAT:
-			if isinstance(value, str):
-				# It could be a json-string. Try to decode it
-				try:
-					value = json.loads(value)
-				except ValueError:
-					# Could not decode, fallback to empty value
-					value = {}  # pylint: disable=R0204
-			if not isinstance(value, dict):
-				value = {}
-		else:
-			value = None
+		method, value = Device.normalizeStateValue(action, value)
 		def triggerFail(reason):
 			if failure:
 				try:
@@ -550,21 +522,8 @@ class Device(object):
 				return
 		self.lastUpdated = time.time()
 
-		# Make sure the value follows correct format
-		if state == Device.DIM:
-			if not isinstance(stateValue, int):
-				stateValue = int(stateValue)  # pylint: disable=R0204
-			# Only 0-255 allowed
-			stateValue = max(0, min(255, stateValue))
-		elif state == Device.RGB:
-			# TODO
-			pass
-		elif state == Device.THERMOSTAT:
-			if not isinstance(stateValue, dict):
-				stateValue = {}
-			# Make sure only allowed keys exists
-			allowedKeys = ('setpoint', 'mode')
-			stateValue = {key: stateValue[key] for key in stateValue if key in allowedKeys}
+		_, stateValue = Device.normalizeStateValue(state, stateValue)
+
 		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT):
 			# Only set the statevalue for these states
 			self._stateValues[str(state)] = stateValue
@@ -686,6 +645,47 @@ class Device(object):
 
 		# Cut of the rest of the unsupported methods we don't have a fallback for
 		return methods & supportedMethods
+
+	@staticmethod
+	def normalizeStateValue(state, stateValue):
+		if isinstance(state, str):
+			method = Device.methodStrToInt(state)
+		else:
+			method = state
+
+		# Make sure the value follows correct format
+		if method == Device.DIM:
+			if stateValue is None:
+				return method, 0  # this is an error, but at least won't crash now
+			if not isinstance(stateValue, int):
+				stateValue = int(stateValue)
+			# Only 0-255 allowed
+			return method, max(0, min(255, stateValue))
+
+		if method == Device.RGB:
+			if isinstance(stateValue, str):
+				stateValue = int(stateValue, 16)
+			elif not isinstance(stateValue, int):
+				stateValue = 0
+			if state == 'rgbw':
+				# For backwards compatibility, remove white component
+				stateValue = stateValue >> 8
+			return method, stateValue
+
+		if method == Device.THERMOSTAT:
+			if isinstance(stateValue, str):
+				# It could be a json-string. Try to decode it
+				try:
+					stateValue = json.loads(stateValue)
+				except ValueError:
+					# Could not decode, fallback to empty value
+					stateValue = {}
+			if not isinstance(stateValue, dict):
+				return method, {}
+			# Make sure only allowed keys exists
+			allowedKeys = ('setpoint', 'mode', 'temperature', 'changeMode')
+			return method, {key: stateValue[key] for key in stateValue if key in allowedKeys}
+		return method, None
 
 	@staticmethod
 	def sensorTypeIntToStr(sensorType):

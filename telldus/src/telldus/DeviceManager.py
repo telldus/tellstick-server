@@ -305,11 +305,11 @@ class DeviceManager(Plugin):
 		else:
 			extras['origin'] = 'Incoming signal'
 		(state, stateValue) = device.state()
+		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
 		if isinstance(stateValue, dict):
 			stateValue = json.dumps(stateValue)
 		else:
 			stateValue = str(stateValue)
-		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
 		self.save()
 		if not self.live.registered:
 			return
