@@ -259,7 +259,8 @@ class TelldusLive(Plugin):
 			'protocol': 3,
 			'version': Board.firmwareVersion(),
 			'os': 'linux',
-			'os-version': 'telldus'
+			'os-version': 'telldus',
+			'dist': self.distribution()
 		})
 		self.conn.send(msg)
 
@@ -279,3 +280,11 @@ class TelldusLive(Plugin):
 			payload += ' '.encode() * (16 - len(payload) % 16)
 		buff.write(encryptor.encrypt(payload))
 		return buff.getvalue()
+
+	@staticmethod
+	def distribution():
+		try:
+			with open('/etc/distribution') as fd:
+				return fd.readline().strip()
+		except Exception:
+			return 'unknown'
