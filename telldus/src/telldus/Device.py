@@ -215,6 +215,11 @@ class Device(object):
 					value = {}  # pylint: disable=R0204
 			if not isinstance(value, dict):
 				value = {}
+			# If mode is missing, add current mode
+			if 'mode' not in value:
+				value['mode'] = self.stateValue(Device.THERMOSTAT).get('mode')
+				value['changeMode'] = False  # Probably not needed, just to be sure
+
 		else:
 			value = None
 		def triggerFail(reason):
