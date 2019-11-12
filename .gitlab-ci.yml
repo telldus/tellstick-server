@@ -17,13 +17,16 @@ unittest:
   cache:
     paths:
       - build/
+  artifacts:
+    paths:
+      - setup.log
+    expire_in: '1 day'
   script:
     - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv > /dev/null 2>&1
     - mkdir /etc/upgrade
     - touch /etc/builddate
-    - ./tellstick.sh setup > /dev/null 2>&1
-    - ./tellstick.sh install events > /dev/null 2>&1
-    - ./tellstick.sh install scheduler > /dev/null 2>&1
-    - ./tellstick.sh install telldus > /dev/null 2>&1
-    - ./tellstick.sh install upgrade > /dev/null 2>&1
+    - ./tellstick.sh setup >> setup.log 2>&1
+    - ./tellstick.sh install events >> setup.log 2>&1
+    - ./tellstick.sh install scheduler >> setup.log 2>&1
+    - ./tellstick.sh install upgrade >> setup.log 2>&1
     - ./tellstick.sh test
