@@ -22,7 +22,7 @@ unittest:
       - setup.log
     expire_in: '1 day'
   script:
-    - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv > /dev/null 2>&1
+    - apk add -U bash gcc gnupg linux-headers musl-dev npm py2-virtualenv py-cffi > /dev/null 2>&1
     - mkdir /etc/upgrade
     - touch /etc/builddate
     - ./tellstick.sh setup >> setup.log 2>&1
