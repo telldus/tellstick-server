@@ -219,7 +219,9 @@ class Device(object):
 			if 'mode' not in value:
 				value['mode'] = self.stateValue(Device.THERMOSTAT).get('mode')
 				value['changeMode'] = False  # Probably not needed, just to be sure
-
+			if 'temperature' in value:
+				# Make sure temperature is a number
+				value['temperature'] = float(value['temperature'])
 		else:
 			value = None
 		def triggerFail(reason):
