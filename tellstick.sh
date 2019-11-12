@@ -63,16 +63,16 @@ checkPrerequisites() {
 installPlugin() {
 	echo "Installing plugin $1"
 	cd $1
+	if [ -f $1/requirements.txt ]; then
+		echo "Install requirements"
+		pip install -U -r $1/requirements.txt
+	fi
 	OUT=`python setup.py develop`
 	local EXIT_CODE=$?
 	if [ $EXIT_CODE -ne 0 ]; then
 		echo $OUT
 		echo "Could not install plugin"
 		exit
-	fi
-	if [ -f $1/requirements.txt ]; then
-		echo "Install requirements"
-		pip install -U -r $1/requirements.txt
 	fi
 	if [ -f $1/package.json ]; then
 		echo "Install npm packages"
