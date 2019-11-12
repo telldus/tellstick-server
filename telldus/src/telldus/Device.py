@@ -189,6 +189,13 @@ class Device(object):
 			return
 		ignore.append(self.id())
 		method, value = Device.normalizeStateValue(action, value)
+		if method is Device.THERMOSTAT:
+			# If mode is missing, add current mode
+			# This can't be done in normalizeStateValue() since this needs the current mode (non static)
+			if 'mode' not in value:
+				value['mode'] = self.stateValue(Device.THERMOSTAT).get('mode')
+				value['changeMode'] = False  # Probably not needed, just to be sure
+
 		def triggerFail(reason):
 			if failure:
 				try:
