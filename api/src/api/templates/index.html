@@ -7,10 +7,10 @@
 	<body>
 		<div id="content">
 			<h1>Available methods:</h1>
-			<py:for each="module, actions in sorted(methods.iteritems())">
+			<py:for each="module, actions in sorted(methods.items())">
 				<h2>${module}:</h2>
 				<ul>
-					<li py:for="action, fn in sorted(actions.iteritems())"><a href="/api/${module}/${action}">${module}/${action}</a>: ${fn.doc}</li>
+					<li py:for="action, fn in sorted(actions.items())"><a href="/api/${module}/${action}">${module}/${action}</a>: ${fn.doc}</li>
 				</ul>
 			</py:for>
 		</div>
