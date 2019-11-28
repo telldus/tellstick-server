@@ -4,12 +4,14 @@ import unittest
 import os
 import pytz
 import time
+from datetime import datetime
 from dateutil import parser
 from freezegun import freeze_time
 from mock import MagicMock, Mock, patch
 from tzlocal import get_localzone
+from ..Scheduler import Scheduler
 from ..SchedulerEventFactory import BlockheaterTrigger, \
-   SuntimeTrigger, TimeCondition, TimeTrigger, TimeTriggerManager
+   SuntimeCondition, SuntimeTrigger, TimeCondition, TimeTrigger, TimeTriggerManager
 from telldus import Device
 
 # run this with python -m unittest scheduler.base.tests in the tellstick.sh-shell
@@ -46,16 +48,18 @@ class MockSensor(Device):
 		self._sensorValues[1][0]['value'] = value
 
 class MockSettings(object):
-	def __init__(self, defaultTimezone):
+	def __init__(self, defaultTimezone=None, latitude=None, longitude=None):
 		self.timezone = defaultTimezone  # default
+		self.latitude = latitude
+		self.longitude = longitude
 
 	def get(self, setting, defaultValue):
 		if setting == 'tz':
 			return self.timezone
 		elif setting == 'latitude':
-			return 55.70584
+			return self.latitude or 55.70584
 		elif setting == 'longitude':
-			return 13.19321
+			return self.longitude or 13.19321
 
 class ModifiedBlockheaterTrigger(BlockheaterTrigger):
 	def __init__(self, timezone, *args, **kwargs):
@@ -63,7 +67,32 @@ class ModifiedBlockheaterTrigger(BlockheaterTrigger):
 		super(ModifiedBlockheaterTrigger, self).__init__(*args, **kwargs)
 
 	def getSettings(self):
-		return MockSettings(self.usertimezone)
+		return MockSettings(defaultTimezone=self.usertimezone)
+
+class ModifiedSuntimeTrigger(SuntimeTrigger):
+	def __init__(self, latitude, longitude, *args, **kwargs):
+		self.latitude = latitude
+		self.longitude = longitude
+		super(ModifiedSuntimeTrigger, self).__init__(*args, **kwargs)
+
+	def getSettings(self):
+		return MockSettings(latitude=self.latitude, longitude=self.longitude)
+
+class ModifiedSuntimeCondition(SuntimeCondition):
+	def __init__(self, latitude, longitude, *args, **kwargs):
+		self.latitude = latitude
+		self.longitude = longitude
+		super(ModifiedSuntimeCondition, self).__init__(*args, **kwargs)
+
+	def getSettings(self):
+		return MockSettings(latitude=self.latitude, longitude=self.longitude)
+
+class SchedulerLite(object):
+	def __init__(self, tz):
+		self.timezone = tz
+	calculateNextRunTime = Scheduler.__dict__['calculateNextRunTime']
+	calculateRunTimeForDay = Scheduler.__dict__['calculateRunTimeForDay']
+	calculateNextWeekday = Scheduler.__dict__['calculateNextWeekday']
 
 class SchedulerTest(unittest.TestCase):
 	def __init__(self, *args, **kwargs):
@@ -89,17 +118,22 @@ class SchedulerTest(unittest.TestCase):
 		self.timeTrigger = TimeTrigger(TimeTriggerManager(False), **kwargs)
 		mockEvent = Mock()
 		mockEvent.execute = Mock()
-		kwargs = {'params': {'minute': '0', 'hour': '11'}, 'event': mockEvent, 'id': 833}
-		self.sunTimeTrigger = SuntimeTrigger(TimeTriggerManager(False), **kwargs)
+		# 'params': {'sunStatus': '1', 'offset': '0'},
+		kwargs = {'event': mockEvent, 'id': 833}
+		self.sunTimeTrigger = ModifiedSuntimeTrigger(55.70584, 13.19321, TimeTriggerManager(False), **kwargs)
+		kwargs['group'] = None
+		self.sunTimeCondition = ModifiedSuntimeCondition(55.70584, 13.19321, **kwargs)
 
 	def tearDown(self):
 		pass
 
-	def checkTime(self, hour, minute):
-		self.assertEqual(self.blockHeaterTrigger.setHour, hour)
-		self.assertEqual(self.blockHeaterTrigger.minute, minute)
+	def checkTime(self, hour, minute, trigger=None):
+		if not trigger:
+			trigger = self.blockHeaterTrigger
+		self.assertEqual(trigger.setHour, hour)
+		self.assertEqual(trigger.minute, minute)
 		# manager list:
-		self.assertNotEqual(self.blockHeaterTrigger.manager.triggers.get(minute, None), None)
+		self.assertNotEqual(trigger.manager.triggers.get(minute, None), None)
 
 	def freezeTimeSimplifier(self, tstr):
 		return pytz.timezone(self.usertimezone).localize(parser.parse(tstr)).astimezone(pytz.utc)
@@ -623,3 +657,88 @@ class SchedulerTest(unittest.TestCase):
 			self.timeTrigger.manager.runMinute()
 			self.assertTrue(self.timeTrigger.event.execute.call_count == 2)
 
+	def testTimeTriggerDST(self):
+		self.usertimezone = 'Europe/Stockholm'
+		# summer->winter, one hour backwards
+		with freeze_time(self.freezeTimeSimplifier("2019-10-26 00:30")):
+			# the day before, 2 hours diff from UTC
+			self.timeTrigger.parseParam('hour', 5)
+			self.timeTrigger.parseParam('minute', 35)
+			self.assertTrue(self.timeTrigger.hour == 3)
+		with freeze_time(self.freezeTimeSimplifier("2019-10-26 05:35:30")):
+			# winter time, just one hour diff
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.hour == 4, "RunMinute doesn't recalc correctly")
+		with freeze_time(self.freezeTimeSimplifier("2019-10-27 00:30")):
+			# winter time, test setting the hour
+			self.timeTrigger.parseParam('hour', 5)
+			self.assertTrue(self.timeTrigger.hour == 4)
+		# winter-> summer, one hour forward
+		with freeze_time(self.freezeTimeSimplifier("2019-03-30 00:30")):
+			# the day before, 1 hours diff from UTC
+			self.timeTrigger.parseParam('hour', 5)
+			self.timeTrigger.parseParam('minute', 35)
+			self.assertTrue(self.timeTrigger.hour == 4)
+			self.timeTrigger.manager.runMinute()
+		with freeze_time(self.freezeTimeSimplifier("2019-03-30 05:35:30")):
+			# summer time, two hours diff
+			self.timeTrigger.manager.runMinute()
+			self.assertTrue(self.timeTrigger.hour == 3, "RunMinute doesn't recalc correctly")
+		with freeze_time(self.freezeTimeSimplifier("2019-03-31 00:30")):
+			# winter time, test setting the hour
+			self.timeTrigger.parseParam('hour', 5)
+			self.assertTrue(self.timeTrigger.hour == 3)
+
+	def getUTCHourFromJob(self, job):
+		return int(datetime.utcfromtimestamp(job['nextRunTime']).strftime('%-H'))
+
+	def testSchedulerDST(self):
+		job = {'retries': 3, 'random_interval': 0, 'client_device_id': 1, 'hour': 5, 'retry_interval': 5, 'reps': 1, 'weekdays': '1,2,3,4,5,6,7', 'value': 0, 'id': 2341984, 'offset': 0, 'active': 1, 'type': 'time', 'method': 1, 'minute': 35, 'device_id': 1}
+		sch = SchedulerLite(self.usertimezone)
+		# summer->winter (on the 27:th), one hour backwards
+		with freeze_time(self.freezeTimeSimplifier("2019-10-26 00:30")):
+			# the day before, 2 hours diff from UTC
+			sch.calculateNextRunTime(job)
+			self.assertTrue(self.getUTCHourFromJob(job) == 3)
+		with freeze_time(self.freezeTimeSimplifier("2019-10-26 05:35:30")):
+			# winter time, just one hour diff
+			sch.calculateNextRunTime(job)
+			self.assertTrue(self.getUTCHourFromJob(job) == 4)
+		# winter-> summer, one hour forward
+		with freeze_time(self.freezeTimeSimplifier("2019-03-30 00:30")):
+			# the day before, 1 hour diff from UTC
+			sch.calculateNextRunTime(job)
+			self.assertTrue(self.getUTCHourFromJob(job) == 4)
+		with freeze_time(self.freezeTimeSimplifier("2019-03-30 05:35:30")):
+			# summer time, 2 hours diff again
+			sch.calculateNextRunTime(job)
+			self.assertTrue(self.getUTCHourFromJob(job) == 3)
+
+	def testSuntimeTrigger(self):
+		self.sunTimeTrigger.latitude = 70.05
+		self.sunTimeTrigger.longitude = 13.13
+		self.sunTimeTrigger.parseParam('offset', 0)
+		with freeze_time(self.freezeTimeSimplifier("2019-06-20 02:30")):
+			# No sunrise/sunset at all during summer
+			self.sunTimeTrigger.parseParam('sunStatus', 0)  # sunset
+			self.assertTrue(self.sunTimeTrigger.active is False)
+		with freeze_time(self.freezeTimeSimplifier("2019-07-28 00:37")):
+			# Sunset after 00:00
+			self.sunTimeTrigger.manager.runMinute()
+			self.assertEqual(self.sunTimeTrigger.hour, 22)  # 00 local time
+			self.assertEqual(self.sunTimeTrigger.active, True)
+
+	def testSuntimeCondition(self):
+		self.sunTimeCondition.latitude = 70.05
+		self.sunTimeCondition.longitude = 13.13
+		self.sunTimeCondition.parseParam('sunStatus', 1)  # solen är...? uppe?
+		self.sunTimeCondition.parseParam('sunriseOffset', 0)
+		self.sunTimeCondition.parseParam('sunsetOffset', 0)
+		successmethod = MagicMock()
+		failmethod = MagicMock()
+		with freeze_time(self.freezeTimeSimplifier("2019-06-20 02:30")):
+			self.sunTimeCondition.validate(successmethod, failmethod)
+			self.assertEqual(successmethod.call_count, 1)
+		with freeze_time(self.freezeTimeSimplifier("2019-12-20 12:30")):
+			self.sunTimeCondition.validate(successmethod, failmethod)
+			self.assertEqual(successmethod.call_count, 1)
