@@ -72,7 +72,7 @@ class Logger(Plugin):
 					'level': 'DEBUG'
 				},
 				'cherrypy.access': {
-					'propagate': True
+					'propagate': False
 				},
 				'cherrypy.error': {
 					'propagate': True
