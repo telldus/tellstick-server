@@ -31,10 +31,10 @@ class SunCalculator:
 		curDate = date
 		while retval['sunrise'] == 0 or retval['sunset'] == 0:
 			values = self.riseset(date, lat, lon)
-			if retval['sunrise'] == 0 and values['sunrise'] > 0:
+			if retval['sunrise'] == 0 and (values['sunrise'] is not None and values['sunrise'] > 0):
 				if values['sunrise'] >= curDate:
 					retval['sunrise'] = values['sunrise']
-			if retval['sunset'] == 0 and values['sunset'] > 0:
+			if retval['sunset'] == 0 and (values['sunset'] is not None and  values['sunset'] > 0):
 				if values['sunset'] >= curDate:
 					retval['sunset'] = values['sunset']
 			date = date + 60*60*24  # One day later
