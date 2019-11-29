@@ -252,6 +252,8 @@ class SuntimeTrigger(TimeTrigger):
 		if (utc_datetime.day != currentDate.day or utc_datetime.month != currentDate.month) \
 		   and (utc_datetime.day != tomorrow.day or utc_datetime.month != tomorrow.month):
 			# no sunrise/sunset today or tomorrow
+			self.minute = utc_datetime.minute  # make sure minute/hour are still set, so that it may recalculate during the day and eventually be activated again
+			self.hour = utc_datetime.hour
 			if self.active:
 				self.active = False
 				return True  # has changed (status to active)
