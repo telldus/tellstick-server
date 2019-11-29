@@ -102,6 +102,9 @@ class TimeTriggerManager(object):
 					if isinstance(trigger, SuntimeTrigger) and trigger.recalculate():
 						# suntime (time or active-status) was updated (new minute), move it around
 						triggersToRemove.append(trigger)
+					elif type(trigger) is TimeTrigger:
+						# Recalculate timetriggers, since the utc-hour might be different due to DST
+						trigger.recalculate()
 					if trigger.active and not trigger.isTriggered():
 						# is active (not inactive due to sunrise/sunset-thing)
 						trigger.triggered({'triggertype': triggertype})
@@ -166,7 +169,7 @@ class TimeTrigger(Trigger):
 					datetime(currentDate.year, currentDate.month, currentDate.day, int(value))
 				)
 				utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
-				if datetime.now().hour > utc_datetime.hour:
+				if datetime.now().hour > utc_datetime.hour or (datetime.now().hour == utc_datetime.hour and self.minute >= datetime.now().minute):
 					# retry it with new date (will have impact on daylight savings changes (but not
 					# sure it will actually help))
 					currentDate = currentDate + timedelta(days=1)
@@ -188,7 +191,7 @@ class TimeTrigger(Trigger):
 			datetime(currentDate.year, currentDate.month, currentDate.day, self.setHour)
 		)
 		utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
-		if datetime.now().hour > utc_datetime.hour:
+		if datetime.now().hour > utc_datetime.hour or (datetime.now().hour == utc_datetime.hour and self.minute >= datetime.now().minute):
 			# retry it with new date (will have impact on daylight savings changes (but not sure it
 			# will actually help))
 			currentDate = currentDate + timedelta(days=1)
