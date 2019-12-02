@@ -398,8 +398,14 @@ class SuntimeCondition(Condition):
 		if sunToday['sunset']:
 			sunSet = sunToday['sunset'] + (self.sunsetOffset*60)
 		if sunRise or sunSet:
-			if (sunRise and time.time() < sunRise) or (sunSet and time.time() > sunSet):
-				currentStatus = 0
+			if sunRise and sunSet and sunSet < sunRise:
+				# if the sun sets and rises again before 00:00 utc, we'll get the time
+				# for this evening as sunrise, so we have to compare in a different way
+				if time.time() < sunRise and time.time() > sunSet:
+					currentStatus = 0
+			else:
+				if (sunRise and time.time() < sunRise) or (sunSet and time.time() > sunSet):
+					currentStatus = 0
 		else:
 			# no sunset or sunrise, is it winter or summer?
 			if riseSet['sunrise'] < riseSet['sunset']:
