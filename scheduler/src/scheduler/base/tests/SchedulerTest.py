@@ -742,3 +742,17 @@ class SchedulerTest(unittest.TestCase):
 		with freeze_time(self.freezeTimeSimplifier("2019-12-20 12:30")):
 			self.sunTimeCondition.validate(successmethod, failmethod)
 			self.assertEqual(successmethod.call_count, 1)
+		self.sunTimeCondition.latitude = 65.31
+		self.sunTimeCondition.longitude = 21.48
+		with freeze_time(self.freezeTimeSimplifier("2019-06-07 04:30")):
+			# sun is up, but went up at 01:46 (23:46 UTC)
+			self.sunTimeCondition.validate(successmethod, failmethod)
+			self.assertEqual(successmethod.call_count, 2)
+		with freeze_time(self.freezeTimeSimplifier("2019-06-07 23:30")):
+			# sun is down, but went up at 01:46 (23:46 UTC)
+			self.sunTimeCondition.validate(successmethod, failmethod)
+			self.assertEqual(successmethod.call_count, 2)
+		with freeze_time(self.freezeTimeSimplifier("2019-06-08 01:50")):
+			# sun is up, but went up at 01:46 (23:46 UTC)
+			self.sunTimeCondition.validate(successmethod, failmethod)
+			self.assertEqual(successmethod.call_count, 3)
