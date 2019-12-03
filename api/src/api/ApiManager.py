@@ -215,13 +215,13 @@ class ApiManager(Plugin):
 
 	def __tokenKey(self):
 		if self.tokenKey is not None:
-			return self.tokenKey
-		password = Board.secret()
+			return self.tokenKey.decode()
+		password = Board.secret().encode()
 		settings = Settings('telldus.api')
-		tokenKey = settings.get('tokenKey', '')
+		tokenKey = base64.b64decode(settings.get('tokenKey', '').encode())
 		backend = default_backend()
-		if tokenKey == '':
-			self.tokenKey = os.urandom(32)
+		if tokenKey == b'':
+			self.tokenKey = base64.b64encode(os.urandom(32))
 			# Store it
 			salt = os.urandom(16)
 			kdf = PBKDF2HMAC(
@@ -233,15 +233,15 @@ class ApiManager(Plugin):
 			)
 			key = kdf.derive(password)
 			pwhash = ApiManager.pbkdf2crypt(password)
-			settings['salt'] = base64.b64encode(salt)
+			settings['salt'] = base64.b64encode(salt).decode()
 			settings['pw'] = pwhash
 			# Encrypt token key
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			encryptor = cipher.encryptor()
-			settings['tokenKey'] = base64.b64encode(bytes(encryptor.update(self.tokenKey)))
+			settings['tokenKey'] = base64.b64encode(encryptor.update(self.tokenKey)).decode()
 		else:
 			# Decode it
-			salt = base64.b64decode(settings.get('salt', ''))
+			salt = base64.b64decode(settings.get('salt', '').encode())
 			pwhash = settings.get('pw', '')
 			if ApiManager.pbkdf2crypt(password, pwhash) != pwhash:
 				logging.warning('Could not decrypt token key, wrong password')
@@ -257,9 +257,9 @@ class ApiManager(Plugin):
 			enc = base64.b64decode(tokenKey)
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			decryptor = cipher.decryptor()
-			self.tokenKey = bytes(decryptor.update(enc))
+			self.tokenKey = base64.b64encode(decryptor.update(enc))
 
-		return self.tokenKey
+		return self.tokenKey.decode()
 
 	def __generateToken(self, body, claims):
 		return jwt.encode(body, self.__tokenKey(), algorithm='HS256', headers=claims)
@@ -277,17 +277,18 @@ class ApiManager(Plugin):
 	def pbkdf2crypt(password, salt=None):
 		if salt is None:
 			binarysalt = b''.join([struct.pack("@H", random.randint(0, 0xffff)) for _i in range(3)])
-			salt = "$p5k2$$" + base64.b64encode(binarysalt, "./")
+			salt = "$p5k2$$" + base64.b64encode(binarysalt, b"./").decode()
 		elif salt.startswith("$p5k2$"):
 			salt = "$p5k2$$" + salt.split("$")[3]
 		kdf = PBKDF2HMAC(
 			algorithm=hashes.SHA1(),
 			length=24,
-			salt=salt,
+			salt=salt.encode(),
 			iterations=400,
 			backend=default_backend()
 		)
 		rawhash = kdf.derive(password)
-		return salt + "$" + base64.b64encode(rawhash, "./")
+		encoded = base64.b64encode(rawhash, b"./").decode()
+		return salt + "$" + encoded
 
 apicall = ApiManager.apicall  # pylint: disable=C0103
