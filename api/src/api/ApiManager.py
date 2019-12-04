@@ -221,7 +221,8 @@ class ApiManager(Plugin):
 		tokenKey = base64.b64decode(settings.get('tokenKey', '').encode())
 		backend = default_backend()
 		if tokenKey == b'':
-			self.tokenKey = base64.b64encode(os.urandom(32))
+			tokenKey = os.urandom(32)
+			self.tokenKey = base64.b64encode(tokenKey)
 			# Store it
 			salt = os.urandom(16)
 			kdf = PBKDF2HMAC(
@@ -238,7 +239,7 @@ class ApiManager(Plugin):
 			# Encrypt token key
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			encryptor = cipher.encryptor()
-			settings['tokenKey'] = base64.b64encode(encryptor.update(self.tokenKey)).decode()
+			settings['tokenKey'] = base64.b64encode(encryptor.update(tokenKey)).decode()
 		else:
 			# Decode it
 			salt = base64.b64decode(settings.get('salt', '').encode())
@@ -254,10 +255,9 @@ class ApiManager(Plugin):
 				backend=backend
 			)
 			key = kdf.derive(password)
-			enc = base64.b64decode(tokenKey)
 			cipher = Cipher(algorithms.AES(key), modes.ECB(), backend=backend)
 			decryptor = cipher.decryptor()
-			self.tokenKey = base64.b64encode(decryptor.update(enc))
+			self.tokenKey = base64.b64encode(decryptor.update(tokenKey))
 
 		return self.tokenKey.decode()
 
