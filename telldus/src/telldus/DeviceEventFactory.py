@@ -104,7 +104,7 @@ class DeviceActionExecutor(object):
 		self.method = method
 		self.value = value
 		self.repeats = repeats
-		self.description = description
+		self.origin = 'Event - %s' % description
 
 		if device.typeString() == '433' and self.repeats > 1:
 			self.retries = 0  # No retries for 433
@@ -121,16 +121,18 @@ class DeviceActionExecutor(object):
 		self.device.command(
 			self.method,
 			self.value,
-			origin='Event - %s' % self.description,
+			origin=self.origin,
 			failure=self.__failure
 		)
 
 	def __failure(self, reason):
-		del reason
 		self.retries -= 1
 		if self.retries > 0:
+			del reason
 			tmr = Timer(60, self.execute)
 			tmr.start()
+		else:
+			self.device.setStateFailed(self.method, self.value, reason, self.origin)
 
 class DeviceAction(Action):
 	def __init__(self, manager, **kwargs):
