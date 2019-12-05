@@ -650,7 +650,7 @@ class Device(object):
 
 	@staticmethod
 	def normalizeStateValue(state, stateValue):
-		if isinstance(action, str) or isinstance(action, unicode):
+		if isinstance(state, str) or isinstance(state, unicode):
 			method = Device.methodStrToInt(state)
 		else:
 			method = state
