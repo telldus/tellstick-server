@@ -111,14 +111,28 @@ class Application():
 		event loop.
 
 		:param Callable[...,Any] cbFn: The target function to run
+		:returns: a Future object that can be used to get the result of the target function
 		:since: 2.0
 
 		.. note::
 			Calls to this method are threadsafe.
 		"""
-		self.loop.call_soon_threadsafe(
-			functools.partial(self.asyncCreateTask, cbFn, *args, **kwargs)
-		)
+		if Application.isMainThread():
+			# In main thread. We can just pass on the call
+			return self.asyncCreateTask(cbFn, *args, **kwargs)
+		# Not in main thread, we need to wrap everything
+		future = self.loop.create_future()
+		def taskDone(task):
+			try:
+				result = task.result()
+				future.set_result(result)
+			except Exception as error:
+				future.set_exception(error)
+		def mainThreadSyncronizer():
+			task = self.asyncCreateTask(cbFn, *args, **kwargs)
+			task.add_done_callback(taskDone)
+		self.loop.call_soon_threadsafe(mainThreadSyncronizer)
+		return future
 
 	def asyncCreateTask(self, cbFn: Callable[..., Any], *args, **kwargs):
 		"""Creates a task to run in the event loop.
