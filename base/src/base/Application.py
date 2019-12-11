@@ -116,7 +116,9 @@ class Application():
 		.. note::
 			Calls to this method are threadsafe.
 		"""
-		self.loop.call_soon_threadsafe(self.asyncCreateTask, cbFn, *args, **kwargs)
+		self.loop.call_soon_threadsafe(
+			functools.partial(self.asyncCreateTask, cbFn, *args, **kwargs)
+		)
 
 	def asyncCreateTask(self, cbFn: Callable[..., Any], *args, **kwargs):
 		"""Creates a task to run in the event loop.
