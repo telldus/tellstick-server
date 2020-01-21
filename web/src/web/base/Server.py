@@ -16,6 +16,8 @@ class IWebRequestHandler(IInterface):
 		"""Handle a request. Return a tuple with template and data"""
 	def getMenuItems():
 		"""Return array with menu items"""
+	def getNoSessionPaths():
+		"""Return array with paths that should be excluded from session management"""
 	def getTemplatesDirs():
 		""" Location of templates provided by plugin. """
 	def matchRequest(plugin, path):
@@ -128,7 +130,8 @@ class Server(Plugin):
 			'tools.sessions.timeout': 60,
 			'tools.sessions.httponly': True,
 		})
-		cherrypy.tree.mount(RequestHandler(self.context), '', config={
+		reqHandler = RequestHandler(self.context, self)
+		self.mainApp = cherrypy.tree.mount(reqHandler, '', config={
 			'/ws': {
 				'tools.websocket.on': True,
 				'tools.websocket.handler_cls': WebSocketHandler
@@ -139,6 +142,7 @@ class Server(Plugin):
 		cherrypy.tools.websocket = WebSocketTool()
 		cherrypy.engine.start()
 		Application().registerShutdown(self.stop)
+		reqHandler.setSessionPaths()
 
 	@staticmethod
 	def webSocketSend(module, action, data):
@@ -155,9 +159,10 @@ class Server(Plugin):
 class RequestHandler(object):
 	observers = ObserverCollection(IWebRequestHandler)
 
-	def __init__(self, context):
+	def __init__(self, context, server):
 		self.templates = None
 		self.context = context
+		self.server = server
 
 	@staticmethod
 	def loadTemplate(filename, dirs):
@@ -221,6 +226,17 @@ class RequestHandler(object):
 		data['menu'] = menu
 		stream = tmpl.generate(title='TellStick ZNet', **data)
 		return stream.render('html', doctype='html')
+
+	def setSessionPaths(self):
+		noSessionPaths = []
+		for observer in self.observers:
+			noSessionPath = observer.getNoSessionPaths()
+			if isinstance(noSessionPath, list):
+				noSessionPaths.extend(noSessionPath)
+			for nsPath in noSessionPaths:
+				self.server.mainApp.merge({nsPath: {
+					'tools.sessions.on': False,
+				}})
 
 	def __call__(self, plugin='', *args, **kwargs):
 		if plugin == 'ws':

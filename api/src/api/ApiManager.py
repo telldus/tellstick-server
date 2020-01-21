@@ -36,6 +36,10 @@ class ApiManager(Plugin):
 		self.tokenKey = None
 
 	@staticmethod
+	def getNoSessionPaths():
+		return ['/api/' + path for path in ['', 'device', 'devices', 'lua', 'sensor', 'sensors', 'system']]
+
+	@staticmethod
 	def getTemplatesDirs():
 		return [resource_filename('api', 'templates')]
 
