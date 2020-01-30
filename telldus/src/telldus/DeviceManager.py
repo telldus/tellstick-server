@@ -430,8 +430,6 @@ class DeviceManager(Plugin):
 			if dev.id() == sensorId:
 				if updateType == 'updateignored':
 					value = data['ignored']
-					if dev.ignored() == value:
-						return
 					dev.setIgnored(value)
 				self.__sendSensorChange(sensorId, updateType, value)
 				return
