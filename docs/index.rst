@@ -27,10 +27,10 @@ This also makes it fragile since Python plugins can affect the service negative.
 Lua
 ###
 
-Lua code is available on both TellStick ZNet Pro and TellStick ZNet Lite. Lua
+Lua code is available on both TellStick Net v2 and TellStick ZNet Lite v1/v2. Lua
 code runs in a sandbox and has only limited access to the system.
 
-To create a Lua script you need to access the local web server in TellStick ZNet.
+To create a Lua script you need to access the local web server in TellStick.
 Browse to: http://[ipaddress]/lua to access the editor.
 
 Lua codes works by signals from the server triggers the execution.
