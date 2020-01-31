@@ -112,7 +112,6 @@ class Application():
 		if run:
 			self.run()
 
-	@callback
 	def memoryLogger(self):
 		if not hasattr(self, 'startSnapshot'):
 			# memory debug not active, start it now instead
