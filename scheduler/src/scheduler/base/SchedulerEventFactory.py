@@ -298,7 +298,7 @@ class BlockheaterTrigger(TimeTrigger):
 		if currentDate > utc_datetime:
 			# departure time already passed today
 			local_datetime = local_timezone.localize(
-				datetime(currentDate.year, currentDate.month, currentDate.day+1, self.departureHour, self.departureMinute)
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.departureHour, self.departureMinute) + timedelta(days=1)
 			)
 			utc_datetime = pytz.utc.normalize(local_datetime.astimezone(pytz.utc))
 		return currentDate < (utc_datetime - timedelta(hours=self.maxRunTime/3600))
@@ -464,7 +464,7 @@ class TimeCondition(Condition):
 			# we reckon this has to be DST transition
 			# since the condition starts at non-existing time, instead start it just after the DST switch
 			fromTime = local_timezone.localize(
-				datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour+1, 0, 0)
+				datetime(currentDate.year, currentDate.month, currentDate.day, self.fromHour, 0, 0) + timedelta(hours=1)
 			)
 			fromTimeNonExistent = True
 		except pytz.exceptions.AmbiguousTimeError:
