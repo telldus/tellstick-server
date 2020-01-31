@@ -16,6 +16,8 @@ import signal
 import sys
 from .Plugin import Plugin, PluginContext
 
+import tracemalloc
+
 async def asyncWrapper(func, *args, **kwargs):
 	return func(*args, **kwargs)
 
@@ -94,12 +96,50 @@ class Application():
 		self.pluginContext = PluginContext()
 		signal.signal(signal.SIGINT, self.__signal)
 		signal.signal(signal.SIGTERM, self.__signal)
+		signal.signal(signal.SIGUSR2, self.__signal)
 		Application._mainThread = threading.currentThread()
 		self.loop = asyncio.get_event_loop()
 		self.loop.set_exception_handler(self.exceptionHandler)
 		self.shutdownEvent = asyncio.Event()
+		try:
+			self.startSnapshot = tracemalloc.take_snapshot()
+			self.lastSnapshot = self.startSnapshot
+			logging.warning("Starting with memory debug active")
+		except:
+			# This is OK, if PYTHONTRACEMALLOC env variable is not set (for example to 25),
+			# don't start memory debug
+			pass
 		if run:
 			self.run()
+
+	@callback
+	def memoryLogger(self):
+		if not hasattr(self, 'startSnapshot'):
+			# memory debug not active, start it now instead
+			tracemalloc.start(25)
+			logging.warning("Activating memory debug at late stage")
+			self.startSnapshot = tracemalloc.take_snapshot()
+			self.lastSnapshot = self.startSnapshot
+		top = 20
+		trace = 1
+		current = tracemalloc.take_snapshot()
+		totalStats = current.compare_to(self.startSnapshot, 'filename')
+		lastStats = current.compare_to(self.lastSnapshot, 'lineno')
+		logging.warning("Top diffs since start")
+		for i, stat in enumerate(totalStats[:top], 1):
+			logging.warning(stat)
+		logging.warning("Top incremental")
+		for i, stat in enumerate(lastStats[:top], 1):
+			logging.warning(stat)
+		logging.warning("Top current")
+		for i, stat in enumerate(current.statistics('filename')[:top], 1):
+			logging.warning(stat)
+		traces = current.statistics('traceback')
+		for stat in traces[:trace]:
+			logging.warning("traceback: memory_blocks=" + str(stat.count) + ", size_kB=" + str(stat.size/1024))
+			for line in stat.traceback.format():
+				logging.warning(line)
+		self.lastSnapshot = current
 
 	def createTask(self, cbFn: Callable[..., Any], *args, **kwargs):
 		"""Creates a task to run in the event loop.
@@ -337,6 +377,10 @@ class Application():
 		signalManager.sendSignal(msg, *args, **kwargs)
 
 	def __signal(self, signum, __frame):
+		if signum == signal.SIGUSR2:
+			del __frame
+			self.memoryLogger()
+			return
 		logging.getLogger(__name__).info("Signal %d caught", signum)
 		self.quit(1)
 
