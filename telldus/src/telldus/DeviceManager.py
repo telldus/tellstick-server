@@ -15,7 +15,7 @@ from base import \
 	mainthread, \
 	signal, \
 	slot
-from .Device import CachedDevice, DeviceAbortException
+from .Device import CachedDevice, DeviceAbortException, Device
 
 __name__ = 'telldus'  # pylint: disable=W0622
 
@@ -325,6 +325,8 @@ class DeviceManager(Plugin):
 			return
 		if device.isDevice() is False:
 			return
+		if not reason:
+			reason = Device.FAILED_STATUS_UNKNOWN
 		extras = {
 			'reason': reason,
 		}
@@ -358,6 +360,9 @@ class DeviceManager(Plugin):
 				raise DeviceAbortException()
 		def fail(reason):
 			# We failed to set status for some reason, nack the server
+			if not reason:
+				# reason 0 will count as success in device log history
+				reason = Device.FAILED_STATUS_UNKNOWN
 			if 'ACK' in args:
 				msg = LiveMessage('NACK')
 				msg.append({
