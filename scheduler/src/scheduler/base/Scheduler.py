@@ -318,12 +318,11 @@ class Scheduler(Plugin):
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if 'client_device_id' not in runningJob:
-						print("Missing client_device_id, this is an error, perhaps refetch jobs?")
-						print(runningJob)
+						logging.warning("Missing client_device_id, this is an error, perhaps refetch jobs?")
 						continue
 					device = self.deviceManager.device(runningJob['client_device_id'])
 					if not device:
-						print("Missing device, b: " + str(runningJob['client_device_id']))
+						logging.warning("Missing device, b: " + str(runningJob['client_device_id']))
 						continue
 					if runningJob['maxRunTime'] > time.time():
 						if device.typeString() == '433' and runningJob['originalRepeats'] > 1:
@@ -375,7 +374,7 @@ class Scheduler(Plugin):
 	def runJob(self, jobData):
 		device = self.deviceManager.device(jobData['client_device_id'])
 		if not device:
-			print("Missing device: " + str(jobData['client_device_id']))
+			logging.warning("Missing device: " + str(jobData['client_device_id']))
 			return
 		method = jobData['method']
 		value = None
