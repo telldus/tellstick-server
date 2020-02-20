@@ -244,7 +244,7 @@ class Scheduler(Plugin):
 
 	@TelldusLive.handler('scheduler-remove')
 	def removeOneJob(self, msg):
-		if len(msg.argument(0).toNative()) != 0:  # pylint disable=C1801
+		if len(msg.argument(0).toNative()) != 0:  # pylint: disable=C1801
 			scheduleDict = msg.argument(0).toNative()
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
@@ -254,7 +254,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-report')
 	def receiveJobsFromServer(self, msg):
 		"""Receive list of jobs from server, saves to settings and calculate nextRunTimes"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
 			jobs = []
 		else:
 			scheduleDict = msg.argument(0).toNative()
@@ -265,7 +265,7 @@ class Scheduler(Plugin):
 	@TelldusLive.handler('scheduler-update')
 	def receiveOneJobFromServer(self, msg):
 		"""Receive one job from server, add or edit, save to settings and calculate nextRunTime"""
-		if len(msg.argument(0).toNative()) == 0:  # pylint disable=C1801
+		if len(msg.argument(0).toNative()) == 0:  # pylint: disable=C1801
 			return
 		scheduleDict = msg.argument(0).toNative()
 		job = scheduleDict['job']
@@ -290,14 +290,14 @@ class Scheduler(Plugin):
 		while self.running:
 			maintenanceJob = None
 			with self.maintenanceJobsLock:
-				if len(self.maintenanceJobs) > 0 \
+				if self.maintenanceJobs \
 				and self.maintenanceJobs[0]['nextRunTime'] < time.time():
 					maintenanceJob = self.maintenanceJobs.pop(0)
 			self.runMaintenanceJob(maintenanceJob)
 
 			jobCopy = None
 			with self.jobsLock:
-				if len(self.jobs) > 0 and self.jobs[0]['nextRunTime'] < time.time():
+				if self.jobs and self.jobs[0]['nextRunTime'] < time.time():
 					#a job has passed its nextRunTime
 					job = self.jobs[0]
 					jobId = job['id']
@@ -318,7 +318,7 @@ class Scheduler(Plugin):
 
 			jobsToRun = []  # jobs to run in own list, to avoid deadlocks (necessary?)
 			# Iterating using .keys(9 since we are modifiyng the dict while iterating
-			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
+			for runningJobId in self.runningJobs.keys():  # pylint: disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if 'client_device_id' not in runningJob:
@@ -326,7 +326,7 @@ class Scheduler(Plugin):
 						continue
 					device = self.deviceManager.device(runningJob['client_device_id'])
 					if not device:
-						logging.warning("Missing device, b: " +
+						logging.warning("Missing device, b: %s",
 						                str(runningJob['client_device_id']))
 						continue
 					if runningJob['maxRunTime'] > time.time():
@@ -379,7 +379,7 @@ class Scheduler(Plugin):
 	def runJob(self, jobData):
 		device = self.deviceManager.device(jobData['client_device_id'])
 		if not device:
-			logging.warning("Missing device: " + str(jobData['client_device_id']))
+			logging.warning("Missing device: %s", str(jobData['client_device_id']))
 			return
 		method = jobData['method']
 		value = None
