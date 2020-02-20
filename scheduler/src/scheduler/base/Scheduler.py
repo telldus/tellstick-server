@@ -14,6 +14,7 @@ from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 
 from .SunCalculator import SunCalculator
 
+
 class Scheduler(Plugin):
 	implements(ITelldusLiveObserver, IDeviceChange)
 
@@ -26,7 +27,7 @@ class Scheduler(Plugin):
 		self.maintenanceJobsLock = threading.Lock()
 		self.maintenanceJobs = []
 		self.lastMaintenanceJobId = 0
-		self.runningJobs = {} #id:s as keys
+		self.runningJobs = {}  # id:s as keys
 		self.settings = Settings('telldus.scheduler')
 		Application().registerShutdown(self.stop)
 		Application().registerMaintenanceJobHandler(self.addMaintenanceJobGeneric)
@@ -45,7 +46,8 @@ class Scheduler(Plugin):
 		self.thread.start()
 
 	def addMaintenanceJobGeneric(self, job):
-		self.addMaintenanceJob(job['nextRunTime'], job['callback'], job['recurrence'])
+		self.addMaintenanceJob(job['nextRunTime'], job['callback'],
+		                       job['recurrence'])
 
 	def addMaintenanceJob(self, nextRunTime, timeoutCallback, recurrence=0):
 		""" nextRunTime - GMT timestamp, timeoutCallback - the method to run,
@@ -53,10 +55,14 @@ class Scheduler(Plugin):
 		Returns: An id for the newly added job (for removal and whatnot)
 		Note, if the next nextRunTime needs to be calculated, it's better to do that
 		in the callback-method, and add a new job from there, instead of using "recurrence" """
-		jobData = {'nextRunTime': nextRunTime, 'callback': timeoutCallback, 'recurrence': recurrence}
+		jobData = {
+		    'nextRunTime': nextRunTime,
+		    'callback': timeoutCallback,
+		    'recurrence': recurrence
+		}
 		with self.maintenanceJobsLock:
 			self.lastMaintenanceJobId = self.lastMaintenanceJobId + 1
-			jobData['id'] = self.lastMaintenanceJobId  # add an ID, make it possible to remove it someday
+			jobData['id'] = self.lastMaintenanceJobId  # add an ID, make it possible to remove someday
 			self.maintenanceJobs.append(jobData)
 			self.maintenanceJobs.sort(key=lambda jobData: jobData['nextRunTime'])
 			return self.lastMaintenanceJobId
@@ -76,7 +82,7 @@ class Scheduler(Plugin):
 	def calculateNextRunTime(self, job):
 		"""Calculates nextRunTime for a job, depending on time, weekday and timezone."""
 		if not job['active'] or not job['weekdays']:
-			job['nextRunTime'] = 253402214400 #set to max value, only run just before the end of time
+			job['nextRunTime'] = 253402214400  # set to max value, only run just before the end of time
 			# just delete the job, until it's possible to edit schedules locally, inactive jobs has
 			# no place at all here
 			self.deleteJob(job['id'])
@@ -89,12 +95,14 @@ class Scheduler(Plugin):
 		runDate = None
 
 		for weekday in weekdays:
-			weekday = weekday - 1 #weekdays in python: 0-6, weekdays in our database: 1-7
+			weekday = weekday - 1  # weekdays in python: 0-6, weekdays in our database: 1-7
 			if weekday == today:
 				runToday = True
-			elif today < weekday and (nextWeekdayToRun is None or nextWeekdayToRun > weekday):
+			elif today < weekday and (nextWeekdayToRun is None or
+			                          nextWeekdayToRun > weekday):
 				nextWeekdayToRun = weekday
-			elif today > weekday and (firstWeekdayToRun is None or weekday < firstWeekdayToRun):
+			elif today > weekday and (firstWeekdayToRun is None or
+			                          weekday < firstWeekdayToRun):
 				firstWeekdayToRun = weekday
 
 		todayDate = datetime.now(timezone(self.timezone)).date()  # normalize?
@@ -102,7 +110,8 @@ class Scheduler(Plugin):
 			#this weekday is included in the ones that this schedule should be run on
 			runTimeToday = self.calculateRunTimeForDay(todayDate, job)
 			if runTimeToday > time.time():
-				job['nextRunTime'] = runTimeToday + random.randint(0, job['random_interval']) * 60
+				job['nextRunTime'] = runTimeToday + random.randint(
+				    0, job['random_interval']) * 60
 				return True
 			elif len(weekdays) == 1:
 				#this job should only run on this weekday, since it has already passed today, run it next week
@@ -124,13 +133,13 @@ class Scheduler(Plugin):
 				return False
 
 		job['nextRunTime'] = self.calculateRunTimeForDay(runDate, job) \
-		                     + random.randint(0, job['random_interval']) * 60
+                       + random.randint(0, job['random_interval']) * 60
 		return True
 
 	@staticmethod
 	def calculateNextWeekday(todayDate, weekday):
 		days_ahead = weekday - todayDate.weekday()
-		if days_ahead <= 0: # Target day already happened this week
+		if days_ahead <= 0:  # Target day already happened this week
 			days_ahead += 7
 		return todayDate + timedelta(days_ahead)
 
@@ -150,19 +159,13 @@ class Scheduler(Plugin):
 			return timegm(tzone.localize(runDate).utctimetuple())
 		elif job['type'] == 'sunrise':
 			sunCalc = SunCalculator()
-			riseSet = sunCalc.nextRiseSet(
-				timegm(runDate.utctimetuple()),
-				float(self.latitude),
-				float(self.longitude)
-			)
+			riseSet = sunCalc.nextRiseSet(timegm(runDate.utctimetuple()),
+			                              float(self.latitude), float(self.longitude))
 			return riseSet['sunrise'] + job['offset'] * 60
 		elif job['type'] == 'sunset':
 			sunCalc = SunCalculator()
-			riseSet = sunCalc.nextRiseSet(
-				timegm(runDate.utctimetuple()),
-				float(self.latitude),
-				float(self.longitude)
-			)
+			riseSet = sunCalc.nextRiseSet(timegm(runDate.utctimetuple()),
+			                              float(self.latitude), float(self.longitude))
 			return riseSet['sunset'] + job['offset'] * 60
 
 	def checkNewlyLoadedJob(self, job):
@@ -179,21 +182,20 @@ class Scheduler(Plugin):
 				#check for this day (today or yesterday)
 				runTime = self.calculateRunTimeForDay(currentDate, job)
 				runTimeMax = runTime + job['reps'] * 3 \
-				             + job['retry_interval'] * 60 * (job['retries'] + 1) \
-				             + 70 \
-				             + job['random_interval'] * 60
+                 + job['retry_interval'] * 60 * (job['retries'] + 1) \
+                 + 70 \
+                 + job['random_interval'] * 60
 				jobId = job['id']
 				executedJobs = self.settings.get('executedJobs', {})
 				if (str(jobId) not in executedJobs or executedJobs[str(jobId)] < runTime) \
-				   and time.time() > runTime \
-				   and time.time() < runTimeMax:
+                    and time.time() > runTime and time.time() < runTimeMax:
 					# run time for this job was passed during downtime, but it was passed within the
 					# max-runtime, and the last time it was executed (successfully) was before this
 					# run time, so it should be run again...
 					jobCopy = copy.deepcopy(job)
 					jobCopy['originalRepeats'] = job['reps']
 					jobCopy['nextRunTime'] = runTime
-					jobCopy['maxRunTime'] = runTimeMax #approximate maxRunTime, sanity check
+					jobCopy['maxRunTime'] = runTimeMax  #approximate maxRunTime, sanity check
 					self.runningJobs[jobId] = jobCopy
 					return
 			i = i + 1
@@ -203,7 +205,7 @@ class Scheduler(Plugin):
 			# Test this! It should be fast and keep original reference, they say (though it will
 			# iterate all, even if it could end after one)
 			self.jobs[:] = [x for x in self.jobs if x['id'] != jobId]
-			if jobId in self.runningJobs:	#TODO this might require a lock too?
+			if jobId in self.runningJobs:  # TODO this might require a lock too?
 				self.runningJobs[jobId]['retries'] = 0
 
 			executedJobs = self.settings.get('executedJobs', {})
@@ -224,7 +226,7 @@ class Scheduler(Plugin):
 		try:
 			jobs = self.settings.get('jobs', [])
 		except ValueError:
-			jobs = [] #something bad has been stored, just ignore it and continue?
+			jobs = []  # something bad has been stored, just ignore it and continue?
 			print("WARNING: Could not fetch schedules from local storage")
 		self.calculateJobs(jobs)
 
@@ -245,7 +247,7 @@ class Scheduler(Plugin):
 			scheduleDict = msg.argument(0).toNative()
 			jobId = scheduleDict['id']
 			self.deleteJob(jobId)
-			self.settings['jobs'] = self.jobs #save to storage
+			self.settings['jobs'] = self.jobs  # save to storage
 			self.live.pushToWeb('scheduler', 'removed', jobId)
 
 	@TelldusLive.handler('scheduler-report')
@@ -268,12 +270,12 @@ class Scheduler(Plugin):
 		job = scheduleDict['job']
 
 		active = self.calculateNextRunTime(job)
-		self.deleteJob(job['id']) #delete the job if it already exists (update)
+		self.deleteJob(job['id'])  # delete the job if it already exists (update)
 		if active:
 			with self.jobsLock:
 				self.jobs.append(job)
 				self.jobs.sort(key=lambda job: job['nextRunTime'])
-		self.settings['jobs'] = self.jobs #save to storage
+		self.settings['jobs'] = self.jobs  # save to storage
 		# TODO is this a good idea? Trying to avoid cache problems where updates haven't come through?
 		# But this may not work if the same schedule is saved many times in a row, or if changes
 		# wasn't saved correctly to the database (not possible yet, only one database for schedules)
@@ -287,7 +289,8 @@ class Scheduler(Plugin):
 		while self.running:
 			maintenanceJob = None
 			with self.maintenanceJobsLock:
-				if len(self.maintenanceJobs) > 0 and self.maintenanceJobs[0]['nextRunTime'] < time.time():
+				if len(self.maintenanceJobs) > 0 \
+				and self.maintenanceJobs[0]['nextRunTime'] < time.time():
 					maintenanceJob = self.maintenanceJobs.pop(0)
 			self.runMaintenanceJob(maintenanceJob)
 
@@ -297,32 +300,33 @@ class Scheduler(Plugin):
 					#a job has passed its nextRunTime
 					job = self.jobs[0]
 					jobId = job['id']
-					jobCopy = copy.deepcopy(job) #make a copy, don't edit the original job
+					jobCopy = copy.deepcopy(job)  # make a copy, don't edit the original job
 
 			if jobCopy:
 				jobCopy['originalRepeats'] = job['reps']
 				# approximate maxRunTime, sanity check
 				jobCopy['maxRunTime'] = jobCopy['nextRunTime'] \
-				                        + jobCopy['reps'] * 3 \
-				                        + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) \
-				                        + 70 \
-				                        + jobCopy['random_interval'] * 60
+                            + jobCopy['reps'] * 3 \
+                            + jobCopy['retry_interval'] * 60 * (jobCopy['retries'] + 1) \
+                            + 70 \
+                            + jobCopy['random_interval'] * 60
 				self.runningJobs[jobId] = jobCopy
 				self.calculateNextRunTime(job)
 				with self.jobsLock:
 					self.jobs.sort(key=lambda job: job['nextRunTime'])
 
-			jobsToRun = [] # jobs to run in a separate list, to avoid deadlocks (necessary?)
+			jobsToRun = []  # jobs to run in own list, to avoid deadlocks (necessary?)
 			# Iterating using .keys(9 since we are modifiyng the dict while iterating
 			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
 					if 'client_device_id' not in runningJob:
-						logging.warning("Missing client_device_id, this is an error, perhaps refetch jobs?")
+						logging.warning("Missing client_device_id, error, perhaps refetch jobs?")
 						continue
 					device = self.deviceManager.device(runningJob['client_device_id'])
 					if not device:
-						logging.warning("Missing device, b: " + str(runningJob['client_device_id']))
+						logging.warning("Missing device, b: " +
+						                str(runningJob['client_device_id']))
 						continue
 					if runningJob['maxRunTime'] > time.time():
 						if device.typeString() == '433' and runningJob['originalRepeats'] > 1:
@@ -334,16 +338,16 @@ class Scheduler(Plugin):
 								continue
 
 						if runningJob['retries'] > 0:
-							runningJob['nextRunTime'] = time.time() + (runningJob['retry_interval'] * 60)
+							runningJob['nextRunTime'] = time.time() + \
+							    (runningJob['retry_interval'] * 60)
 							runningJob['retries'] = runningJob['retries'] - 1
 							runningJob['reps'] = runningJob['originalRepeats']
 							jobsToRun.append(runningJob)
 							continue
 					else:
-						self.deviceManager.stateUpdatedFail(device, runningJob['method'],
-														    runningJob['value'],
-														    Device.FAILED_STATUS_TIMEDOUT,
-														    Scheduler.ORIGIN)
+						self.deviceManager.stateUpdatedFail(
+						    device, runningJob['method'], runningJob['value'],
+						    Device.FAILED_STATUS_TIMEDOUT, Scheduler.ORIGIN)
 					del self.runningJobs[runningJobId]  # max run time passed or out of retries
 
 			for jobToRun in jobsToRun:
@@ -364,7 +368,7 @@ class Scheduler(Plugin):
 		# save timestamp for when this was executed, to avoid rerun within maxRunTime on restart
 		# TODO is this too much writing?
 		executedJobs = self.settings.get('executedJobs', {})
-		executedJobs[str(jobId)] = time.time() #doesn't work well with int type, for some reason
+		executedJobs[str(jobId)] = time.time()  # doesn't work well with int type
 		self.settings['executedJobs'] = executedJobs
 		#executedJobsTest = self.settings.get('executedJobs', {})
 		if jobId in self.runningJobs:
@@ -381,13 +385,11 @@ class Scheduler(Plugin):
 		if 'value' in jobData:
 			value = jobData['value']
 
-		device.command(
-			method,
-			value=value,
-			origin=Scheduler.ORIGIN,
-			success=self.successfulJobRun,
-			callbackArgs=[jobData['id']]
-		)
+		device.command(method,
+		               value=value,
+		               origin=Scheduler.ORIGIN,
+		               success=self.successfulJobRun,
+		               callbackArgs=[jobData['id']])
 
 	@mainthread
 	def runMaintenanceJob(self, jobData):
@@ -395,9 +397,6 @@ class Scheduler(Plugin):
 			return
 		if jobData['recurrence']:
 			# readd the job for another run
-			self.addMaintenanceJob(
-				time.time() + jobData['recurrence'],
-				jobData['callback'],
-				jobData['recurrence']
-			)
+			self.addMaintenanceJob(time.time() + jobData['recurrence'],
+			                       jobData['callback'], jobData['recurrence'])
 		jobData['callback']()
