@@ -54,4 +54,4 @@ class CommandClass:
 
 
 # pylint: disable=wrong-import-position
-from . import ManuFacturerSpecific, SensorMultilevel, SwitchBinary
+from . import ManuFacturerSpecific, Meter, SensorMultilevel, SwitchBinary
