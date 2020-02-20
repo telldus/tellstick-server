@@ -2,8 +2,9 @@
 
 import logging
 
-from pyzwave.commandclass import SwitchBinary
+from pyzwave.commandclass import Basic, SwitchBinary
 from pyzwave.const.ZW_classcmd import COMMAND_CLASS_SENSOR_MULTILEVEL, COMMAND_CLASS_METER
+from pyzwave.message import Message
 import pyzwave.node
 
 from zwave.commandClass import CommandClass
@@ -20,6 +21,7 @@ class Node(Device):
 		self._supported = {}
 		for cmdClassId, cmdClass in self._node.supported.items():
 			self._supported[cmdClassId] = CommandClass.load(cmdClassId, cmdClass, self)
+		node.addListener(self)
 
 	async def _command(self, action, value, **_kwargs):  # pylint: disable=arguments-differ
 		if action == Device.TURNON:
@@ -33,6 +35,18 @@ class Node(Device):
 			await self._node.supported[cmdClass].interview()
 		else:
 			await self._node.interview()
+
+	async def onMessage(self, _: pyzwave.node.Node, message: Message):
+		# Command class basic is normally not in NIF so we handle it here
+		if isinstance(message, Basic.Report):
+			if message.value == 0xFF:
+				self.setState(Device.TURNON, None)
+				return True
+			if message.value == 0x00:
+				self.setState(Device.TURNOFF, None)
+				return True
+		# Not handled
+		return False
 
 	def localId(self) -> str:
 		return self._node.nodeId
