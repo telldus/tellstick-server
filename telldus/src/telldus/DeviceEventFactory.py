@@ -131,8 +131,6 @@ class DeviceActionExecutor(object):
 			del reason
 			tmr = Timer(60, self.execute)
 			tmr.start()
-		else:
-			self.device.setStateFailed(self.method, self.value, reason, self.origin)
 
 class DeviceAction(Action):
 	def __init__(self, manager, **kwargs):
