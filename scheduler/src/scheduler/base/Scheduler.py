@@ -9,13 +9,15 @@ from calendar import timegm
 from pytz import timezone
 
 from base import Application, mainthread, Settings, Plugin, implements
-from telldus import DeviceManager, IDeviceChange
+from telldus import Device, DeviceManager, IDeviceChange
 from tellduslive.base import TelldusLive, LiveMessage, ITelldusLiveObserver
 
 from .SunCalculator import SunCalculator
 
 class Scheduler(Plugin):
 	implements(ITelldusLiveObserver, IDeviceChange)
+
+	ORIGIN = 'Scheduler'
 
 	def __init__(self):
 		self.running = False
@@ -315,15 +317,15 @@ class Scheduler(Plugin):
 			for runningJobId in self.runningJobs.keys():  # pylint disable=C0201
 				runningJob = self.runningJobs[runningJobId]
 				if runningJob['nextRunTime'] < time.time():
+					if 'client_device_id' not in runningJob:
+						print("Missing client_device_id, this is an error, perhaps refetch jobs?")
+						print(runningJob)
+						continue
+					device = self.deviceManager.device(runningJob['client_device_id'])
+					if not device:
+						print("Missing device, b: " + str(runningJob['client_device_id']))
+						continue
 					if runningJob['maxRunTime'] > time.time():
-						if 'client_device_id' not in runningJob:
-							print("Missing client_device_id, this is an error, perhaps refetch jobs?")
-							print(runningJob)
-							continue
-						device = self.deviceManager.device(runningJob['client_device_id'])
-						if not device:
-							print("Missing device, b: " + str(runningJob['client_device_id']))
-							continue
 						if device.typeString() == '433' and runningJob['originalRepeats'] > 1:
 							#repeats for 433-devices only
 							runningJob['reps'] = int(runningJob['reps']) - 1
@@ -338,8 +340,12 @@ class Scheduler(Plugin):
 							runningJob['reps'] = runningJob['originalRepeats']
 							jobsToRun.append(runningJob)
 							continue
-
-					del self.runningJobs[runningJobId] #max run time passed or out of retries
+					else:
+						self.deviceManager.stateUpdatedFail(device, runningJob['method'],
+														    runningJob['value'],
+														    Device.FAILED_STATUS_TIMEDOUT,
+														    Scheduler.ORIGIN)
+					del self.runningJobs[runningJobId]  # max run time passed or out of retries
 
 			for jobToRun in jobsToRun:
 				self.runJob(jobToRun)
@@ -379,7 +385,7 @@ class Scheduler(Plugin):
 		device.command(
 			method,
 			value=value,
-			origin='Scheduler',
+			origin=Scheduler.ORIGIN,
 			success=self.successfulJobRun,
 			callbackArgs=[jobData['id']]
 		)
