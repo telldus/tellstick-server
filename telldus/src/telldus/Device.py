@@ -197,11 +197,13 @@ class Device(object):
 				value['changeMode'] = False  # Probably not needed, just to be sure
 
 		def triggerFail(reason):
+			self.setStateFailed(method, value, reason, origin)
 			if failure:
 				try:
 					failure(reason, *callbackArgs)
 				except DeviceAbortException:
 					return
+
 		def s(state=None, stateValue=None):
 			if state is None:
 				state = method
