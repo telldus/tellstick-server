@@ -686,6 +686,14 @@ class Device(object):
 					stateValue = {}
 			if not isinstance(stateValue, dict):
 				return method, {}
+
+			if 'temperature' in stateValue:
+				# Make sure temperature is a number
+				try:
+					stateValue['temperature'] = float(stateValue['temperature'])
+				except:
+					pass
+
 			# Make sure only allowed keys exists
 			allowedKeys = ('setpoint', 'mode', 'temperature', 'changeMode')
 			return method, {key: stateValue[key] for key in stateValue if key in allowedKeys}
