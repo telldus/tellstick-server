@@ -357,6 +357,38 @@ class Device(object):
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id
 
+	def normalizeDeviceEvent(self, state, stateValue):
+		"""Return what's actually changed in the device event"""
+		if state == Device.THERMOSTAT:
+			response = {}
+			mode = stateValue['mode']
+			oldStateValue = self._stateValues.get(str(state), None)
+			changeMode = 0
+			oldMode = oldStateValue.get('mode', None)
+			if mode != oldMode:
+				changeMode = 1
+			else:
+				# see which (if any) temperature changed
+				oldSetPoint = oldStateValue.get('setpoint', {})
+				setPoint = stateValue.get('setpoint', {})
+				for setPointMode in setPoint:
+					if setPointMode in oldSetPoint:
+						if setPoint[setPointMode] != oldSetPoint[setPointMode]:
+							# TODO, currently only one at a time (theoretically several could be changed at one time)
+							mode = setPointMode
+							response['temperature'] = setPoint[setPointMode]
+							break
+					else:
+						# new setPointMode
+						mode = setPointMode
+						response['temperature'] = setPoint[setPointMode]
+						break
+
+			response['changeMode'] = changeMode
+			response['mode'] = mode
+			return response
+		return None
+
 	def parameters(self):
 		"""
 		:returns: a static dictionary of paramters describing the device.
@@ -534,24 +566,27 @@ class Device(object):
 
 		_, stateValue = Device.normalizeStateValue(state, stateValue)
 
-		if state in (Device.DIM, Device.RGB, Device.THERMOSTAT):
-			# Only set the statevalue for these states
-			self._stateValues[str(state)] = stateValue
-
+		executedState = state
+		executedStateValue = None
 		if state == Device.THERMOSTAT:
 			# We never go to this state. We use on or off instead
+			executedStateValue = self.normalizeDeviceEvent(state, stateValue)
 			mode = stateValue.get('mode', '')
 			if mode == 'off':
 				state = Device.TURNOFF
 			else:
 				state = Device.TURNON
 
+		if executedState in (Device.DIM, Device.RGB, Device.THERMOSTAT):
+			# Only set the statevalue for these states
+			self._stateValues[str(executedState)] = stateValue
+
 		if state not in (Device.EXECUTE, Device.LEARN, Device.RGB):
 			# don't change the state itself for some types
 			self._state = state
 
 		if self._manager:
-			self._manager.stateUpdated(self, ackId=ack, origin=origin)
+			self._manager.stateUpdated(self, ackId=ack, origin=origin, executedState=executedState, executedStateValue=executedStateValue)
 
 	def setStateFailed(self, state, stateValue=None, reason=0, origin=None):
 		if self._manager:
