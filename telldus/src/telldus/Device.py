@@ -540,7 +540,6 @@ class Device(object):
 				state = Device.TURNOFF
 			else:
 				state = Device.TURNON
-		self._state = state
 
 		if state not in (Device.EXECUTE, Device.LEARN, Device.RGB):
 			# don't change the state itself for some types
