@@ -292,10 +292,12 @@ class DeviceManager(Plugin):
 		msg.append(valueList)
 		self.live.send(msg)
 
-	def stateUpdated(self, device, ackId=None, origin=None):
+	def stateUpdated(self, device, ackId=None, origin=None, executedState=None, executedStateValue=None):
 		if device.isDevice() is False:
 			return
+		(state, stateValue) = device.state()
 		extras = {
+			'deviceState': state,
 			'stateValues': device.stateValues()
 		}
 		if ackId:
@@ -304,18 +306,26 @@ class DeviceManager(Plugin):
 			extras['origin'] = origin
 		else:
 			extras['origin'] = 'Incoming signal'
-		(state, stateValue) = device.state()
-		self.__deviceStateChanged(device, state, stateValue, extras['origin'])
+		if executedStateValue:
+			stateValue = executedStateValue
+		elif executedState and executedState != state:
+			# "state" is the current state of the device, but not
+			# what was actually executed
+			stateValue = device.stateValue(executedState)
+
+		self.__deviceStateChanged(device, executedState, stateValue, extras['origin'])
+
 		if isinstance(stateValue, dict):
 			stateValue = json.dumps(stateValue)
 		else:
 			stateValue = str(stateValue)
 		self.save()
+
 		if not self.live.registered:
 			return
 		msg = LiveMessage("DeviceEvent")
 		msg.append(device.id())
-		msg.append(state)
+		msg.append(executedState)
 		msg.append(str(stateValue))
 		msg.append(extras)
 		self.live.send(msg)
