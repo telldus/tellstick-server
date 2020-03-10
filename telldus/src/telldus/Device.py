@@ -521,10 +521,11 @@ class Device(object):
 		"""
 		if stateValue is None:
 			stateValue = ''
-		if self._state == state and self._stateValues.get(state, None) == stateValue:
+		if (self._state == state or state in (Device.RGB, Device.THERMOSTAT)) and self._stateValues.get(str(state), None) == stateValue:
 			if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
 				# Same state/statevalue and less than one second ago, most probably
 				# just the same value being resent, ignore
+				# Note, this of course does not work for RGB, Thermostat, learn and execute
 				return
 			if onlyUpdateIfChanged:
 				# No need to update
