@@ -357,7 +357,7 @@ class Device(object):
 		if state == Device.THERMOSTAT:
 			response = {}
 			mode = stateValue['mode']
-			oldStateValue = self._stateValues.get(str(state), None)
+			oldStateValue = self._stateValues.get(str(state), {})
 			changeMode = 0
 			oldMode = oldStateValue.get('mode', None)
 			if mode != oldMode:
