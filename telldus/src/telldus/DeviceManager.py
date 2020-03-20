@@ -371,7 +371,7 @@ class DeviceManager(Plugin):
 				break
 		def success(state, stateValue):
 			if 'ACK' in args:
-				device.setState(state, stateValue, ack=args['ACK'])
+				device.setState(state, stateValue, ack=args['ACK'], executedStateValue=value)
 				# Abort the DeviceEvent this triggered
 				raise DeviceAbortException()
 		def fail(reason):
