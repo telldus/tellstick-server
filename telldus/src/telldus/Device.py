@@ -209,7 +209,7 @@ class Device(object):
 					success(state=state, stateValue=stateValue, *callbackArgs)
 				except DeviceAbortException:
 					return
-			self.setState(state, stateValue, origin=origin)
+			self.setState(state, stateValue, origin=origin, executedStateValue=value)
 
 		if method == 0:
 			triggerFail(0)
@@ -533,7 +533,7 @@ class Device(object):
 			self._manager.sensorValuesUpdated(self, values)
 			self._manager.save()
 
-	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False):
+	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False, executedStateValue=None):
 		"""
 		Update the state of the device. Use this method if the state should be updated from an
 		external source and not by an command. Examples if the state was updated on the device
@@ -558,14 +558,15 @@ class Device(object):
 				# No need to update
 				return
 		self.lastUpdated = time.time()
-
 		_, stateValue = Device.normalizeStateValue(state, stateValue)
 
 		executedState = state
-		executedStateValue = None
+
 		if state == Device.THERMOSTAT:
 			# We never go to this state. We use on or off instead
-			executedStateValue = self.normalizeDeviceEvent(state, stateValue)
+			if not executedStateValue:
+				# incoming signal
+				executedStateValue = self.normalizeDeviceEvent(state, stateValue)
 			mode = stateValue.get('mode', '')
 			if mode == 'off':
 				state = Device.TURNOFF
