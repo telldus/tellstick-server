@@ -397,7 +397,7 @@ class DeviceManager(Plugin):
 		if 'action' not in args:
 			return
 		if args['action'] == 'setName':
-			if 'name' not in args or args['name'] == '':
+			if 'name' not in args:
 				return
 			for dev in self.devices:
 				if dev.id() != args['device']:

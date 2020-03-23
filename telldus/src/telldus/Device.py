@@ -464,6 +464,9 @@ class Device(object):
 			self._manager.deviceMetadataUpdated(self, name)
 
 	def setName(self, name):
+		if name == '' and not self.isSensor():
+			# empty names only allowed for sensors
+			return
 		self._name = name
 		self.paramUpdated('name')
 
