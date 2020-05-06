@@ -99,10 +99,12 @@ class Group(Plugin):
 		self.deviceManager.finishedLoading('group')
 		self.live = TelldusLive(self.context)  # pylint: disable=too-many-function-args
 
-	def addDevice(self, name, devices):
+	def addDevice(self, uuid, name, devices):
 		if not isinstance(devices, list):
 			return
 		device = GroupDevice()
+		if uuid:
+			device.setUuid(uuid)
 		device.setName(name)
 		device.setParams({'devices': devices})
 		self.devices.append(device)
@@ -113,7 +115,15 @@ class Group(Plugin):
 		data = msg.argument(0).toNative()
 		action = data['action']
 		if action == 'addGroup':
-			self.addDevice(data['name'], data['devices'])
+			# Sent from web-v2 application
+			self.addDevice(None, data['name'], data['devices'])
+
+		elif action == 'addDevice':
+			# Sent from Telldus API
+			self.addDevice(
+			    data.get('id', None), data['name'],
+			    data.get('parameters', {}).get('devices', [])
+			)
 
 		elif action == 'editGroup':
 			deviceId = data['device']
