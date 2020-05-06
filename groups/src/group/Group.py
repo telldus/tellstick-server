@@ -4,12 +4,14 @@ from base import implements, Plugin
 from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
 
+
 class GroupDevice(Device):
 	def __init__(self):
 		super(GroupDevice, self).__init__()
 		self._nodeId = 0
 		self.devices = []
 
+	# pylint: disable=arguments-differ
 	def _command(self, action, value, success, failure, ignore, **__kwargs):
 		del failure
 		for deviceId in self.devices:
@@ -17,12 +19,12 @@ class GroupDevice(Device):
 			if not device:
 				continue
 			device.command(
-				action,
-				value,
-				origin='Group %s' % self.name(),
-				success=None,
-				failure=None,
-				ignore=ignore
+			    action,
+			    value,
+			    origin='Group %s' % self.name(),
+			    success=None,
+			    failure=None,
+			    ignore=ignore
 			)
 		success()
 
@@ -46,12 +48,12 @@ class GroupDevice(Device):
 
 	def parameters(self):
 		return {
-			'devices': list(self.devices),  # Return copy
+		    'devices': list(self.devices),  # Return copy
 		}
 
 	def params(self):
 		return {
-			'devices': self.devices,
+		    'devices': self.devices,
 		}
 
 	def setId(self, newId):
@@ -80,12 +82,13 @@ class GroupDevice(Device):
 			methods = methods | device.methods()
 		return methods
 
+
 class Group(Plugin):
 	implements(ITelldusLiveObserver)
 
 	def __init__(self):
 		self.devices = []
-		self.deviceManager = DeviceManager(self.context)
+		self.deviceManager = DeviceManager(self.context)  # pylint: disable=too-many-function-args
 		for oldDevice in self.deviceManager.retrieveDevices('group'):
 			params = oldDevice.params()
 			device = GroupDevice()
@@ -94,16 +97,14 @@ class Group(Plugin):
 			device.setParams(params)
 			self.deviceManager.addDevice(device)
 		self.deviceManager.finishedLoading('group')
-		self.live = TelldusLive(self.context)
+		self.live = TelldusLive(self.context)  # pylint: disable=too-many-function-args
 
 	def addDevice(self, name, devices):
 		if not isinstance(devices, list):
 			return
 		device = GroupDevice()
 		device.setName(name)
-		device.setParams({
-			'devices': devices
-		})
+		device.setParams({'devices': devices})
 		self.devices.append(device)
 		self.deviceManager.addDevice(device)
 
@@ -119,7 +120,7 @@ class Group(Plugin):
 			for device in self.devices:
 				if device.id() == deviceId:
 					device.setParams({
-						'devices': data['devices'],
+					    'devices': data['devices'],
 					})
 					device.paramUpdated('devices')
 					break
