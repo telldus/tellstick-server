@@ -14,11 +14,15 @@ import urllib.parse
 import zipfile
 import pkg_resources
 import gnupg
+from typing import Set, Tuple
 
 from six.moves.urllib.parse import urlencode
 import yaml
 
-from base import Application, Plugin, mainthread, ConfigurationManager
+from base import (
+    Application, ISignalObserver, implements, Plugin, mainthread,
+    ConfigurationManager, slot
+)
 from board import Board
 from web.base import Server
 
@@ -184,9 +188,13 @@ class LoadedPlugin():
 			raise Exception('Could not verify signature: %s' % result.status)
 		return True
 
+
 class Loader(Plugin):
+	implements(ISignalObserver)
+
 	def __init__(self, *args):
 		del args
+		self.suggestedPlugins: Set[str] = set()
 		self.plugins = []
 		self.initializeKeychain()
 		self.loadPlugins()
@@ -434,5 +442,41 @@ class Loader(Plugin):
 		data = parser.parse()
 		with open('%s/plugins.yml' % Board.pluginPath(), 'w') as fd:
 			yaml.dump(data, fd, default_flow_style=False)
+		# Fetch discovery information
+		parser.fetchDiscovery('{}/discovery.yml'.format(Board.pluginPath()))
 		# Notify clients through websocket
 		Server(self.context).webSocketSend('plugins', 'storePluginsUpdated', None)
+
+	@slot('SSDPDeviceDiscovered')
+	def __ssdpDeviceDiscovered(self, device):
+		match, pluginName = self.sspdDeviceMatch(device)
+		if not match:
+			return
+		self.suggestedPlugins.add(pluginName)
+
+	@staticmethod
+	def sspdDeviceMatch(device) -> Tuple[bool, str]:
+		try:
+			plugins = yaml.safe_load(
+			    open('{}/discovery.yml'.format(Board.pluginPath()), 'r').read()
+			)
+		except FileNotFoundError:
+			# File not found. Bail
+			return False, ""
+
+		for plugin, values in plugins.get('ssdp', {}).items():
+			# First compare st. If no match we do not need to fetch the descriptor
+			for ssdpValues in values:
+				serviceType = ssdpValues.get('st')
+				if serviceType and serviceType != device.st:
+					# No match
+					continue
+
+				match = True
+				for ssdpKey, ssdpValue in ssdpValues.items():
+					if getattr(device, ssdpKey) != ssdpValue:
+						match = False
+						break
+				if match:
+					return True, plugin
+		return False, ""

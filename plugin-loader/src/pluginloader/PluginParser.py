@@ -1,12 +1,26 @@
 # -*- coding: utf-8 -*-
 
 import http.client
+import logging
 import xml.parsers.expat
 
 from board import Board
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class PluginParser(object):
+	def fetchDiscovery(self, path):
+		conn = http.client.HTTPConnection('fw.telldus.com:80')
+		try:
+			conn.request('GET', '/discovery.yml')
+			response = conn.getresponse()
+		except:
+			_LOGGER.error("Could not get discovery list")
+			return
+		with open(path, 'wb') as fd:
+			fd.write(response.read())
+
 	def parse(self):
 		print("Update plugins")
 		conn = http.client.HTTPConnection('fw.telldus.com:80')  # 2to3, TODO test
