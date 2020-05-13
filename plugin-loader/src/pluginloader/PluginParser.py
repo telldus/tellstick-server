@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from board import Board
 import http.client
 import xml.parsers.expat
+
+from board import Board
+
 
 class PluginParser(object):
 	def parse(self):
@@ -20,15 +22,16 @@ class PluginParser(object):
 		self.edition = None
 		self.plugins = []
 		self.content = ''
+
 		def startElement(name, attrs):
 			self.queue.append((name, attrs))
 			if name == 'plugin':
 				self.plugin = {
-					'author': '',
-					'author-email': '',
-					'name': str(attrs['name']),
-					'category': str(attrs['category']),
-					'compatible': False,
+				    'author': '',
+				    'author-email': '',
+				    'name': str(attrs['name']),
+				    'category': str(attrs['category']),
+				    'compatible': False,
 				}
 				if 'color' in attrs:
 					self.plugin['color'] = str(attrs['color'])
@@ -37,7 +40,7 @@ class PluginParser(object):
 				if name == 'author':
 					if 'name' in attrs:
 						self.plugin['author'] = str(attrs['name'])
-					if 'email' in attrs :
+					if 'email' in attrs:
 						self.plugin['author-email'] = str(attrs['email'])
 				if name == 'edition':
 					# TODO, check minimumSoftwareVersion and maximumSoftwareVersion
@@ -46,11 +49,13 @@ class PluginParser(object):
 				if self.edition != None:
 					if name == 'file':
 						self.edition['file'] = {
-							'size': int(attrs['size']),
-							'sha1': str(attrs['sha1']),
+						    'size': int(attrs['size']),
+						    'sha1': str(attrs['sha1']),
 						}
+
 		def characterDataHandler(c):
 			self.content = self.content + c
+
 		def endElement(name):
 			(el, attrs) = self.queue.pop()
 			content = str(self.content.strip())
