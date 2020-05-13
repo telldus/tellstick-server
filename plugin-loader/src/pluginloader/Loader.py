@@ -24,6 +24,9 @@ from web.base import Server
 
 from .PluginParser import PluginParser
 
+_LOGGER = logging.getLogger(__name__)
+
+
 def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
 
@@ -89,7 +92,7 @@ class LoadedPlugin():
 	@staticmethod
 	def printBacktrace(backtrace):
 		for func in backtrace:
-			logging.error(str(func))
+			_LOGGER.error(str(func))
 
 	def remove(self):
 		for cls in self.classes:
@@ -131,7 +134,7 @@ class LoadedPlugin():
 			if not self.verify():
 				return
 		except Exception as exception:
-			logging.warning("Could not load plugin %s: %s", self.name, str(exception))
+			_LOGGER.warning("Could not load plugin %s: %s", self.name, str(exception))
 			return
 		for package in self.packages:
 			self.__loadEgg(package)
@@ -144,7 +147,7 @@ class LoadedPlugin():
 
 	def __loadEgg(self, egg):
 		for dist in pkg_resources.find_distributions('%s/%s' % (self.path, egg)):
-			logging.warning("Loading plugin %s %s", dist.project_name, dist.version)
+			_LOGGER.warning("Loading plugin %s %s", dist.project_name, dist.version)
 			dist.activate()
 			for entry in dist.get_entry_map(group='telldus.plugins'):
 				info = dist.get_entry_info('telldus.plugins', entry)
@@ -153,8 +156,8 @@ class LoadedPlugin():
 					self.classes.append(moduleClass)
 				except Exception as exception:
 					_exc_type, _exc_value, exc_traceback = sys.exc_info()
-					logging.error("Could not load %s", str(entry))
-					logging.error(str(exception))
+					_LOGGER.error("Could not load %s", str(entry))
+					_LOGGER.error(str(exception))
 					self.printBacktrace(traceback.extract_tb(exc_traceback))
 
 			for entry in dist.get_entry_map(group='telldus.startup'):
@@ -168,8 +171,8 @@ class LoadedPlugin():
 						moduleClass()
 				except Exception as exception:
 					_exc_type, _exc_value, exc_traceback = sys.exc_info()
-					logging.error("Could not load %s", str(entry))
-					logging.error(str(exception))
+					_LOGGER.error("Could not load %s", str(entry))
+					_LOGGER.error(str(exception))
 					self.printBacktrace(traceback.extract_tb(exc_traceback))
 
 	@staticmethod
@@ -359,7 +362,7 @@ class Loader(Plugin):
 			return True
 
 		def install():
-			logging.warning('Install plugin %s from %s', name, url)
+			_LOGGER.warning('Install plugin %s from %s', name, url)
 			try:
 				downloadFile()
 			except Exception as exception:
