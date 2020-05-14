@@ -18,6 +18,7 @@ import yaml
 
 from base import Application, Plugin, mainthread, ConfigurationManager
 from board import Board
+from tellduslive.base import TelldusLive
 from web.base import Server
 
 from .PluginParser import PluginParser
@@ -326,7 +327,7 @@ class Loader(Plugin):
 		del sha1
 		# Install in a separate thread since calls are blocking
 		filename = '%s/staging.zip' % Board.pluginPath()
-		server = Server(self.context)
+
 		def downloadFile():
 			urlFd = urllib2.urlopen(url)
 			meta = urlFd.info()
@@ -336,17 +337,23 @@ class Loader(Plugin):
 			fd = open(filename, 'wb')
 			fileSizeDl = 0
 			blockSz = 8192
-			server.webSocketSend('plugins', 'downloadProgress', {'downloaded': fileSizeDl, 'size': fileSize})
+			self.__notifyFrontend(
+			    'downloadProgress', {
+			        'downloaded': fileSizeDl,
+			        'size': fileSize
+			    }
+			)
 			while True:
 				buff = urlFd.read(blockSz)
 				if not buff:
 					break
 				fileSizeDl += len(buff)
 				fd.write(buff)
-				server.webSocketSend(
-					'plugins',
-					'downloadProgress',
-					{'downloaded': fileSizeDl, 'size': fileSize}
+				self.__notifyFrontend(
+				    'downloadProgress', {
+				        'downloaded': fileSizeDl,
+				        'size': fileSize
+				    }
 				)
 			fd.close()
 			return True
@@ -356,17 +363,18 @@ class Loader(Plugin):
 			try:
 				downloadFile()
 			except Exception as exception:
-				server.webSocketSend('plugins', 'downloadFailed', {'msg': str(exception)})
+				self.__notifyFrontend('downloadFailed', {'msg': str(exception)})
 				return
 			try:
 				msg = self.importPlugin(filename)
-				server.webSocketSend('plugins', 'install', msg)
+				self.__notifyFrontend('install', msg)
 			except ImportError as error:
 				os.unlink(filename)
-				server.webSocketSend(
-					'plugins',
-					'install',
-					{'success': False, 'msg':'Error importing plugin: %s' % error}
+				self.__notifyFrontend(
+				    'install', {
+				        'success': False,
+				        'msg': 'Error importing plugin: %s' % error
+				    }
 				)
 
 		thread = threading.Thread(name='Plugin installer', target=install)
@@ -424,4 +432,9 @@ class Loader(Plugin):
 		with open('%s/plugins.yml' % Board.pluginPath(), 'w') as fd:
 			yaml.dump(data, fd, default_flow_style=False)
 		# Notify clients through websocket
-		Server(self.context).webSocketSend('plugins', 'storePluginsUpdated', None)
+		self.__notifyFrontend('storePluginsUpdated', None)
+
+	def __notifyFrontend(self, action, data):
+		# pylint: disable=too-many-function-args
+		Server(self.context).webSocketSend('plugins', action, data)
+		TelldusLive(self.context).pushToWeb('plugins', action, data)

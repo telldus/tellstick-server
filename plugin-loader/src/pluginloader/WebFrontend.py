@@ -6,6 +6,8 @@ from base import Plugin, implements
 from board import Board
 from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson, WebResponseRedirect
 from telldus.web import IWebReactHandler
+from tellduslive.base import TelldusLive, ITelldusLiveObserver
+
 import json
 import os
 import yaml
@@ -22,6 +24,7 @@ def loadGPG():
 class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
 	implements(IWebReactHandler)
+	implements(ITelldusLiveObserver)
 
 	def getReactComponents(self):  # pylint: disable=R0201
 		return {
@@ -120,16 +123,7 @@ class WebFrontend(Plugin):
 		if path == 'installStorePlugin':
 			if 'pluginname' not in params:
 				return WebResponseJson({'success': False, 'msg': 'No plugin specified'})
-			for plugin in yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read()):
-				if plugin['name'] == params['pluginname']:
-					Loader(self.context).installRemotePlugin(
-						plugin['name'],
-						plugin['file']['url'],
-						plugin['file']['size'],
-						plugin['file']['sha1']
-					)
-					return WebResponseJson({'success': True})
-			return WebResponseJson({'success': False, 'msg': 'Plugin was not found in the store'})
+			return WebResponseJson(self.installStorePlugin(params['pluginname']))
 
 		if path == 'reboot':
 			retval = os.system('/usr/sbin/telldus-helper reboot')
@@ -183,20 +177,7 @@ class WebFrontend(Plugin):
 		if path == 'storePlugins':
 			if not os.path.exists('%s/plugins.yml' % Board.pluginPath()):
 				return WebResponseJson([])
-			return WebResponseJson([
-				{
-					'author': plugin['author'],
-					'author-email': plugin['author-email'],
-					'category': plugin.get('category', 'other'),
-					'color': plugin.get('color', None),
-					'name': plugin['name'],
-					'icon': plugin['icon'] if 'icon' in plugin else '',
-					'description': plugin['description'],
-					'size': plugin['file']['size'],
-					'version': plugin['version'],
-				}
-				for plugin in yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read())
-			])
+			return WebResponseJson(self.storePlugins())
 
 		if path == 'upload' and request.method() == 'POST':
 			self.uploadPlugin(params['pluginfile'])
@@ -206,6 +187,60 @@ class WebFrontend(Plugin):
 			except ImportError as error:
 				os.unlink(filename)
 				return WebResponseJson({'success': False, 'msg': str(error)})
+
+	def installStorePlugin(self, pluginName):
+		for plugin in yaml.safe_load(
+		    open('%s/plugins.yml' % Board.pluginPath(), 'r').read()
+		):
+			if plugin['name'] == pluginName:
+				Loader(self.context).installRemotePlugin(
+				    plugin['name'], plugin['file']['url'], plugin['file']['size'],
+				    plugin['file']['sha1']
+				)
+				return {'success': True}
+		return {'success': False, 'msg': 'Plugin was not found in the store'}
+
+	@TelldusLive.handler('plugins')
+	def __webMessage(self, msg):
+		live = TelldusLive(self.context)  # pylint: disable=too-many-function-args
+		data = msg.argument(0).toNative()
+		print("Store", data)
+		loader = Loader(self.context)
+		if data['action'] == 'getState':
+			live.pushToWeb(
+			    'plugins', 'state', {
+			        'plugins': [plugin.infoObject() for plugin in loader.plugins],
+			        'suggested': list(loader.suggestedPlugins),
+			    }
+			)
+			return
+
+		if data['action'] == 'getStorePlugins':
+			live.pushToWeb('plugins', 'storePlugins', self.storePlugins())
+			return
+
+		if data['action'] == 'install':
+			live.pushToWeb(
+			    'plugins', 'installStatus', self.installStorePlugin(data.get('plugin'))
+			)
+			return
+
+	@staticmethod
+	def storePlugins():
+		return [
+		    {
+		        'author': plugin['author'],
+		        'author-email': plugin['author-email'],
+		        'category': plugin.get('category', 'other'),
+		        'color': plugin.get('color', None),
+		        'name': plugin['name'],
+		        'icon': plugin['icon'] if 'icon' in plugin else '',
+		        'description': plugin['description'],
+		        'size': plugin['file']['size'],
+		        'version': plugin['version'],
+		    } for plugin in
+		    yaml.load(open('%s/plugins.yml' % Board.pluginPath(), 'r').read())
+		]
 
 	@staticmethod
 	def uploadPlugin(fileobject):
