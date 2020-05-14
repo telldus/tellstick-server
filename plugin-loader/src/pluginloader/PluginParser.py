@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from board import Board
+import logging
 import httplib
 import xml.parsers.expat
 
+from board import Board
+
+
 class PluginParser(object):
+	def __init__(self):
+		self.queue = []
+		self.plugin = None
+		self.edition = None
+		self.plugins = []
+		self.content = ''
+
 	def parse(self):
-		print "Update plugins"
 		conn = httplib.HTTPConnection('fw.telldus.com:80')
 		try:
 			conn.request('GET', '/plugins.xml')
 			response = conn.getresponse()
-		except:
+		except Exception:
 			logging.error("Could not get plugins list")
 			return
 
@@ -20,52 +29,55 @@ class PluginParser(object):
 		self.edition = None
 		self.plugins = []
 		self.content = ''
+
 		def startElement(name, attrs):
 			self.queue.append((name, attrs))
 			if name == 'plugin':
 				self.plugin = {
-					'author': '',
-					'author-email': '',
-					'name': str(attrs['name']),
-					'category': str(attrs['category']),
-					'compatible': False,
+				    'author': '',
+				    'author-email': '',
+				    'name': str(attrs['name']),
+				    'category': str(attrs['category']),
+				    'compatible': False,
 				}
 				if 'color' in attrs:
 					self.plugin['color'] = str(attrs['color'])
 				return
-			if self.plugin != None:
+			if self.plugin is not None:
 				if name == 'author':
 					if 'name' in attrs:
 						self.plugin['author'] = str(attrs['name'])
-					if 'email' in attrs :
+					if 'email' in attrs:
 						self.plugin['author-email'] = str(attrs['email'])
 				if name == 'edition':
 					# TODO, check minimumSoftwareVersion and maximumSoftwareVersion
 					self.edition = attrs
 					return
-				if self.edition != None:
+				if self.edition is not None:
 					if name == 'file':
 						self.edition['file'] = {
-							'size': int(attrs['size']),
-							'sha1': str(attrs['sha1']),
+						    'size': int(attrs['size']),
+						    'sha1': str(attrs['sha1']),
 						}
-		def characterDataHandler(c):
-			self.content = self.content + c
+
+		def characterDataHandler(content):
+			self.content = self.content + content
+
 		def endElement(name):
-			(el, attrs) = self.queue.pop()
+			(element, attrs) = self.queue.pop()
 			content = str(self.content.strip())
 			self.content = ''
-			if el != name:
+			if element != name:
 				raise Exception("Error parsing xml")
-			if self.plugin != None:
+			if self.plugin is not None:
 				if name == 'description':
 					self.plugin['description'] = content
 				elif name == 'plugin':
-					if self.plugin['compatible'] == True:
+					if self.plugin['compatible']:
 						del self.plugin['compatible']
 						self.plugins.append(self.plugin)
 					self.plugin = None
-			if self.edition != None:
+			if self.edition is not None:
 				if name == 'edition':
 					self.plugin['file'] = self.edition['file']
 					if 'icon' in self.edition:
@@ -79,11 +91,11 @@ class PluginParser(object):
 						self.plugin['compatible'] = True
 				elif name == 'icon':
 					self.edition['icon'] = content
-		
-		p = xml.parsers.expat.ParserCreate()
 
-		p.StartElementHandler = startElement
-		p.EndElementHandler = endElement
-		p.CharacterDataHandler = characterDataHandler
-		p.Parse(response.read())
+		parser = xml.parsers.expat.ParserCreate()
+
+		parser.StartElementHandler = startElement
+		parser.EndElementHandler = endElement
+		parser.CharacterDataHandler = characterDataHandler
+		parser.Parse(response.read())
 		return self.plugins

@@ -22,6 +22,7 @@ from web.base import Server
 
 from .PluginParser import PluginParser
 
+
 def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
 
@@ -35,7 +36,8 @@ class LoadedPlugin(object):
 		self.name = self.manifest['name']
 		self.icon = self.manifest.get('icon', '')
 		self.path = os.path.dirname(manifest)
-		self.packages = self.manifest['packages'] if 'packages' in self.manifest else []
+		self.packages = self.manifest['packages'
+		                              ] if 'packages' in self.manifest else []
 		self.classes = []
 
 	def configuration(self, pluginClass, configurationName):
@@ -56,19 +58,31 @@ class LoadedPlugin(object):
 			configs['%s.%s' % (cls.__module__, cls.__name__)] = cfg
 
 		return {
-			'author': self.manifest.get('author', ''),
-			'author-email': self.manifest.get('author-email', ''),
-			'category': self.manifest.get('category', 'other'),
-			'color': self.manifest.get('color', ''),
-			'config': configs,
-			'long_description': self.manifest.get('long_description', ''),
-			'description': self.manifest.get('description', ''),
-			'icon': '/pluginloader/icon?%s' %
-				urlencode({'name': self.name}) if self.icon != '' else '',
-			'loaded': self.loaded,
-			'name': self.name,
-			'size': self.size(),
-			'version': self.manifest.get('version', ''),
+		    'author':
+		    self.manifest.get('author', ''),
+		    'author-email':
+		    self.manifest.get('author-email', ''),
+		    'category':
+		    self.manifest.get('category', 'other'),
+		    'color':
+		    self.manifest.get('color', ''),
+		    'config':
+		    configs,
+		    'long_description':
+		    self.manifest.get('long_description', ''),
+		    'description':
+		    self.manifest.get('description', ''),
+		    'icon':
+		    '/pluginloader/icon?%s' %
+		    urlencode({'name': self.name}) if self.icon != '' else '',
+		    'loaded':
+		    self.loaded,
+		    'name':
+		    self.name,
+		    'size':
+		    self.size(),
+		    'version':
+		    self.manifest.get('version', ''),
 		}
 
 	@staticmethod
@@ -124,7 +138,8 @@ class LoadedPlugin(object):
 		# backtrace if the loading failed.
 		self.loaded = True
 		# Push new info to web
-		Server(self.context).webSocketSend('plugins', 'pluginInfo', self.infoObject())
+		Server(self.context
+		       ).webSocketSend('plugins', 'pluginInfo', self.infoObject())
 
 	def __loadEgg(self, egg):
 		for dist in pkg_resources.find_distributions('%s/%s' % (self.path, egg)):
@@ -165,6 +180,7 @@ class LoadedPlugin(object):
 			raise Exception('Could not verify signature: %s' % result.status)
 		return True
 
+
 class Loader(Plugin):
 	def __init__(self, *args):
 		del args
@@ -175,7 +191,9 @@ class Loader(Plugin):
 		if not os.path.exists('%s/plugins.yml' % Board.pluginPath()):
 			# Run now
 			self.updatePluginsList()
-		elif time.time() - os.path.getmtime('%s/plugins.yml' % Board.pluginPath()) >= 604800:
+		elif time.time() - os.path.getmtime(
+		    '%s/plugins.yml' % Board.pluginPath()
+		) >= 604800:
 			# The file is over 7 days old. Refresh
 			self.updatePluginsList()
 
@@ -205,12 +223,12 @@ class Loader(Plugin):
 				keyid = key['keyid']
 				if keyid != acceptKeyId:
 					return {
-						'success': False,
-						'key': {
-							'name': name,
-							'fingerprint': fingerprint,
-							'keyid': keyid,
-						}
+					    'success': False,
+					    'key': {
+					        'name': name,
+					        'fingerprint': fingerprint,
+					        'keyid': keyid,
+					    }
 					}
 				gpg.import_keys(open(keyFile).read())
 				os.unlink(keyFile)
@@ -234,7 +252,9 @@ class Loader(Plugin):
 			if 'name' not in cfg:
 				raise ImportError('Malformed plugin. Plugin has no name.')
 			if cfg['name'] == 'staging':
-				raise ImportError('Plugin name cannot be "staging", this is a reserved name')
+				raise ImportError(
+				    'Plugin name cannot be "staging", this is a reserved name'
+				)
 			if 'packages' not in cfg:
 				raise ImportError('Malformed plugin. Manifest does not list any packages.')
 			try:
@@ -245,7 +265,10 @@ class Loader(Plugin):
 			for package in cfg['packages']:
 				packageFilename = zipF.extract(package, '/tmp/')
 				signature = zipF.getinfo('%s.asc' % package)
-				packages.append((packageFilename, signature,))
+				packages.append((
+				    packageFilename,
+				    signature,
+				))
 				result = gpg.verify_file(zipF.open(signature), packageFilename)
 				if result.valid is True:
 					continue
@@ -256,7 +279,7 @@ class Loader(Plugin):
 					# No public key for this plugin
 					return self.importKey(None)
 				raise ImportError(
-					'Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.'
+				    'Could not verify plugin. Please make sure this plugin was downloaded from a trusted source.'
 				)
 			path = '%s/%s' % (Board.pluginPath(), cfg['name'])
 			if os.path.exists(path):
@@ -264,7 +287,9 @@ class Loader(Plugin):
 				shutil.rmtree(path)
 			os.mkdir(path)
 			for packageFilename, signature in packages:
-				shutil.move(packageFilename, '%s/%s' % (path, os.path.basename(packageFilename)))
+				shutil.move(
+				    packageFilename, '%s/%s' % (path, os.path.basename(packageFilename))
+				)
 				zipF.extract(signature, path)
 			manifest = zipF.extract(info, path)
 			if 'icon' in cfg:
@@ -277,13 +302,15 @@ class Loader(Plugin):
 		os.unlink(filename)
 		status = self.loadPlugin(manifest)
 		return {
-			'success': True,
-			'msg': 'Plugin was imported',
-			'restartRequired': True if status == 1 else False
+		    'success': True,
+		    'msg': 'Plugin was imported',
+		    'restartRequired': True if status == 1 else False
 		}
 
 	def initializeKeychain(self):
-		filename = pkg_resources.resource_filename('pluginloader', 'files/telldus.gpg')
+		filename = pkg_resources.resource_filename(
+		    'pluginloader', 'files/telldus.gpg'
+		)
 		gpg = loadGPG()
 		installedKeys = [key['keyid'] for key in gpg.list_keys()]
 		defaultKeys = [key['keyid'] for key in gpg.scan_keys(filename)]
@@ -323,6 +350,7 @@ class Loader(Plugin):
 				)
 			fd.close()
 			return True
+
 		def install():
 			logging.warning('Install plugin %s from %s', name, url)
 			try:
@@ -340,6 +368,7 @@ class Loader(Plugin):
 					'install',
 					{'success': False, 'msg':'Error importing plugin: %s' % error}
 				)
+
 		thread = threading.Thread(name='Plugin installer', target=install)
 		thread.daemon = True  # Kill if needed
 		thread.start()
@@ -383,7 +412,9 @@ class Loader(Plugin):
 
 	def updatePluginsList(self):
 		# Run in a separate thread to allow blocking calls
-		thread = threading.Thread(target=self.__updatePluginsList, name='PluginList updater')
+		thread = threading.Thread(
+		    target=self.__updatePluginsList, name='PluginList updater'
+		)
 		thread.daemon = True
 		thread.start()
 

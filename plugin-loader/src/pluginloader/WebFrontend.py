@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 from base import Plugin, implements
 from board import Board
 from web.base import IWebRequestHandler, WebResponseLocalFile, WebResponseJson, WebResponseRedirect
@@ -10,8 +12,12 @@ import yaml
 from pluginloader.Loader import Loader
 import gnupg
 
+_LOGGER = logging.getLogger(__name__)
+
+
 def loadGPG():
 	return gnupg.GPG(keyring='%s/plugins.keyring' % Board.pluginPath())
+
 
 class WebFrontend(Plugin):
 	implements(IWebRequestHandler)
@@ -19,33 +25,23 @@ class WebFrontend(Plugin):
 
 	def getReactComponents(self):  # pylint: disable=R0201
 		return {
-			'plugins': {
-				'title': 'Plugins (beta)',
-				'script': 'pluginloader/plugins.js',
-				'tags': ['menu']
-			},
-			'plugins/oauth2': {
-				'script': 'pluginloader/oauth2.js'
-			}
+		    'plugins': {
+		        'title': 'Plugins (beta)',
+		        'script': 'pluginloader/plugins.js',
+		        'tags': ['menu']
+		    },
+		    'plugins/oauth2': {
+		        'script': 'pluginloader/oauth2.js'
+		    }
 		}
 
 	def matchRequest(self, plugin, path):  # pylint: disable=R0201
 		if plugin != 'pluginloader':
 			return False
 		if path in [
-			'oauth2',
-			'icon',
-			'import',
-			'importkey',
-			'installStorePlugin',
-			'keys',
-			'reboot',
-			'refreshStorePlugins',
-			'remove',
-			'plugins',
-			'saveConfiguration',
-			'storePlugins',
-			'upload'
+		    'oauth2', 'icon', 'import', 'importkey', 'installStorePlugin', 'keys',
+		    'reboot', 'refreshStorePlugins', 'remove', 'plugins',
+		    'saveConfiguration', 'storePlugins', 'upload'
 		]:
 			return True
 		return False
@@ -54,26 +50,31 @@ class WebFrontend(Plugin):
 		plugin = params['pluginname']
 		pluginClass = params['pluginclass']
 		pluginConfig = params['config']
-		configuration = Loader(self.context).configurationForPlugin(plugin, pluginClass, pluginConfig)
+		configuration = Loader(
+		    self.context
+		).configurationForPlugin(plugin, pluginClass, pluginConfig)
 		if not configuration:
 			return WebResponseJson({'success': False, 'msg': 'Configuration not found'})
 		if 'code' not in params:
 			redirectUri = params['redirectUri']
 			if not hasattr(configuration, 'activate'):
-				return WebResponseJson({'success': False, 'msg': 'Configuration cannot be activated'})
+				return WebResponseJson(
+				    {
+				        'success': False,
+				        'msg': 'Configuration cannot be activated'
+				    }
+				)
 			url = configuration.activate(redirectUri)
 			return WebResponseJson({'success': True, 'url': url})
 		params = configuration.activateCode(params['code'])
 		try:
-			config = {
-				pluginClass: {
-					pluginConfig: params
-				}
-			}
+			config = {pluginClass: {pluginConfig: params}}
 			Loader(self.context).saveConfiguration(plugin, config)
 		except Exception as error:
 			return WebResponseJson({'success': False, 'msg': str(error)})
-		return WebResponseRedirect('%s/plugins?settings=%s' % (request.base(), plugin))
+		return WebResponseRedirect(
+		    '%s/plugins?settings=%s' % (request.base(), plugin)
+		)
 
 	def handleRequest(self, plugin, path, params, request, **kwargs):
 		del kwargs
@@ -94,15 +95,26 @@ class WebFrontend(Plugin):
 					return WebResponseJson(Loader(self.context).importPlugin(filename))
 				except ImportError as error:
 					os.unlink('%s/staging.zip' % (Board.pluginPath()))
-					return WebResponseJson({'success': False, 'msg':'Error importing plugin: %s' % error})
-			return WebResponseJson({'success': False, 'msg':'Error importing plugin: No plugin uploaded'})
+					return WebResponseJson(
+					    {
+					        'success': False,
+					        'msg': 'Error importing plugin: %s' % error
+					    }
+					)
+			return WebResponseJson(
+			    {
+			        'success': False,
+			        'msg': 'Error importing plugin: No plugin uploaded'
+			    }
+			)
 
 		if path == 'importkey':
 			if 'discard' in params:
 				os.unlink('%s/staging.zip' % (Board.pluginPath()))
 				return WebResponseJson({'success': True})
-			return WebResponseJson(Loader(self.context).importKey(
-				params['key'] if 'key' in params else None)
+			return WebResponseJson(
+			    Loader(self.context
+			           ).importKey(params['key'] if 'key' in params else None)
 			)
 
 		if path == 'installStorePlugin':
@@ -135,21 +147,29 @@ class WebFrontend(Plugin):
 			elif 'key' in params and 'fingerprint' in params:
 				Loader(self.context).removeKey(params['key'], params['fingerprint'])
 			else:
-				return WebResponseJson({'success': False, 'msg': 'No plugin or key specified'})
+				return WebResponseJson(
+				    {
+				        'success': False,
+				        'msg': 'No plugin or key specified'
+				    }
+				)
 			return WebResponseJson({'success': True})
 
 		if path == 'plugins':
-			return WebResponseJson([plugin.infoObject() for plugin in Loader(self.context).plugins])
+			return WebResponseJson(
+			    [plugin.infoObject() for plugin in Loader(self.context).plugins]
+			)
 
 		if path == 'keys':
-			return WebResponseJson([
-				{
-					'uids': key['uids'],
-					'keyid': key['keyid'],
-					'fingerprint': key['fingerprint']
-				}
-				for key in Loader(self.context).keys
-			])
+			return WebResponseJson(
+			    [
+			        {
+			            'uids': key['uids'],
+			            'keyid': key['keyid'],
+			            'fingerprint': key['fingerprint']
+			        } for key in Loader(self.context).keys
+			    ]
+			)
 
 		if path == 'saveConfiguration' and request.method() == 'POST':
 			plugin = params['pluginname']
