@@ -342,7 +342,7 @@ class Loader(Plugin):
 		def downloadFile():
 			urlFd = urllib.request.urlopen(url)  # 2to3, TODO TEST
 			meta = urlFd.info()
-			fileSize = int(meta.getheaders("Content-Length")[0])
+			fileSize = int(meta.get("Content-Length"))
 			if size is not None and fileSize != size:
 				raise Exception("Size mismatch")
 			fd = open(filename, 'wb')
