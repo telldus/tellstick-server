@@ -31,6 +31,9 @@ class CommandClass:
 	def device(self) -> Device:
 		return self._device
 
+	async def doCommand(self, command, data):
+		pass
+
 	async def interviewDone(self, _):
 		await self.device.interviewDone(self)
 

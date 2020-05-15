@@ -54,9 +54,8 @@ class Manager(Plugin):
 		# 	#self.__handleCommandBasic(data)
 		# 	pass
 
-		# elif action == 'cmdClass':
-		# 	# self.__handleCommandCmdClass(data)
-		# 	pass
+		elif action == 'cmdClass':
+			Application().createTask(self.__handleCommandCmdClass, data)
 
 		# elif action == 'getRoutingInfo':
 		# 	# self.__handleCommandGetRoutingInfo(data)
@@ -152,6 +151,16 @@ class Manager(Plugin):
 		ret = await self.app.adapter.addNode(TxOptions.TRANSMIT_OPTION_EXPLORE)
 		if ret:
 			self.pushToWeb('addNodeToNetwork', [1, 0, 0])
+
+	async def __handleCommandCmdClass(self, data):
+		if 'nodeId' not in data or 'class' not in data:
+			return
+		node = self.nodes.get(data['nodeId'])
+		if not node:
+			return
+		cmdClass = node.supported(data['class'])
+		if cmdClass is not None:
+			await cmdClass.doCommand(data['cmd'], data['data'])
 
 	async def __handleCommandNodeInfo(self, data):
 		if 'device' not in data:
