@@ -31,10 +31,17 @@ class CommandClass:
 	def device(self) -> Device:
 		return self._device
 
+	async def interviewDone(self, _):
+		await self.device.interviewDone(self)
+
 	@property
 	def native(self) -> pyzwave.commandclass.CommandClass:
 		"""Returns the node this command class belongs to"""
 		return self._commandClass
+
+	@property
+	def node(self) -> pyzwave.node.Node:
+		return self.native.node
 
 	async def version(self) -> int:
 		version = self.native.version

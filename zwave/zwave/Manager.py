@@ -160,7 +160,7 @@ class Manager(Plugin):
 			return
 		nodeInfo = await device.zwaveInfo()
 		nodeInfo['deviceId'] = data['device']
-		TelldusLive(self.context).pushToWeb('zwave', 'nodeInfo', nodeInfo)  # pylint: disable=too-many-function-args
+		self.pushToWeb('nodeInfo', nodeInfo)  # pylint: disable=too-many-function-args
 
 	async def __handleInterview(self, data):
 		if 'device' not in data:
@@ -199,10 +199,11 @@ class Manager(Plugin):
 	async def nodeAdded(
 	    self, _: pyzwave.application.Application, node: pyzwave.node.Node
 	):
-		device = Node(node)
+		device = Node(node, self)
 		self.nodes[node.nodeId] = device
 		deviceManager = DeviceManager(self.context)  # pylint: disable=too-many-function-args
 		deviceManager.addDevice(device)
+		Application().createTask(device.interview, None, onlyNeeded=True)
 
 	async def nodeRemoved(self, _: pyzwave.application.Application, nodeId: str):
 		device = self.nodes.get(nodeId)
@@ -211,6 +212,9 @@ class Manager(Plugin):
 		deviceManager = DeviceManager(self.context)  # pylint: disable=too-many-function-args
 		deviceManager.removeDevice(device.id())
 		del self.nodes[nodeId]
+
+	def pushToWeb(self, action, data):
+		TelldusLive(self.context).pushToWeb('zwave', action, data)  # pylint: disable=too-many-function-args
 
 	async def startup(self):
 		# pylint: disable=too-many-function-args

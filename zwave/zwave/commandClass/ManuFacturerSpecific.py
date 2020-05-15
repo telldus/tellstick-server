@@ -10,4 +10,5 @@ class ManufacturerSpecific(CommandClass):
 		    'productTypeId': self.native.productTypeID,
 		    "productId": self.native.productID,
 		    "version": self.native.version,
+		    "interviewed": self.native.interviewed,
 		}

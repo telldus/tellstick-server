@@ -3,7 +3,10 @@
 import logging
 
 from pyzwave.commandclass import Basic, SwitchBinary
-from pyzwave.const.ZW_classcmd import COMMAND_CLASS_SENSOR_MULTILEVEL, COMMAND_CLASS_METER
+from pyzwave.const.ZW_classcmd import (
+    COMMAND_CLASS_MANUFACTURER_SPECIFIC, COMMAND_CLASS_SENSOR_MULTILEVEL,
+    COMMAND_CLASS_METER, COMMAND_CLASS_WAKE_UP
+)
 from pyzwave.message import Message
 import pyzwave.node
 
@@ -15,9 +18,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Node(Device):
-	def __init__(self, node: pyzwave.node.Node):
+	def __init__(self, node: pyzwave.node.Node, manager):
 		super().__init__()
 		self._node = node
+		self.__manager = manager
 		self._supported = {}
 		for cmdClassId, cmdClass in self._node.supported.items():
 			self._supported[cmdClassId] = CommandClass.load(cmdClassId, cmdClass, self)
@@ -30,11 +34,38 @@ class Node(Device):
 			return await self.node.send(SwitchBinary.Set(value=0))
 		return False
 
-	async def interview(self, cmdClass):
+	async def interview(self, cmdClass, onlyNeeded=False):
+		supported = self._node.supported.keys()
 		if cmdClass:
-			await self._node.supported[cmdClass].interview()
+			commandClasses = [cmdClass]
 		else:
-			await self._node.interview()
+			# We prioritize some command classes
+			commandClasses = [
+			    COMMAND_CLASS_WAKE_UP, COMMAND_CLASS_MANUFACTURER_SPECIFIC
+			]
+			commandClasses.extend(supported)
+		# Remove duplicates and non supported
+		commandClasses[:] = [
+		    x for x in list(dict.fromkeys(commandClasses)) if x in supported
+		]
+		with self._node.storageLock():
+			for commandClass in commandClasses:
+				if onlyNeeded and self._node.supported[commandClass].interviewed:
+					continue
+				_LOGGER.info(
+				    "Start interview (%s) %s", self._node.nodeId,
+				    self._node.supported[commandClass].name
+				)
+				await self._node.supported[commandClass].interview()
+
+	async def interviewDone(self, commandClass):
+		self.__manager.pushToWeb(
+		    "interviewDone", {
+		        "node": self._node.nodeId,
+		        "cmdClass": commandClass.native.id,
+		        "data": await commandClass.zwaveInfo(),
+		    }
+		)
 
 	async def onMessage(self, _: pyzwave.node.Node, message: Message):
 		# Command class basic is normally not in NIF so we handle it here
@@ -67,6 +98,9 @@ class Node(Device):
 	@property
 	def node(self) -> pyzwave.node.Node:
 		return self._node
+
+	def supported(self, commandClass) -> CommandClass:
+		return self._supported.get(commandClass)
 
 	async def zwaveInfo(self):
 		params = {
