@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import ipaddress
 import logging
 
 import pyzwave.application
@@ -7,6 +8,7 @@ import pyzwave.zipgateway
 import pyzwave.persistantstorage
 from pyzwave.const import ZW_classcmd
 from pyzwave.adapter import TxOptions
+from pyzwave.mailbox import MailboxService
 from pyzwave.message import Message
 from pyzwave.commandclass.NetworkManagementInclusion import (
     NodeAddDSKReport, NodeAddKeysReport, NodeAddStatus, NodeRemoveStatus
@@ -242,6 +244,8 @@ class Manager(Plugin):
 		)
 		self.app.addListener(self)
 		await self.app.startup()
+		mailbox = MailboxService(adapter)
+		await mailbox.initialize(ipaddress.IPv6Address("::ffff:c0a8:31"), 4123)
 		deviceManager.finishedLoading("zwave")
 
 	async def shutdown(self):
