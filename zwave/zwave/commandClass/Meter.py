@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 @ZWaveCommandClass(COMMAND_CLASS_METER)
 class Meter(CommandClass):
 	async def onReport(
-	    self, _, report: pyzwave.commandclass.SensorMultilevel.Report
+	    self, _, report: pyzwave.commandclass.SensorMultilevel.Report, _flags
 	):
 		if report.meterType != MeterType.ELECTRIC_METER:
 			_LOGGER.warning("Unknown meter type received: %s", report.meterType)
