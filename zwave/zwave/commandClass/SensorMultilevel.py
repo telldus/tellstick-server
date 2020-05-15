@@ -31,7 +31,7 @@ SENSOR_MAPPING = {
 @ZWaveCommandClass(COMMAND_CLASS_SENSOR_MULTILEVEL)
 class SensorMultilevel(CommandClass):
 	async def onReport(
-	    self, _, report: pyzwave.commandclass.SensorMultilevel.Report
+	    self, _, report: pyzwave.commandclass.SensorMultilevel.Report, flags
 	):
 		valueType = SENSOR_MAPPING.get(SensorType(report.sensorType), Device.UNKNOWN)
 		scale = report.sensorValue.scale

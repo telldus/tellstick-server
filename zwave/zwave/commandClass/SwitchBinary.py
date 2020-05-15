@@ -10,7 +10,9 @@ _LOGGER = logging.getLogger(__name__)
 
 @ZWaveCommandClass(COMMAND_CLASS_SWITCH_BINARY)
 class SwitchBinary(CommandClass):
-	async def onReport(self, _, report: pyzwave.commandclass.SwitchBinary.Report):
+	async def onReport(
+	    self, _, report: pyzwave.commandclass.SwitchBinary.Report, flags
+	):
 		if report.value == 0xFF:
 			self.device.setState(Device.TURNON, None)
 			return True
