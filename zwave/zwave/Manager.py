@@ -79,9 +79,8 @@ class Manager(Plugin):
 		# 	# self.__handleCommandNodeList()
 		# 	pass
 
-		# elif action == 'removeFailedNode':
-		# 	# self.__handleCommandRemoveFailedNode(data)
-		# 	pass
+		elif action == 'removeFailedNode':
+			Application().createTask(self.__handleCommandRemoveFailedNode, data)
 
 		elif action == 'removeNodeFromNetwork':
 			Application().createTask(self.__handleRemoveNodeFromNetwork)
@@ -172,6 +171,18 @@ class Manager(Plugin):
 		nodeInfo = await device.zwaveInfo()
 		nodeInfo['deviceId'] = data['device']
 		self.pushToWeb('nodeInfo', nodeInfo)  # pylint: disable=too-many-function-args
+
+	async def __handleCommandRemoveFailedNode(self, data):
+		if 'device' not in data:
+			return
+		deviceManager = DeviceManager(self.context)  # pylint: disable=too-many-function-args
+		device: Node = deviceManager.device(data['device'])
+		if device is None:
+			return
+		_LOGGER.info(
+		    "Remove failed node %s: %s", device.node.nodeId, await
+		    device.node.remove()
+		)
 
 	async def __handleInterview(self, data):
 		if 'device' not in data:
