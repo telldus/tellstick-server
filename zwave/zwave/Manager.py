@@ -6,6 +6,11 @@ import pyzwave.application
 import pyzwave.zipgateway
 import pyzwave.persistantstorage
 from pyzwave.const import ZW_classcmd
+from pyzwave.adapter import TxOptions
+from pyzwave.message import Message
+from pyzwave.commandclass.NetworkManagementInclusion import (
+    NodeAddDSKReport, NodeAddKeysReport, NodeAddStatus, NodeRemoveStatus
+)
 
 from base import Application, Plugin, implements
 from board import Board
@@ -22,8 +27,9 @@ class Manager(Plugin):
 	implements(ITelldusLiveObserver)
 
 	def __init__(self):
-		self.app = None
+		self.app: pyzwave.application.Application = None
 		self.nodes = {}
+		self.secureInclusion = False
 		Application().createTask(self.startup)
 		Application().registerShutdown(self.shutdown)
 
@@ -32,16 +38,15 @@ class Manager(Plugin):
 		data = msg.argument(0).toNative()
 		action = data['action']
 		if action == 'addNodeToNetwork':
-			#self.controller.addNodeToNetwork(1 | 0x80 | 0x40, secure=False)
-			pass
+			self.secureInclusion = False
+			Application().createTask(self.__handleAddNode)
 
-		# elif action == 'addSecureNodeToNetwork':
-		# 	#self.controller.addNodeToNetwork(1 | 0x80 | 0x40, secure=True)
-		# 	pass
+		elif action == 'addSecureNodeToNetwork':
+			self.secureInclusion = True
+			Application().createTask(self.__handleAddNode)
 
-		# elif action == 'addNodeToNetworkStop':
-		# 	#self.controller.addNodeToNetwork(5)
-		# 	pass
+		elif action == 'addNodeToNetworkStop':
+			Application().createTask(self.app.adapter.addNodeStop)
 
 		# elif action == 'basic':
 		# 	#self.__handleCommandBasic(data)
@@ -77,13 +82,11 @@ class Manager(Plugin):
 		# 	# self.__handleCommandRemoveFailedNode(data)
 		# 	pass
 
-		# elif action == 'removeNodeFromNetwork':
-		# 	# self.controller.removeNodeFromNetwork(1)
-		# 	pass
+		elif action == 'removeNodeFromNetwork':
+			Application().createTask(self.__handleRemoveNodeFromNetwork)
 
-		# elif action == 'removeNodeFromNetworkStop':
-		# 	# self.controller.removeNodeFromNetwork(5)
-		# 	pass
+		elif action == 'removeNodeFromNetworkStop':
+			Application().createTask(self.app.adapter.removeNodeStop)
 
 		# elif action == 'replaceFailedNode':
 		# 	# self.__handleCommandReplaceFailedNode(data)
@@ -117,6 +120,37 @@ class Manager(Plugin):
 		else:
 			print("Unhandled action", action)
 
+	async def addNodeStatus(self, _speaker, status: NodeAddStatus):
+		if status.status == NodeAddStatus.Status.DONE:
+			# These 3 messages is not received by zipgateway, we need to create them ourself
+			self.pushToWeb('addNodeToNetwork', [NodeAddStatus.Status.NODE_FOUND, 0, 0])
+			self.pushToWeb(
+			    'addNodeToNetwork', [
+			        NodeAddStatus.Status.ADD_SLAVE, status.newNodeID,
+			        len(status.commandClass) + 3, status.basicDeviceClass,
+			        status.genericDeviceClass, status.specificDeviceClass,
+			        *status.commandClass
+			    ]
+			)
+			self.pushToWeb(
+			    'addNodeToNetwork',
+			    [NodeAddStatus.Status.PROTOCOL_DONE, status.newNodeID, 0]
+			)
+
+			self.pushToWeb(
+			    'addNodeToNetwork', [NodeAddStatus.Status.DONE, status.newNodeID, 0]
+			)
+		else:
+			self.pushToWeb('addNodeToNetwork', [status.status, status.newNodeID, 0])
+
+	async def removeNodeStatus(self, _speaker, status: NodeRemoveStatus):
+		self.pushToWeb('removeNodeFromNetwork', [status.status, status.nodeID, 0])
+
+	async def __handleAddNode(self):
+		ret = await self.app.adapter.addNode(TxOptions.TRANSMIT_OPTION_EXPLORE)
+		if ret:
+			self.pushToWeb('addNodeToNetwork', [1, 0, 0])
+
 	async def __handleCommandNodeInfo(self, data):
 		if 'device' not in data:
 			return
@@ -132,13 +166,35 @@ class Manager(Plugin):
 		if 'device' not in data:
 			return
 		deviceManager = DeviceManager(self.context)  # pylint: disable=too-many-function-args
-		device = deviceManager.device(data['device'])
+		device: Node = deviceManager.device(data['device'])
 		if not device:
 			return
 		if not isinstance(device, Node):
 			return
 		cmdClass = data['class'] if 'class' in data else None
 		await device.interview(cmdClass)
+
+	async def __handleRemoveNodeFromNetwork(self):
+		ret = await self.app.adapter.removeNode()
+		if ret:
+			self.pushToWeb('removeNodeFromNetwork', [1, 0, 0])
+
+	async def __handleSecureInclusion(self, report: NodeAddKeysReport):
+		if not self.secureInclusion:
+			await self.app.adapter.addNodeKeysSet(False, False, 0)
+			return True
+		await self.app.adapter.addNodeKeysSet(False, True, report.requestedKeys)
+		return True
+
+	async def messageReceived(self, _sender, message: Message):
+		if isinstance(message, NodeAddKeysReport):
+			return await self.__handleSecureInclusion(message)
+		if isinstance(message, NodeAddDSKReport):
+			if message.inputDSKLength == 0:
+				# Unauthenticated S2
+				await self.app.adapter.addNodeDSKSet(True, 0, b'')
+			return True
+		return False
 
 	async def nodeAdded(
 	    self, _: pyzwave.application.Application, node: pyzwave.node.Node
