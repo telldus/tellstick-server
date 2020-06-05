@@ -3,8 +3,11 @@
 import logging
 import time
 from threading import Timer
+from uuid import UUID
 
-from base import Application, implements, Plugin, signal
+from base import (
+    Application, implements, ISignalObserver, Plugin, signal, slot
+)
 from board import Board
 from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
@@ -12,6 +15,9 @@ from tellduslive.base import TelldusLive, ITelldusLiveObserver
 from .Protocol import Protocol
 from .Adapter import Adapter
 from .RF433Msg import RF433Msg
+
+_LOGGER = logging.getLogger(__name__)
+
 
 class RF433Node(Device):
 	def __init__(self):
@@ -31,6 +37,7 @@ class RF433Node(Device):
 	@staticmethod
 	def typeString():
 		return '433'
+
 
 class SensorNode(RF433Node):
 	def __init__(self):
@@ -63,7 +70,9 @@ class SensorNode(RF433Node):
 		return True
 
 	def isValid(self):
-		if self._name and self._name != "Device " + str(self.localId()) and not self._ignored:
+		if self._name and self._name != "Device " + str(
+		    self.localId()
+		) and not self._ignored:
 			return True  # name is set and not ignored, don't clean up automatically
 		if not self._sensorValues:
 			if not self.declaredDead:
@@ -91,10 +100,10 @@ class SensorNode(RF433Node):
 
 	def params(self):
 		return {
-			'protocol': self._protocol,
-			'model': self._model,
-			'sensorId': self._sensorId,
-			'type': 'sensor',
+		    'protocol': self._protocol,
+		    'model': self._model,
+		    'sensorId': self._sensorId,
+		    'type': 'sensor',
 		}
 
 	def protocol(self):
@@ -119,6 +128,7 @@ class SensorNode(RF433Node):
 			self.declaredDead = False
 		self.setSensorValues(data)
 
+
 class DeviceNode(RF433Node):
 	def __init__(self, controller):
 		super(DeviceNode, self).__init__()
@@ -138,11 +148,15 @@ class DeviceNode(RF433Node):
 		msg = protocol.stringForMethod(action, value)
 		if msg is None:
 			failure(0)
-			logging.error("Could not encode rf-data for %s:%s %s", self._protocol, self._model, action)
+			logging.error(
+			    "Could not encode rf-data for %s:%s %s", self._protocol, self._model,
+			    action
+			)
 			return
 
 		def _success(__params):
 			success()
+
 		def fail():
 			failure(Device.FAILED_STATUS_NO_REPLY)
 
@@ -152,7 +166,9 @@ class DeviceNode(RF433Node):
 		if 'R' in msg:
 			prefixes['R'] = msg['R']
 		if 'S' in msg:
-			self.controller.queue(RF433Msg('S', msg['S'], prefixes, success=_success, failure=fail))
+			self.controller.queue(
+			    RF433Msg('S', msg['S'], prefixes, success=_success, failure=fail)
+			)
 
 	def deviceType(self):
 		protocol = Protocol.protocolInstance(self._protocol)
@@ -181,10 +197,10 @@ class DeviceNode(RF433Node):
 
 	def params(self):
 		return {
-			'type': 'device',
-			'protocol': self._protocol,
-			'model': self._model,
-			'protocolParams': self._protocolParams,
+		    'type': 'device',
+		    'protocol': self._protocol,
+		    'model': self._model,
+		    'protocolParams': self._protocolParams,
 		}
 
 	def parameters(self):
@@ -204,12 +220,12 @@ class DeviceNode(RF433Node):
 		self._model = params.setdefault('model', '')
 		self._protocolParams = params.setdefault('protocolParams', {})
 
+
 class RF433(Plugin):
 	implements(ITelldusLiveObserver)
+	implements(ISignalObserver)
 
-	fwVersions = {
-		'18F25K50': 1
-	}
+	fwVersions = {'18F25K50': 1}
 
 	def __init__(self):
 		self.version = 0
@@ -246,8 +262,12 @@ class RF433(Plugin):
 			self.deviceManager.addDevice(device)
 
 		self.deviceManager.finishedLoading('433')
-		self.dev.queue(RF433Msg('V', success=self.__version, failure=self.__noVersion))
-		self.dev.queue(RF433Msg('H', success=self.__hwVersion, failure=self.__noHWVersion))
+		self.dev.queue(
+		    RF433Msg('V', success=self.__version, failure=self.__noVersion)
+		)
+		self.dev.queue(
+		    RF433Msg('H', success=self.__hwVersion, failure=self.__noHWVersion)
+		)
 		self.live = TelldusLive(self.context)
 
 	def addDevice(self, uuid, protocol, model, name, params):
@@ -255,11 +275,13 @@ class RF433(Plugin):
 		if uuid:
 			device.setUuid(uuid)
 		device.setName(name)
-		device.setParams({
-			'protocol': protocol,
-			'model': model,
-			'protocolParams': params
-		})
+		device.setParams(
+		    {
+		        'protocol': protocol,
+		        'model': model,
+		        'protocolParams': params
+		    }
+		)
 		self.devices.append(device)
 		self.deviceManager.addDevice(device)
 
@@ -276,7 +298,10 @@ class RF433(Plugin):
 		data = msg.argument(0).toNative()
 		action = data['action']
 		if action == 'addDevice':
-			self.addDevice(data.get('id', None), data['protocol'], data['model'], data['name'], data['parameters'])
+			self.addDevice(
+			    data.get('id', None), data['protocol'], data['model'], data['name'],
+			    data['parameters']
+			)
 
 		elif action == 'deviceInfo':
 			deviceId = data['device']
@@ -291,11 +316,13 @@ class RF433(Plugin):
 			deviceId = data['device']
 			for device in self.devices:
 				if device.id() == deviceId:
-					device.setParams({
-						'protocol': data['protocol'],
-						'model': data['model'],
-						'protocolParams': data['parameters']
-					})
+					device.setParams(
+					    {
+					        'protocol': data['protocol'],
+					        'model': data['model'],
+					        'protocolParams': data['parameters']
+					    }
+					)
 					device.paramUpdated('')
 					break
 
@@ -398,7 +425,13 @@ class RF433(Plugin):
 				break
 		if sensor is None:
 			sensor = SensorNode()
-			sensor.setParams({'protocol': protocol, 'model': model, 'sensorId': sensorId})
+			sensor.setParams(
+			    {
+			        'protocol': protocol,
+			        'model': model,
+			        'sensorId': sensorId
+			    }
+			)
 			sensor.setManager(self.deviceManager)
 			self.sensors.append(sensor)
 		if 'battery' in data:
@@ -407,7 +440,9 @@ class RF433(Plugin):
 
 	def registerSensorCleanup(self):
 		"""Register scheduled job to clean up sensors that have not been updated for a while"""
-		Application().registerScheduledTask(self.cleanupSensors, hours=12)  # every 12th hour
+		Application().registerScheduledTask(
+		    self.cleanupSensors, hours=12
+		)  # every 12th hour
 		tmr = Timer(600, self.cleanupSensors)  # run a first time after 10 minutes
 		tmr.daemon = True
 		tmr.name = 'Sensor cleanup'
@@ -434,3 +469,22 @@ class RF433(Plugin):
 	def __version(self, version):
 		self.version = version
 		logging.info("RF433 version: %i", self.version)
+
+	def __loadDeviceByUUID(self, uuid, protocol, model, parameters):
+		self.addDevice(uuid, protocol, model, 'provisioning', parameters)
+
+	@slot('provisioning', profile='rf433')
+	def __provisioning(self, data):
+		for deviceData in data.get('devices', []):
+			found = False
+			for device in self.devices:
+				uuid = UUID(deviceData.get('id'))
+				if device.uuid() == uuid:
+					found = True
+					break
+			if found:
+				continue
+			self.__loadDeviceByUUID(
+			    deviceData['id'], deviceData['protocol'], deviceData['model'],
+			    deviceData['parameters']
+			)

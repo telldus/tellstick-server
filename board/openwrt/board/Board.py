@@ -32,6 +32,10 @@ class Board(object):
 		return '/etc/telldus'
 
 	@staticmethod
+	def filesPath():
+		return '/usr/lib/telldus'
+
+	@staticmethod
 	def firmwareVersion():
 		with open('/etc/builddate') as f:
 			return f.readline().strip()
