@@ -24,18 +24,36 @@ class SignalManager(Plugin):
 	observers = ObserverCollection(ISignalObserver)
 	signals = {}
 
+	def observersForSignal(self, signalName):
+		"""
+		Return a list of methods and their options as a tuple for the given signal
+		"""
+		observers = []
+		for observer in self.observers:
+			listeners = getattr(observer, '_applicationSlots', {}).get(signalName, [])
+			for listener, opts in listeners:
+				# Bind the methods
+				func = listener.__get__(observer, observer.__class__)
+				observers.append((func, opts))
+		return observers
+
 	def sendSignal(self, msg, *args, **kwargs):
 		for observer in self.observers:
-			for func in getattr(observer, '_applicationSlots', {}).get(msg, []):
+			for func, opts in getattr(observer, '_applicationSlots', {}).get(msg, []):
 				Application().queue(func, observer, *args, **kwargs)
-			for func in getattr(observer, '_applicationSlots', {}).get('', []):
+			for func, opts in getattr(observer, '_applicationSlots', {}).get('', []):
 				Application().queue(func, observer, msg, *args, **kwargs)
 
 	@staticmethod
-	def slot(message=''):
+	def slot(message='', **opts):
 		def call(func):
 			frame = sys._getframe(1)  # pylint: disable=W0212
-			frame.f_locals.setdefault('_applicationSlots', {}).setdefault(message, []).append(func)
+			frame.f_locals.setdefault('_applicationSlots',
+			                          {}).setdefault(message,
+			                                         []).append((
+			                                             func,
+			                                             opts,
+			                                         ))
 			return func
 		return call
 
