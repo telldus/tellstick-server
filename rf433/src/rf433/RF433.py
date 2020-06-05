@@ -3,8 +3,11 @@
 import logging
 import time
 from threading import Timer
+from uuid import UUID
 
-from base import Application, implements, Plugin, signal
+from base import (
+    Application, implements, ISignalObserver, Plugin, signal, slot
+)
 from board import Board
 from telldus import DeviceManager, Device
 from tellduslive.base import TelldusLive, ITelldusLiveObserver
@@ -12,6 +15,9 @@ from tellduslive.base import TelldusLive, ITelldusLiveObserver
 from .Protocol import Protocol
 from .Adapter import Adapter
 from .RF433Msg import RF433Msg
+
+_LOGGER = logging.getLogger(__name__)
+
 
 class RF433Node(Device):
 	def __init__(self):
@@ -206,6 +212,7 @@ class DeviceNode(RF433Node):
 
 class RF433(Plugin):
 	implements(ITelldusLiveObserver)
+	implements(ISignalObserver)
 
 	fwVersions = {
 		'18F25K50': 1
@@ -434,3 +441,22 @@ class RF433(Plugin):
 	def __version(self, version):
 		self.version = version
 		logging.info("RF433 version: %i", self.version)
+
+	def __loadDeviceByUUID(self, uuid, protocol, model, parameters):
+		self.addDevice(uuid, protocol, model, 'provisioning', parameters)
+
+	@slot('provisioning', profile='rf433')
+	def __provisioning(self, data):
+		for deviceData in data.get('devices', []):
+			found = False
+			for device in self.devices:
+				uuid = UUID(deviceData.get('id'))
+				if device.uuid() == uuid:
+					found = True
+					break
+			if found:
+				continue
+			self.__loadDeviceByUUID(
+			    deviceData['id'], deviceData['protocol'], deviceData['model'],
+			    deviceData['parameters']
+			)
