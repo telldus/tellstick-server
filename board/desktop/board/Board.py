@@ -27,6 +27,10 @@ class Board(object):
 		return Board.getConfigValue('mac', '000000000000')
 
 	@staticmethod
+	def filesPath():
+		return '%s/build' % os.getcwd()
+
+	@staticmethod
 	def firmwareVersion():
 		return subprocess.check_output(['git', 'describe'])[1:]
 
