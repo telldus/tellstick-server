@@ -269,7 +269,7 @@ class Application(object):
 								job['nextRuntime'] = job['nextRuntime'] + job['interval']
 						else:
 							job['nextRuntime'] = timestamp + job['interval']
-						return (job['fn'], job['args'], job['kwargs'])
+						return (job['func'], job['args'], job['kwargs'])
 				if self.__tasks:
 					# There is a task. Return
 					break
