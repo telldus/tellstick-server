@@ -208,6 +208,7 @@ class DeviceApiManager(Plugin):
 		device = self.__retrieveDevice(id)
 		sensorData = []
 		lastUpdated = 0
+		battery = device.battery()
 		for sensorType, values in list(device.sensorValues().items()):
 			for value in values:
 				valueData = {
@@ -216,22 +217,24 @@ class DeviceApiManager(Plugin):
 					'scale': int(value['scale']),
 					#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
 					#'maxTime': 1442561174.4155,
-					# Battery too!
 				}
 				if 'lastUpdated' in value:
 					valueData['lastUpdated'] = value['lastUpdated']
 					if value['lastUpdated'] > lastUpdated:
 						lastUpdated = value['lastUpdated']
 				sensorData.append(valueData)
-		return {
+		sensorInfo = {
 			'id': device.id(),
 			'name': device.name(),
 			'lastUpdated': lastUpdated,
 			'data': sensorData,
 			'protocol': device.protocol(),
 			'model': device.model(),
-			'sensorId': device.id()
+			'sensorId': device.id(),
 		}
+		if battery:
+			sensorInfo['battery'] = battery
+		return sensorInfo
 
 	@apicall('sensor', 'setName')
 	def sensorSetName(self, id, name, **kwargs):  # pylint: disable=C0103,W0622
