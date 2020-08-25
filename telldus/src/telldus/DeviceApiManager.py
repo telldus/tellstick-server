@@ -147,10 +147,11 @@ class DeviceApiManager(Plugin):
 		return self.deviceCommand(id, Device.UP, **kwargs)
 
 	@apicall('sensors', 'list')
-	def sensorsList(self, includeValues=None, includeScale=None, **__kwargs):
+	def sensorsList(self, includeValues=None, includeScale=None, includeLastUpdated=None, **__kwargs):
 		"""Returns a list of all sensors associated with the current user"""
 		includeValues = True if includeValues == '1' else False
 		includeScale = True if includeScale == '1' else False
+		includeLastUpdated = True if includeLastUpdated == '1' else False
 		deviceManager = DeviceManager(self.context)  # pylint: disable=E1121
 		retval = []
 		for device in deviceManager.retrieveDevices():
@@ -159,11 +160,18 @@ class DeviceApiManager(Plugin):
 			sensor = {
 				'id': device.id(),
 				'name': device.name(),
-				#'lastUpdated': 1442561174,  # TODO(micke): Implement when we have this
 				'protocol': device.protocol(),
 				'model': device.model(),
 				'sensorId': device.id()
 			}
+			if includeLastUpdated:
+				lastUpdated = 0
+				for sensorType, values in device.sensorValues().iteritems():
+					for value in values:
+						if value.get('lastUpdated', 0) > lastUpdated:
+							lastUpdated = value['lastUpdated']
+				sensor['lastUpdated'] = lastUpdated
+
 			battery = device.battery()
 			if battery:
 				sensor['battery'] = battery
@@ -172,15 +180,16 @@ class DeviceApiManager(Plugin):
 				for sensorType, values in list(device.sensorValues().items()):
 					for value in values:
 						if includeScale:
-							data.append({
+							valueData = {
 								'name': Device.sensorTypeIntToStr(sensorType),
 								'value': value['value'],
 								'scale': value['scale'],
-								# TODO(micke): Implement this when we have timestamp per value
-								#'lastUpdated': 1442561174.4156,
 								#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
 								#'maxTime': 1442561174.4155,
-							})
+							}
+							if 'lastUpdated' in value:
+								valueData['lastUpdated'] = value['lastUpdated']
+							data.append(valueData)
 						else:
 							sensor[Device.sensorTypeIntToStr(sensorType)] = value['value']
 							break
@@ -198,21 +207,26 @@ class DeviceApiManager(Plugin):
 		"""
 		device = self.__retrieveDevice(id)
 		sensorData = []
+		lastUpdated = 0
 		for sensorType, values in list(device.sensorValues().items()):
 			for value in values:
-				sensorData.append({
+				valueData = {
 					'name': Device.sensorTypeIntToStr(sensorType),
 					'value': float(value['value']),
 					'scale': int(value['scale']),
-					# TODO(micke): Implement this when we have timestamp per value
-					#'lastUpdated': 1442561174.4156,
 					#'max': 0.0,  # TODO(micke): Implement when we have min/max for sensors
 					#'maxTime': 1442561174.4155,
-				})
+					# Battery too!
+				}
+				if 'lastUpdated' in value:
+					valueData['lastUpdated'] = value['lastUpdated']
+					if value['lastUpdated'] > lastUpdated:
+						lastUpdated = value['lastUpdated']
+				sensorData.append(valueData)
 		return {
 			'id': device.id(),
 			'name': device.name(),
-			#'lastUpdated':1452632383,  # TODO(micke): See sensors/list
+			'lastUpdated': lastUpdated,
 			'data': sensorData,
 			'protocol': device.protocol(),
 			'model': device.model(),
