@@ -145,7 +145,7 @@ class Device(object):
 			# parameters() must return a dict
 			params = {}
 
-		devicetype = self.metadata('deviceType', None)
+		devicetype = self.metadata('devicetype', None)
 		if devicetype is not None:
 			# Devicetype in metadata overrides the devicetype
 			params['devicetype'] = devicetype
