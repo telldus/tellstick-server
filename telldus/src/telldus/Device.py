@@ -107,6 +107,7 @@ class Device(object):
 	FAILED_STATUS_TIMEDOUT = 3
 	FAILED_STATUS_NOT_CONFIRMED = 4
 	FAILED_STATUS_UNKNOWN = 5
+	FAILED_STATUS_PENDING = 6  # not a failure, might execute on wakeup
 
 	BATTERY_LOW = 255  # Battery status, if not percent value
 	BATTERY_UNKNOWN = 254  # Battery status, if not percent value
@@ -361,7 +362,13 @@ class Device(object):
 		"""Return what's actually changed in the device event"""
 		if state == Device.THERMOSTAT:
 			response = {}
-			mode = stateValue['mode']
+			mode = None
+			if 'mode' in stateValue:
+				mode = stateValue['mode']
+			else:
+				# if "mode" not included (probably only supporting one), use first in setpoint
+				if 'setpoint' in stateValue and type(stateValue['setpoint']) is dict and stateValue['setpoint']:
+					mode = stateValue['setpoint'].keys()[0]
 			oldStateValue = self._stateValues.get(str(state), {})
 			changeMode = 0
 			oldMode = oldStateValue.get('mode', None)
@@ -736,6 +743,8 @@ class Device(object):
 					stateValue['temperature'] = float(stateValue['temperature'])
 				except:
 					pass
+			if 'mode' not in stateValue and 'setpoint' in stateValue and type(stateValue['setpoint']) is dict and stateValue['setpoint']:
+				stateValue['mode'] = stateValue['setpoint'].keys()[0]
 			# Make sure only allowed keys exists
 			allowedKeys = ('setpoint', 'mode', 'temperature', 'changeMode')
 			return method, {key: stateValue[key] for key in stateValue if key in allowedKeys}
