@@ -292,7 +292,7 @@ class DeviceManager(Plugin):
 		msg.append(valueList)
 		self.live.send(msg)
 
-	def stateUpdated(self, device, ackId=None, origin=None, executedState=None, executedStateValue=None):
+	def stateUpdated(self, device, ackId=None, origin=None, executedState=None, executedStateValue={}):
 		if device.isDevice() is False:
 			return
 		(state, stateValue) = device.state()
