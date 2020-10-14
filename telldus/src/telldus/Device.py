@@ -108,6 +108,7 @@ class Device(object):
 	FAILED_STATUS_NOT_CONFIRMED = 4
 	FAILED_STATUS_UNKNOWN = 5
 	FAILED_STATUS_PENDING = 6  # not a failure, might execute on wakeup
+	FAILED_STATUS_INVALID_PARAMETER = 7
 
 	BATTERY_LOW = 255  # Battery status, if not percent value
 	BATTERY_UNKNOWN = 254  # Battery status, if not percent value
