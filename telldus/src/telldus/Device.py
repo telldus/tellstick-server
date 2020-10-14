@@ -358,7 +358,7 @@ class Device(object):
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id
 
-	def normalizeDeviceEvent(self, state, stateValue):
+	def normalizeDeviceEvent(self, state, stateValue, executedStateValue={}):
 		"""Return what's actually changed in the device event"""
 		if state == Device.THERMOSTAT:
 			response = {}
@@ -374,22 +374,31 @@ class Device(object):
 			oldMode = oldStateValue.get('mode', None)
 			if mode != oldMode:
 				changeMode = 1
-			else:
-				# see which (if any) temperature changed
-				oldSetPoint = oldStateValue.get('setpoint', {})
-				setPoint = stateValue.get('setpoint', {})
-				for setPointMode in setPoint:
-					if setPointMode in oldSetPoint:
-						if setPoint[setPointMode] != oldSetPoint[setPointMode]:
-							# TODO, currently only one at a time (theoretically several could be changed at one time)
-							mode = setPointMode
-							response['temperature'] = setPoint[setPointMode]
-							break
-					else:
-						# new setPointMode
+			oldSetPoint = oldStateValue.get('setpoint', {})
+			setPoint = stateValue.get('setpoint', {})
+			for setPointMode in setPoint:
+				if setPointMode in oldSetPoint:
+					setPointTemperature = setPoint[setPointMode]
+					executedTemperature = setPointTemperature  # set to current setPointTemperature as default
+					if isinstance(executedStateValue, str):
+						try:
+							executedStateValue = json.loads(executedStateValue)
+						except ValueError:
+							# Could not decode, fallback to empty value
+							executedStateValue = {}
+					if executedStateValue.get('mode', None) == setPointMode:
+						executedTemperature = executedStateValue.get('temperature', setPointTemperature)
+					if setPointTemperature != oldSetPoint[setPointMode] or executedTemperature != setPointTemperature:
+						# temperature has changed, or is not what we have tried to set it to (may for example
+						# be out of max/min-bounds)
 						mode = setPointMode
-						response['temperature'] = setPoint[setPointMode]
+						response['temperature'] = setPointTemperature
 						break
+				else:
+					# new setPointMode
+					mode = setPointMode
+					response['temperature'] = setPoint[setPointMode]
+					break
 
 			response['changeMode'] = changeMode
 			response['mode'] = mode
@@ -548,7 +557,7 @@ class Device(object):
 			self._manager.sensorValuesUpdated(self, values)
 			self._manager.save()
 
-	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False, executedStateValue=None):
+	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False, executedStateValue={}):
 		"""
 		Update the state of the device. Use this method if the state should be updated from an
 		external source and not by an command. Examples if the state was updated on the device
@@ -574,14 +583,11 @@ class Device(object):
 				return
 		self.lastUpdated = time.time()
 		_, stateValue = Device.normalizeStateValue(state, stateValue)
-
 		executedState = state
 
 		if state == Device.THERMOSTAT:
 			# We never go to this state. We use on or off instead
-			if not executedStateValue:
-				# incoming signal
-				executedStateValue = self.normalizeDeviceEvent(state, stateValue)
+			executedStateValue = self.normalizeDeviceEvent(state, stateValue, executedStateValue)
 			mode = stateValue.get('mode', '')
 			if mode == 'off':
 				state = Device.TURNOFF
