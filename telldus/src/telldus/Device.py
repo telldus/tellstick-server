@@ -240,7 +240,7 @@ class Device(object):
 		devices = []
 		ids = []
 		toCheck = list(self.containingDevices())
-		while len(toCheck):
+		while toCheck:
 			d = toCheck.pop()
 			if isinstance(d, int):
 				d = self._manager.device(d)
@@ -259,9 +259,8 @@ class Device(object):
 	def getOrCreateUUID(self):
 		if self.uuid():
 			return str(self.uuid())
-		else:
-			self._uuid = uuid.uuid4()
-			return str(self.uuid())
+		self._uuid = uuid.uuid4()
+		return str(self.uuid())
 
 	# pylint: disable=W0212
 	def loadCached(self, olddevice):
@@ -294,7 +293,7 @@ class Device(object):
 			self._room = settings['room']
 		try:
 			self._uuid = uuid.UUID(settings['uuid'])
-		except:
+		except:  # pylint: disable=bare-except
 			# uuid might for example be none
 			self._uuid = uuid.uuid4()
 		#if 'state' in settings and 'stateValue' in settings:
@@ -354,7 +353,7 @@ class Device(object):
 	def name(self):
 		return self._name if self._name is not None else 'Device %i' % self._id
 
-	def normalizeDeviceEvent(self, state, stateValue, executedStateValue={}):
+	def normalizeDeviceEvent(self, state, stateValue, executedStateValue=None):
 		"""Return what's actually changed in the device event"""
 		if state == Device.THERMOSTAT:
 			response = {}
@@ -363,8 +362,16 @@ class Device(object):
 				mode = stateValue['mode']
 			else:
 				# if "mode" not included (probably only supporting one), use first in setpoint
-				if 'setpoint' in stateValue and type(stateValue['setpoint']) is dict and stateValue['setpoint']:
+				if 'setpoint' in stateValue and isinstance(stateValue['setpoint'], dict) and stateValue['setpoint']:
 					mode = stateValue['setpoint'].keys()[0]
+			if executedStateValue is None:
+				executedStateValue = {}  # empty dict as default
+			if isinstance(executedStateValue, str):
+				try:
+					executedStateValue = json.loads(executedStateValue)
+				except ValueError:
+					# Could not decode, fallback to empty value
+					executedStateValue = {}
 			oldStateValue = self._stateValues.get(str(state), {})
 			changeMode = 0
 			oldMode = oldStateValue.get('mode', None)
@@ -376,15 +383,10 @@ class Device(object):
 				if setPointMode in oldSetPoint:
 					setPointTemperature = setPoint[setPointMode]
 					executedTemperature = setPointTemperature  # set to current setPointTemperature as default
-					if isinstance(executedStateValue, str):
-						try:
-							executedStateValue = json.loads(executedStateValue)
-						except ValueError:
-							# Could not decode, fallback to empty value
-							executedStateValue = {}
 					if executedStateValue.get('mode', None) == setPointMode:
 						executedTemperature = executedStateValue.get('temperature', setPointTemperature)
-					if setPointTemperature != oldSetPoint[setPointMode] or executedTemperature != setPointTemperature:
+					if (setPointTemperature != oldSetPoint[setPointMode]
+					   or executedTemperature != setPointTemperature):
 						# temperature has changed, or is not what we have tried to set it to (may for example
 						# be out of max/min-bounds)
 						mode = setPointMode
@@ -553,7 +555,8 @@ class Device(object):
 			self._manager.sensorValuesUpdated(self, values)
 			self._manager.save()
 
-	def setState(self, state, stateValue=None, ack=None, origin=None, onlyUpdateIfChanged=False, executedStateValue={}):
+	def setState(self, state, stateValue=None, ack=None, origin=None,
+		         onlyUpdateIfChanged=False, executedStateValue=None):
 		"""
 		Update the state of the device. Use this method if the state should be updated from an
 		external source and not by an command. Examples if the state was updated on the device
@@ -566,9 +569,13 @@ class Device(object):
 		:param onlyUpdateIfChanged: Skip the update if the state is changed or not. If this is `False`
 		       the new state will always trigger and update. This parameter was added in version 1.2
 		"""
+		logging.warning("Should call size")
+		self.printSize()  # don't know where to do this...
+
 		if stateValue is None:
 			stateValue = ''
-		if (self._state == state or state in (Device.RGB, Device.THERMOSTAT)) and self._stateValues.get(str(state), None) == stateValue:
+		if ((self._state == state or state in (Device.RGB, Device.THERMOSTAT))
+		    and self._stateValues.get(str(state), None) == stateValue):
 			if self.lastUpdated and self.lastUpdated > int(time.time() - 1):
 				# Same state/statevalue and less than one second ago, most probably
 				# just the same value being resent, ignore
@@ -705,7 +712,7 @@ class Device(object):
 
 	@staticmethod
 	def normalizeStateValue(state, stateValue):
-		if isinstance(state, str) or isinstance(state, unicode):
+		if isinstance(state, (str, unicode)):
 			method = Device.methodStrToInt(state)
 		else:
 			method = state
@@ -744,9 +751,9 @@ class Device(object):
 				# Make sure temperature is a number
 				try:
 					stateValue['temperature'] = float(stateValue['temperature'])
-				except:
+				except ValueError:
 					pass
-			if 'mode' not in stateValue and 'setpoint' in stateValue and type(stateValue['setpoint']) is dict and stateValue['setpoint']:
+			if 'mode' not in stateValue and 'setpoint' in stateValue and isinstance(stateValue['setpoint'], dict) and stateValue['setpoint']:
 				stateValue['mode'] = stateValue['setpoint'].keys()[0]
 			# Make sure only allowed keys exists
 			allowedKeys = ('setpoint', 'mode', 'temperature', 'changeMode')
@@ -825,7 +832,7 @@ class Thermostat(Device):
 
 	def _command(self, action, value, success, failure, **kwargs):
 		if action is not Device.THERMOSTAT:
-			return Device._command(self, action, value, success, failure, **kwargs)
+			Device._command(self, action, value, success, failure, **kwargs)
 		mode = value.get('mode', None)
 		if not Thermostat.isValidThermostatMode(mode):
 			failure(Device.FAILED_STATUS_UNKNOWN)

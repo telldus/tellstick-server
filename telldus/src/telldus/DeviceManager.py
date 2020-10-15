@@ -54,7 +54,7 @@ class DeviceManager(Plugin):
 		self.devices = []
 		self.settings = Settings('telldus.devicemanager')
 		self.nextId = self.settings.get('nextId', 0)
-		self.live = TelldusLive(self.context)
+		self.live = TelldusLive(self.context)  # pylint: disable=too-many-function-args
 		self.registered = False
 		self.__load()
 
@@ -292,7 +292,8 @@ class DeviceManager(Plugin):
 		msg.append(valueList)
 		self.live.send(msg)
 
-	def stateUpdated(self, device, ackId=None, origin=None, executedState=None, executedStateValue={}):
+	def stateUpdated(self, device, ackId=None, origin=None,
+		             executedState=None, executedStateValue=None):
 		if device.isDevice() is False:
 			return
 		(state, stateValue) = device.state()
@@ -330,10 +331,9 @@ class DeviceManager(Plugin):
 		msg.append(extras)
 		self.live.send(msg)
 
-	"""
-	Send report to Live server that state change failed
-	"""
 	def stateUpdatedFail(self, device, state, stateValue, reason, origin):
+		"""Send report to Live server that state change failed"""
+
 		if not self.live.registered:
 			return
 		if device.isDevice() is False:
@@ -454,7 +454,7 @@ class DeviceManager(Plugin):
 					dev.setIgnored(value)
 				self.__sendSensorChange(sensorId, updateType, value)
 				return
-		if updateType == 'updateignored' and len(self.devices) > 0:
+		if updateType == 'updateignored' and self.devices:
 			# we don't have this sensor, do something! (can't send sensor change
 			# back (__sendSensorChange), because can't create message when
 			# sensor is unknown (could create special workaround, but only do
@@ -464,7 +464,7 @@ class DeviceManager(Plugin):
 			# cleaned up
 			self.__sendSensorReport()
 
-	def liveRegistered(self, __msg, refreshRequired):
+	def liveRegistered(self, __msg, __refreshRequired):
 		self.registered = True
 		self.__sendDeviceReport()
 		self.__sendSensorReport()
@@ -530,7 +530,7 @@ class DeviceManager(Plugin):
 				"ignored": device.ignored(),
 				"isSensor": device.isSensor()
 			}
-			if len(device.sensorValues()) > 0:
+			if device.sensorValues():
 				dev['sensorValues'] = device.sensorValues()
 			battery = device.battery()
 			if battery is not None:
