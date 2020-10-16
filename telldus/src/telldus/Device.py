@@ -573,6 +573,9 @@ class Device(object):
 		:param origin: The origin how the state was updated. If not set this will be "Incoming signal"
 		:param onlyUpdateIfChanged: Skip the update if the state is changed or not. If this is `False`
 		       the new state will always trigger and update. This parameter was added in version 1.2
+		:param executedStateValue: The unfiltered original call. Only needed so that the original
+		       request can be sent back to, and recognized/matched by, the callee, if the call has
+		       been mangled on the way.
 		"""
 		logging.warning("Should call size")
 		self.printSize()  # don't know where to do this...
