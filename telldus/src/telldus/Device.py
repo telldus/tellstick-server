@@ -577,8 +577,6 @@ class Device(object):
 		       request can be sent back to, and recognized/matched by, the callee, if the call has
 		       been mangled on the way.
 		"""
-		logging.warning("Should call size")
-		self.printSize()  # don't know where to do this...
 
 		if stateValue is None:
 			stateValue = ''
