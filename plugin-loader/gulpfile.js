@@ -2,8 +2,6 @@ var gulp = require('gulp');
 var babel = require("gulp-babel");
 var requirejsOptimize = require('gulp-requirejs-optimize');
 
-gulp.task('default', ['plugins', 'oauth2'], function() {
-});
 
 gulp.task("babel", function () {
 	return gulp.src(['src/pluginloader/app/**/*.jsx', 'src/pluginloader/app/**/*.js'])
@@ -13,7 +11,7 @@ gulp.task("babel", function () {
 		.pipe(gulp.dest('src/pluginloader/build'));
 });
 
-gulp.task('oauth2', ['babel'], function () {
+gulp.task('oauth2', gulp.series('babel', function () {
 	return gulp.src('src/pluginloader/build/plugins/oauth2.js')
 		.pipe(requirejsOptimize({
 			//optimize: 'none',
@@ -25,9 +23,9 @@ gulp.task('oauth2', ['babel'], function () {
 			name: 'plugins/oauth2'
 		}))
 		.pipe(gulp.dest('src/pluginloader/htdocs'));
-});
+}));
 
-gulp.task('plugins', ['babel'], function () {
+gulp.task('plugins', gulp.series('babel', function () {
 	return gulp.src('src/pluginloader/build/plugins/plugins.js')
 		.pipe(requirejsOptimize({
 			//optimize: 'none',
@@ -44,8 +42,12 @@ gulp.task('plugins', ['babel'], function () {
 			name: 'plugins/plugins'
 		}))
 		.pipe(gulp.dest('src/pluginloader/htdocs'));
-});
+}));
 
-gulp.task('watch', ['default'], function() {
+gulp.task('default', gulp.series('plugins', 'oauth2', function (done) {
+	done();
+}));
+
+gulp.task('watch', gulp.series('default', function () {
 	gulp.watch(['src/pluginloader/app/**/*.jsx', 'src/pluginloader/app/**/*.js'], ['default']);
-});
+}));
