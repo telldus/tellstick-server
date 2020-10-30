@@ -6,6 +6,7 @@ import socket
 from base import Application, Plugin, signal
 
 from .SSDP import SSDPListener, SSDPEntry
+from .ZeroconfListener import ZeroconfListener
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,12 +16,21 @@ class Listener(Plugin):
 		logging.getLogger('ssdp').setLevel('INFO')
 		self.ssdpListener: SSDPListener = None
 		self.transport = None
+		self.zeroconf = None
+		Application().createTask(self.setupZeroconf)
 		Application().createTask(self.setupSSDP)
 		Application().registerShutdown(self.shutdown)
+
+	def addZeroconfListener(self, configs, callback):
+		for config in configs:
+			self.zeroconf.addFilter(config, callback)
 
 	@signal
 	def SSDPDeviceDiscovered(self, device: SSDPEntry):  #pylint: disable=invalid-name
 		"""Signal sent when a device was discovered on the network"""
+
+	async def setupZeroconf(self):
+		self.zeroconf = ZeroconfListener(self)
 
 	async def setupSSDP(self):
 		loop = asyncio.get_event_loop()
@@ -38,4 +48,5 @@ class Listener(Plugin):
 		)
 
 	def shutdown(self):
+		self.zeroconf.close()
 		self.transport.close()
