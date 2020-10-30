@@ -147,14 +147,20 @@ class telldus_plugin(Command):  # pylint: disable=C0103
 		if attr == 'icon':
 			if not os.path.exists(value):
 				raise DistutilsSetupError('File %s does not exists' % value)
+		if attr == 'zeroconf':
+			if not isinstance(value, list):
+				raise DistutilsSetupError(
+				    'Attribute "zeroconf" must be a list of dictionaries'
+				)
 
 	@staticmethod
 	def write_metadata(cmd, basename, filename):
 		what = os.path.splitext(basename)[0]
 		metadata = {}
-		ports = getattr(cmd.distribution, 'ports', None)
-		if ports is not None:
-			metadata['ports'] = ports
+		for key in ['ports', 'zeroconf']:
+			value = getattr(cmd.distribution, key, None)
+			if value is not None:
+				metadata[key] = value
 		cmd.write_or_delete_file(what, filename, yaml.dump(metadata))
 
 	def __buildPackage(self, files):

@@ -20,6 +20,7 @@ setup(
 			'icon = sdk.plugin:telldus_plugin.validate_attribute',
 			'required_features = sdk.plugin:telldus_plugin.validate_attribute',
 			'ports = sdk.plugin:telldus_plugin.validate_attribute',
+			'zeroconf = sdk.plugin:telldus_plugin.validate_attribute',
 		],
 		'egg_info.writers': [
 			'metadata.yml = sdk.plugin:telldus_plugin.write_metadata',
