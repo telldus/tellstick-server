@@ -24,6 +24,7 @@ from base import (
     ConfigurationManager, slot
 )
 from board import Board
+from discovery import Listener
 from web.base import Server
 
 from .PluginParser import PluginParser
@@ -41,6 +42,7 @@ class LoadedPlugin():
 		self.context = context
 		self.verified = False
 		self.manifest = yaml.safe_load(open(manifest, 'r').read())
+		self.metadata = {}
 		self.name = self.manifest['name']
 		self.icon = self.manifest.get('icon', '')
 		self.path = os.path.dirname(manifest)
@@ -145,6 +147,12 @@ class LoadedPlugin():
 		# TODO: Do not just set the loaded flag here. Make sure the eggs where loaded and store any
 		# backtrace if the loading failed.
 		self.loaded = True
+		if 'zeroconf' in self.metadata:
+			discoveryListener = Listener(self.context)
+			discoveryListener.addZeroconfListener(
+			    self.metadata['zeroconf'], self.__zeroconfDeviceFound
+			)
+
 		# Push new info to web
 		Server(self.context
 		       ).webSocketSend('plugins', 'pluginInfo', self.infoObject())
@@ -178,6 +186,20 @@ class LoadedPlugin():
 					_LOGGER.error("Could not load %s", str(entry))
 					_LOGGER.error(str(exception))
 					self.printBacktrace(traceback.extract_tb(exc_traceback))
+			if dist.has_metadata('metadata.yml'):
+				self.metadata = yaml.safe_load(dist.get_metadata('metadata.yml'))
+
+	def __zeroconfDeviceFound(self, info):
+		for cls in self.classes:
+			plugin = self.context.components.get(cls)
+			if not plugin:
+				continue
+			if not hasattr(plugin, 'zeroconfDeviceFound'):
+				continue
+			try:
+				Application().createTask(plugin.zeroconfDeviceFound, info)
+			except Exception as error:
+				Application.printException(error)
 
 	@staticmethod
 	def __verifyFile(path):
